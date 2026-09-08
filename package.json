@@ -1,0 +1,29 @@
+{
+  "name": "verdict-landing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test lib/policy.test.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/archivo": "latest",
+    "@fontsource-variable/archivo-narrow": "latest",
+    "gsap": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "playwright-core": "^1.63.0",
+    "sharp": "latest",
+    "typescript": "latest"
+  }
+}
