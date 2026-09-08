@@ -89,6 +89,48 @@
 .v-search-big:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 2px rgba(17,17,17,.06); }
 .v-section-title { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
 @media(max-width:1023px){ .v-split{grid-template-columns:1fr} }
+/* Phase 3: verdict panel, graph, matrix, dark diagnostic */
+.v-verdict { border-radius: var(--radius-md); border: 1px solid; padding: 28px 32px; min-height: 240px; }
+.v-verdict-pass { background: var(--pass-bg); border-color: var(--pass-border); }
+.v-verdict-review { background: var(--review-bg); border-color: var(--review-border); }
+.v-verdict-blocked { background: var(--blocked-bg); border-color: var(--blocked-border); }
+.v-verdict-unavailable { background: var(--unavailable-bg); border-color: var(--unavailable-border); }
+.v-verdict h3 { font-size: 28px; margin: 8px 0 12px; letter-spacing: -.01em; }
+.v-verdict ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.v-verdict li { display: flex; gap: 8px; align-items: flex-start; }
+.v-asset-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+.v-asset-head h2 { font-size: 40px; font-weight: 500; letter-spacing: -.02em; margin: 0; }
+.v-ensline { font-family: var(--font-mono); font-size: 13px; color: var(--muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.v-copy-btn { border: 1px solid var(--border); background: var(--surface-raised); border-radius: 6px; font-size: 12px; padding: 4px 10px; cursor: pointer; }
+.v-kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px; }
+.v-kv dt { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding-top: 2px; }
+.v-kv dd { margin: 0; }
+.v-graph { display: flex; align-items: center; justify-content: center; gap: 0; padding: 28px 16px; overflow-x: auto; }
+.v-node { border: 1px solid var(--border); background: var(--surface-raised); border-radius: 10px; padding: 10px 14px; font-size: 12px; text-align: center; min-width: 130px; }
+.v-node strong { display: block; font-size: 13px; }
+.v-node-center { border: 2px solid var(--primary); min-width: 160px; }
+.v-edge { width: 48px; height: 2px; background: var(--primary); flex-shrink: 0; position: relative; }
+.v-edge span { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.v-dark { background: var(--dark); color: var(--on-dark); border-radius: var(--radius-md); padding: 24px; font-family: var(--font-mono); font-size: 13px; }
+.v-dark .v-label { color: var(--on-dark-muted); }
+.v-dark-fail { color: #F2A19C; }
+.v-life-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+.v-timeline { display: flex; align-items: center; gap: 0; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.v-tick { flex: 1; text-align: center; position: relative; padding-top: 14px; }
+.v-tick::before { content: ""; position: absolute; top: 4px; left: 0; right: 0; height: 2px; background: var(--border); }
+.v-tick.done::before { background: var(--pass); }
+.v-tick.warn::before { background: var(--review); }
+.v-tick.bad::before { background: var(--blocked); }
+@media(max-width:1023px){ .v-life-grid{grid-template-columns:1fr 1fr} }
+/* Phase 4: flow, CLI, debug */
+.v-flow { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding: 20px 4px; }
+.v-step { border: 1px solid var(--border); background: var(--surface-raised); border-radius: 10px; padding: 12px 14px; font-size: 13px; min-width: 140px; text-align: center; }
+.v-step strong { display: block; font-size: 12px; }
+.v-step-arrow { align-self: center; padding: 0 8px; color: var(--primary); font-weight: 700; flex-shrink: 0; }
+.v-cli { background: var(--dark); color: var(--on-dark); border-radius: var(--radius-md); padding: 20px 22px; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; overflow-x: auto; }
+.v-cli .v-dim { color: var(--on-dark-muted); }
+.v-cli .v-pass-t { color: #7BD9A5; }
+.v-cli .v-block-t { color: #F2A19C; }
 @media(max-width:1023px){ .v-cards-4{grid-template-columns:1fr 1fr} .v-content{padding:28px} }
 @media(max-width:767px){
   .v-sidebar{position:fixed;z-index:30;left:0;top:0;transform:translateX(-100%);transition:transform var(--motion-slow) var(--ease);background:var(--surface);}
