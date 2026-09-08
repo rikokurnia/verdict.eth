@@ -131,6 +131,24 @@
 .v-cli .v-dim { color: var(--on-dark-muted); }
 .v-cli .v-pass-t { color: #7BD9A5; }
 .v-cli .v-block-t { color: #F2A19C; }
+/* Phase 5: loading, toast, a11y, scenarios */
+.v-skip { position: fixed; top: -100px; z-index: 100; background: #fff; padding: 12px 16px; border-radius: 0 0 8px 0; }
+.v-skip:focus { top: 10px; left: 10px; }
+.v-app a:focus-visible, .v-app button:focus-visible, .v-app input:focus-visible, .v-app select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.v-skeleton { border-radius: 8px; background: linear-gradient(90deg,#E7E5DF 25%,#F4F3EF 50%,#E7E5DF 75%); background-size: 200% 100%; animation: v-shimmer 1.4s infinite; }
+@keyframes v-shimmer { to { background-position: -200% 0; } }
+.v-toasts { position: fixed; right: 20px; bottom: 20px; z-index: 50; display: flex; flex-direction: column; gap: 10px; max-width: min(360px, calc(100vw - 40px)); }
+.v-toast { background: var(--surface-raised); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 10px; padding: 12px 14px; font-size: 13px; box-shadow: 0 12px 32px rgba(17,17,17,.12); animation: v-toast-in var(--motion-slow) var(--ease); }
+.v-toast strong { display: block; font-size: 12px; letter-spacing: .04em; }
+.v-toast-pass { border-left-color: var(--pass); }
+.v-toast-review { border-left-color: var(--review); }
+.v-toast-blocked { border-left-color: var(--blocked); }
+@keyframes v-toast-in { from { opacity: 0; transform: translateY(8px); } }
+.v-scenarios { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+.v-scen { height: 36px; padding: 0 14px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-raised); cursor: pointer; }
+.v-scen[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+@media(max-width:767px){ .v-toasts{ right: 50%; transform: translateX(50%); bottom: 16px; } }
+@media(prefers-reduced-motion:reduce){ .v-skeleton{animation:none;} .v-toast{animation:none;} }
 @media(max-width:1023px){ .v-cards-4{grid-template-columns:1fr 1fr} .v-content{padding:28px} }
 @media(max-width:767px){
   .v-sidebar{position:fixed;z-index:30;left:0;top:0;transform:translateX(-100%);transition:transform var(--motion-slow) var(--ease);background:var(--surface);}

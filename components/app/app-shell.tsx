@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -31,6 +31,12 @@ export function PageHead({ title, sub }: { title: string; sub: string }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [open ]);
   return (
     <div className={'v-app' + (open ? ' nav-open' : '')}>
       <a href="#v-main" className="v-skip" style={{ position: 'fixed', top: -100 }}>Skip to content</a>
