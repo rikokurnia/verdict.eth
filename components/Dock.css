@@ -1,0 +1,92 @@
+.dock-outer {
+  margin: 0 auto;
+  display: flex;
+  max-width: 100%;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dock-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  gap: 8px;
+  border-radius: 18px;
+  background: rgba(3, 18, 32, 0.65);
+  border: 1px solid rgba(163, 209, 255, 0.18);
+  box-shadow: 0 16px 45px rgba(0, 5, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 6px 10px;
+}
+
+.dock-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(163, 209, 255, 0.08);
+  color: #8da4b8;
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.dock-item:hover {
+  color: #edf4fb;
+  background: rgba(144, 183, 227, 0.14);
+  border-color: rgba(163, 209, 255, 0.28);
+}
+
+.dock-item.dock-item-active,
+.dock-item[aria-current='page'] {
+  color: #ffffff;
+  background: rgba(144, 183, 227, 0.22);
+  border-color: rgba(163, 209, 255, 0.42);
+  box-shadow: 0 0 20px rgba(144, 183, 227, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-active-dot {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #a3d1ff;
+  box-shadow: 0 0 6px #a3d1ff;
+}
+
+.dock-tooltip {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  padding: 4px 10px;
+  font-family: var(--font-label, 'Archivo Narrow Variable', sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #edf4fb;
+  background: rgba(2, 13, 23, 0.94);
+  border: 1px solid rgba(163, 209, 255, 0.24);
+  border-radius: 6px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 100;
+}

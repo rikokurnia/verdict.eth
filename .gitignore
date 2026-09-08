@@ -4,3 +4,4 @@ node_modules/
 *.tsbuildinfo
 video/node_modules/
 video/.hyperframes/
+lab/

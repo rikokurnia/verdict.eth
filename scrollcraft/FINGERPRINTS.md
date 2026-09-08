@@ -28,6 +28,7 @@ changes only grammar and world will fail it.
 
 | Build | Grammar | Nav treatment | Hero device | Act-sequence shape | Close pattern | Signature move | World | Port |
 |---|---|---|---|---|---|---|---|---|
+| Verdict cosmic | User-supplied three-scene filmic | Fixed brand / section links / wallet | Cosmic video plus floating glass core | Idea → interactive cloud → workspace close, 4vh | Right-led CTA, small core, inline footer | Five-coin evidence selector | Supplied cosmic mountains | 3001 |
 
 *(empty: your first build has nothing to clear, so build whatever the interview
 points at. From the second onwards, this table is the constraint.)*

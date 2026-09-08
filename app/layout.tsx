@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@fontsource-variable/archivo';
 import '@fontsource-variable/archivo-narrow';
+import '@fontsource-variable/inter';
 import './scrollcraft.css';
 import './globals.css';
 
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
   openGraph: { title: 'Verdict | One name. Every reason.', description: 'Tokenized assets, with the evidence attached.', type: 'website' },
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+  return <html lang="en" data-scroll-behavior="smooth"><body>{children}</body></html>;
 }

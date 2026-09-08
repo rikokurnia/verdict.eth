@@ -12,7 +12,7 @@ export default function AuthoritiesPage() {
   return (
     <>
       <PageHead title="Authorities" sub="Who controls what — and what happens on unauthorized writes." />
-      <div className="v-grid v-cards-4" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+      <div className="v-grid v-authority-cards">
         {[
           ['Issuer', 'acme.verdict.eth', ['issuer', 'ticker', 'asset-class', 'docs-contenthash'], ['audit-*', 'risk-*']],
           ['Auditor', 'audit-001.auditor.eth', ['audit-hash', 'audit-expiry'], ['asset facts', 'policy']],

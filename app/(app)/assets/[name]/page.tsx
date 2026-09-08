@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { CheckCircle2, XCircle, AlertTriangle, Unplug } from 'lucide-react';
 import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
@@ -37,11 +37,11 @@ const VERDICT_CLS: Record<VerdictState, string> = {
 
 const TOAST_KIND = { POLICY_PASS: 'pass', REVIEW: 'review', BLOCKED: 'blocked', UNAVAILABLE: 'info' } as const;
 
-export default function AssetDetailPage({ params }: { params: { name: string } }) {
+export default function AssetDetailPage({ params }: { params: Promise<{ name: string }> }) {
   const [scenario, setScenario] = useState<Scenario>('live');
   const [copied, setCopied] = useState(false);
   const { toasts, push } = useToasts();
-  const name = decodeURIComponent(params.name);
+  const { name } = use(params);
   const asset = DEMO_ASSETS.find((a) => a.name === name) ?? DEMO_ASSETS[0];
 
   const base = BASE_EVIDENCE[asset.name] ?? BASE_EVIDENCE[DEMO_ASSETS[0].name];
