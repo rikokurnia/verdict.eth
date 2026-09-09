@@ -2427,6 +2427,7 @@
 .v-source-state.loading { justify-content: flex-start; }
 .v-source-state.ready { border-color: var(--pass-border); color: var(--pass); }
 .v-source-state.partial { border-color: var(--review-border); color: var(--review); }
+.v-source-state.error { border-color: var(--blocked-border, #F2A19C); color: var(--blocked); }
 .v-source-state button {
   min-height: 40px;
   display: inline-flex;
