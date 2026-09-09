@@ -35,7 +35,7 @@ export default function AuthoritiesPage() {
             <thead><tr><th>Record</th><th>Issuer</th><th>Auditor</th><th>Risk engine</th></tr></thead>
             <tbody>
               {ROWS.map((r) => (
-                <tr key={r.record}>
+                <tr key={r.record} className="v-asset-row">
                   <td className="v-mono">{r.record}</td><td>{r.issuer}</td><td>{r.auditor}</td><td>{r.risk}</td>
                 </tr>
               ))}

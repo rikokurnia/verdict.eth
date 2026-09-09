@@ -45,7 +45,7 @@ export default function AssetsPage() {
             </thead>
             <tbody>
               {rows.map((a) => (
-                <tr key={a.name}>
+                <tr key={a.name} className="v-asset-row">
                   <td>
                     <Link className="v-rowlink" href={`/assets/${encodeURIComponent(a.name)}`}>
                       <div className="v-asset-name">{a.title}</div>
