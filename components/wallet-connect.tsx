@@ -1,117 +1,129 @@
 'use client';
 
-import { useRef } from 'react';
-import { Wallet, X, ArrowUpRight, LogOut, CheckCircle2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Wallet, LogOut, CheckCircle2, ChevronDown, ExternalLink } from 'lucide-react';
 import { useWallet } from './wallet-context';
 
 export default function WalletConnect() {
-  const {
-    account,
-    isConnected,
-    pending,
-    message,
-    connect,
-    disconnect,
-    isDialogOpen,
-    openDialog,
-    closeDialog,
-  } = useWallet();
+  const { account, isConnected, ready, connect, disconnect } = useWallet();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  return (
-    <>
+  if (!isConnected) {
+    return (
       <button
-        ref={trigger}
+        type="button"
         className="cosmic-wallet"
-        onClick={openDialog}
-        aria-haspopup="dialog"
+        onClick={connect}
+        disabled={!ready}
+        aria-label="Connect wallet with Privy"
       >
         <Wallet size={16} />
-        <span>
-          {isConnected ? `${account.slice(0, 6)}…${account.slice(-4)}` : 'Connect wallet'}
+        <span>Connect wallet</span>
+      </button>
+    );
+  }
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        className="cosmic-wallet"
+        onClick={() => setMenuOpen((prev) => !prev)}
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        style={{
+          background: 'rgba(8, 26, 48, 0.85)',
+          borderColor: 'rgba(112, 165, 255, 0.4)',
+        }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: '#34D399',
+            boxShadow: '0 0 8px #34D399',
+            marginRight: 4,
+          }}
+          aria-hidden="true"
+        />
+        <span style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 13 }}>
+          {account ? `${account.slice(0, 6)}…${account.slice(-4)}` : 'Connected'}
         </span>
+        <ChevronDown size={14} style={{ opacity: 0.7, marginLeft: 2 }} />
       </button>
 
-      {isDialogOpen && (
-        <dialog
-          open
-          className="cosmic-wallet-dialog"
-          aria-labelledby="wallet-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeDialog();
+      {menuOpen && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            minWidth: 230,
+            background: 'rgba(6, 18, 34, 0.95)',
+            border: '1px solid rgba(163, 209, 255, 0.28)',
+            borderRadius: 12,
+            padding: 12,
+            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(112, 165, 255, 0.1)',
+            backdropFilter: 'blur(16px)',
+            zIndex: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
           }}
         >
+          <div style={{ padding: '4px 6px', borderBottom: '1px solid rgba(163, 209, 255, 0.12)' }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.1em', color: '#9DB6CD', textTransform: 'uppercase', display: 'block' }}>
+              Connected via Privy
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+              <CheckCircle2 size={13} color="#34D399" />
+              <code style={{ fontSize: 12, color: '#F5F9FD', fontFamily: 'monospace' }}>
+                {account.slice(0, 8)}…{account.slice(-6)}
+              </code>
+            </div>
+          </div>
+
           <button
-            className="cosmic-dialog-close"
-            aria-label="Close wallet dialog"
-            onClick={closeDialog}
+            type="button"
+            role="menuitem"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: '100%',
+              padding: '8px 10px',
+              borderRadius: 8,
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              color: '#FCA5A5',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onClick={() => {
+              setMenuOpen(false);
+              disconnect();
+            }}
           >
-            <X size={20} />
+            <LogOut size={14} />
+            <span>Disconnect Session</span>
           </button>
-
-          <Wallet size={28} style={{ color: '#70A5FF' }} />
-          <h2 id="wallet-title">
-            {isConnected ? 'Wallet Connected' : 'Connect to Verdict'}
-          </h2>
-          <p>
-            {isConnected
-              ? 'Your wallet session is active across landing page and evidence workspace.'
-              : 'Connect an Ethereum browser wallet or use demo mode. No signing or token spending requested.'}
-          </p>
-
-          {account && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0' }}>
-              <CheckCircle2 size={16} color="#34D399" />
-              <code style={{ fontSize: 13 }}>{account}</code>
-            </div>
-          )}
-
-          {!isConnected ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', marginTop: 8 }}>
-              <button
-                className="cosmic-button"
-                disabled={pending}
-                onClick={() => connect(false)}
-              >
-                {pending ? 'Check your wallet…' : 'Connect Browser Wallet'}
-                <ArrowUpRight size={16} />
-              </button>
-              <button
-                type="button"
-                className="cosmic-button secondary"
-                style={{
-                  background: 'rgba(144, 183, 227, 0.12)',
-                  border: '1px solid rgba(144, 183, 227, 0.25)',
-                  color: '#EDF4FB',
-                }}
-                onClick={() => connect(true)}
-              >
-                Connect Demo Wallet
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', marginTop: 8 }}>
-              <button
-                className="cosmic-button"
-                style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#FCA5A5' }}
-                onClick={() => {
-                  disconnect();
-                }}
-              >
-                <LogOut size={16} />
-                Disconnect Session
-              </button>
-            </div>
-          )}
-
-          {message && (
-            <p className="cosmic-wallet-status" role="status">
-              {message}
-            </p>
-          )}
-        </dialog>
+        </div>
       )}
-    </>
+    </div>
   );
 }
