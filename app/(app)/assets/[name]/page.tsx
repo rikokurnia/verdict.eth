@@ -63,7 +63,12 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
     const controller = new AbortController();
     setLoading(true);
     fetch(`/api/verdict?name=${encodeURIComponent(decodedName)}`, { cache: 'no-store', signal: controller.signal })
-      .then(async (response) => setLive(await response.json() as VerdictApiResponse))
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Verdict source unavailable');
+        const result = await response.json() as VerdictApiResponse;
+        if (!result.asset || !result.state || !result.evidence) throw new Error('Invalid verdict response');
+        setLive(result);
+      })
       .catch(() => setLive(null))
       .finally(() => setLoading(false));
     return () => controller.abort();

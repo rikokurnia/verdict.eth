@@ -38,14 +38,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [reduced, setReduced] = useState(false);
   const [compact, setCompact] = useState(false);
   const { account, isConnected, ready, connect, disconnect, openDialog } = useWallet();
-  const hasPrompted = useRef(false);
-
-  useEffect(() => {
-    if (ready && !isConnected && !hasPrompted.current) {
-      hasPrompted.current = true;
-      connect();
-    }
-  }, [ready, isConnected, connect]);
 
   useEffect(() => {
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -76,9 +68,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const current = ROUTES.find(
     (r) => pathname === r.href || (r.href !== '/dashboard' && pathname.startsWith(r.href + '/')),
   );
+  const allowReadOnly = true;
 
   // 1. Loading state while Privy restores local session
-  if (!ready) {
+  if (!ready && !allowReadOnly) {
     return (
       <div className="v-app v-wave-workspace v-gate-screen">
         <div className="v-video-background" aria-hidden="true">
@@ -111,7 +104,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // 2. Gate Lock Screen: Wallet connection required to enter dashboard
-  if (!isConnected) {
+  if (!isConnected && !allowReadOnly) {
     return (
       <div className="v-app v-wave-workspace v-gate-screen">
         {/* Background Video with Cosmic Mountains & Ambient Gradients */}
@@ -264,9 +257,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               type="button"
               className="v-wallet-connect-btn"
               onClick={openDialog}
+              disabled={!ready}
             >
               <Wallet size={14} />
-              <span>Connect Wallet</span>
+              <span>{ready ? 'Connect Wallet' : 'Wallet loading'}</span>
             </button>
           )}
         </div>
@@ -285,7 +279,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="v-footer-link">
             About Verdict
           </Link>
-          <span className="v-footer-disclaimer">Illustrative data. No live onchain verification.</span>
+          <span className="v-footer-disclaimer">Market data is informational. Verdict trust requires independent evidence.</span>
         </div>
       </footer>
 

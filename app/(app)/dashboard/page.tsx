@@ -1,678 +1,268 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Search,
   ArrowUpRight,
-  ShieldCheck,
-  Radio,
-  FileCheck2,
-  Copy,
+  BadgeCheck,
   Check,
-  X,
-  TerminalSquare,
-  KeyRound,
-  Lock,
-  Layers,
+  CircleDollarSign,
+  Copy,
+  Database,
   ExternalLink,
+  Layers,
+  LineChart,
+  Link2,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
+import { AssetLogo, CoverageBadge, NetworkBadges } from '@/components/app/asset-identity';
+import { DEMO_ACTIVITY, DEMO_ASSETS, type CoverageTier, type DemoAsset } from '@/components/app/demo-data';
 import StatusChip from '@/components/app/status-chip';
-import { DEMO_ASSETS, DEMO_ACTIVITY, type DemoAsset } from '@/components/app/demo-data';
-import type { VerdictState } from '@/lib/policy';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
-export default function DashboardPage() {
-  const [assets, setAssets] = useState<DemoAsset[]>(DEMO_ASSETS);
-  const [q, setQ] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | VerdictState>('ALL');
-  const [classFilter, setClassFilter] = useState<string>('ALL');
-  const [copiedName, setCopiedName] = useState<string | null>(null);
-  const [selectedAsset, setSelectedAsset] = useState<DemoAsset | null>(null);
-  const [modalTab, setModalTab] = useState<'authorities' | 'resolver'>('authorities');
+type Quote = { usd: number; change24h: number | null; updatedAt: number | null; image?: string };
+type MarketResponse = { ok: boolean; source: string; quotes: Record<string, Quote> };
+type LoadState = 'loading' | 'ready' | 'partial';
 
-  const query = q.trim().toLowerCase();
+const COVERAGE_COPY: Record<CoverageTier, string> = {
+  VERIFIED_ONCHAIN: 'Evidence resolved from independent ENSv2 authorities.',
+  SOURCE_LINKED: 'A real product with issuer and market sources, not yet verified by Verdict.',
+  MARKET_REFERENCE: 'Live comparison data only. No issuer evidence or Verdict decision.',
+};
+
+function formatUsd(value: number) {
+  const digits = value >= 1000 ? 0 : value >= 1 ? 2 : 4;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value);
+}
+
+function formatUpdated(timestamp: number | null) {
+  if (!timestamp) return 'Update time unavailable';
+  return `Updated ${new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function MarketQuote({ quote, loading }: { quote?: Quote; loading: boolean }) {
+  if (loading) return <span className="v-market-skeleton" aria-label="Loading market price" />;
+  if (!quote) return <><div className="v-cell-main">Not available</div><div className="v-cell-sub">Issuer source only</div></>;
+  const change = quote.change24h;
+  return (
+    <>
+      <div className="v-market-price">{formatUsd(quote.usd)}</div>
+      <div className={`v-market-change ${change !== null && change < 0 ? 'is-down' : 'is-up'}`}>
+        {change === null ? '24h unavailable' : `${change >= 0 ? '+' : ''}${change.toFixed(2)}% · 24h`}
+      </div>
+    </>
+  );
+}
+
+function AssetDialog({ asset, quote, live, onClose }: { asset: DemoAsset; quote?: Quote; live: VerdictApiResponse | null; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const verified = asset.coverage === 'VERIFIED_ONCHAIN';
+
   useEffect(() => {
-    fetch('/api/verdict', { cache: 'no-store' })
-      .then((response) => response.json())
-      .then((live: VerdictApiResponse) => {
-        if (!live.asset) return;
-        const elapsed = Math.max(0, live.evaluatedAt - (live.observation?.observedAt ?? live.evaluatedAt));
-        const heartbeat = elapsed < 60 ? `${elapsed}s ago` : `${Math.floor(elapsed / 60)}m ago`;
-        setAssets((current) => current.map((asset) => asset.name === live.name ? {
-          ...asset,
-          title: live.asset!.displayName,
-          ticker: live.asset!.ticker,
-          assetClass: live.asset!.assetClass,
-          issuer: live.asset!.issuer,
-          state: live.state,
-          auditNote: live.audit ? `${live.audit.status} · ${live.evidence.daysRemaining}d` : 'Unavailable',
-          riskNote: live.observation?.severity ?? 'Unavailable',
-          heartbeat,
-          network: `Sepolia · #${live.sourceBlock ?? '—'}`,
-        } : asset));
-      })
-      .catch(() => {});
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
   }, []);
 
-  const filteredAssets = assets.filter((a) => {
-    const matchesQuery =
-      !query ||
-      a.title.toLowerCase().includes(query) ||
-      a.name.toLowerCase().includes(query) ||
-      a.ticker.toLowerCase().includes(query) ||
-      a.issuer.toLowerCase().includes(query);
+  return (
+    <dialog ref={dialogRef} className="v-native-dialog" onClose={onClose} onCancel={onClose} aria-labelledby="asset-dialog-title">
+      <div className="v-modal-dialog v-catalog-dialog">
+        <div className="v-modal-header">
+          <div className="v-dialog-identity">
+            <AssetLogo asset={asset} size={52} />
+            <div>
+              <div className="v-modal-eyebrow"><span>{asset.assetClass}</span><span className="v-modal-dot" /><span>{asset.ticker}</span></div>
+              <h2 id="asset-dialog-title" className="v-modal-title">{asset.title}</h2>
+              <CoverageBadge coverage={asset.coverage} />
+            </div>
+          </div>
+          <button type="button" className="v-modal-close" onClick={() => dialogRef.current?.close()} aria-label="Close asset details"><X size={20} aria-hidden="true" /></button>
+        </div>
 
-    const matchesStatus = statusFilter === 'ALL' || a.state === statusFilter;
-    const matchesClass = classFilter === 'ALL' || a.assetClass === classFilter;
+        <div className="v-modal-body">
+          <div className="v-catalog-detail-grid">
+            <section className="v-modal-subcard" aria-labelledby="asset-profile-heading">
+              <div id="asset-profile-heading" className="v-label">Asset profile</div>
+              <p className="v-asset-description">{asset.description}</p>
+              <dl className="v-kv">
+                <dt>Issuer</dt><dd>{asset.issuer}</dd>
+                <dt>Category</dt><dd>{asset.assetClass}</dd>
+                <dt>Networks</dt><dd><NetworkBadges networks={asset.networks} /></dd>
+                <dt>Identifier</dt><dd className="v-mono">{asset.name}</dd>
+              </dl>
+            </section>
 
-    return matchesQuery && matchesStatus && matchesClass;
+            <section className="v-modal-subcard" aria-labelledby="market-profile-heading">
+              <div id="market-profile-heading" className="v-label">Market and issuer snapshot</div>
+              <div className="v-dialog-price">{quote ? formatUsd(quote.usd) : 'No unified market quote'}</div>
+              {quote && <div className={`v-market-change ${quote.change24h !== null && quote.change24h < 0 ? 'is-down' : 'is-up'}`}>{quote.change24h === null ? '24h change unavailable' : `${quote.change24h >= 0 ? '+' : ''}${quote.change24h.toFixed(2)}% over 24h`} · {formatUpdated(quote.updatedAt)}</div>}
+              <p className="v-source-snapshot">{asset.snapshot}</p>
+              <span className="v-cell-sub">{asset.snapshotAsOf}</span>
+            </section>
+          </div>
+
+          <section className={`v-verification-panel ${verified ? 'is-verified' : ''}`} aria-labelledby="coverage-heading">
+            <div>
+              <div id="coverage-heading" className="v-label">Verdict coverage</div>
+              <h3>{verified ? live?.state?.replace('_', ' ') ?? 'Resolving ENS evidence' : 'Not yet ENS-verified'}</h3>
+              <p>{verified ? live?.reason ?? 'The live resolver is temporarily unavailable.' : COVERAGE_COPY[asset.coverage]}</p>
+            </div>
+            {verified && live ? (
+              <dl className="v-verification-stats">
+                <div><dt>Source block</dt><dd>{live.sourceBlock ?? '—'}</dd></div>
+                <div><dt>Audit</dt><dd>{live.audit?.status ?? '—'} · {live.evidence.daysRemaining}d</dd></div>
+                <div><dt>Risk</dt><dd>{live.observation?.severity ?? '—'}</dd></div>
+                <div><dt>AI confidence</dt><dd>{live.audit?.ai.confidence ?? '—'}%</dd></div>
+              </dl>
+            ) : (
+              <div className="v-onboarding-note"><Link2 size={16} aria-hidden="true" /><span>Next step: bind issuer, auditor, and monitor records through ENSv2 before showing a policy verdict.</span></div>
+            )}
+          </section>
+        </div>
+
+        <div className="v-modal-footer">
+          <span className="v-modal-footnote">Market price is informational and never changes Verdict’s evidence policy.</span>
+          <div className="v-dialog-actions">
+            <a className="v-btn v-btn-secondary" href={asset.sourceUrl} target="_blank" rel="noreferrer">Open {asset.sourceLabel}<ExternalLink size={14} aria-hidden="true" /></a>
+            <button type="button" className="v-btn" onClick={() => dialogRef.current?.close()}>Close</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
+export default function DashboardPage() {
+  const [live, setLive] = useState<VerdictApiResponse | null>(null);
+  const [quotes, setQuotes] = useState<Record<string, Quote>>({});
+  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [loadMessage, setLoadMessage] = useState('Resolving ENS and market sources…');
+  const [query, setQuery] = useState('');
+  const [coverage, setCoverage] = useState<'ALL' | CoverageTier>('ALL');
+  const [assetClass, setAssetClass] = useState('ALL');
+  const [selected, setSelected] = useState<DemoAsset | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    setLoadState('loading');
+    setLoadMessage('Resolving ENS and market sources…');
+    const [verdictResult, marketResult] = await Promise.allSettled([
+      fetch('/api/verdict', { cache: 'no-store' }).then(async (response) => {
+        if (!response.ok) throw new Error('ENS resolver unavailable');
+        return response.json() as Promise<VerdictApiResponse>;
+      }),
+      fetch('/api/market', { cache: 'no-store' }).then(async (response) => {
+        if (!response.ok) throw new Error('Market feed unavailable');
+        return response.json() as Promise<MarketResponse>;
+      }),
+    ]);
+    if (verdictResult.status === 'fulfilled') setLive(verdictResult.value);
+    if (marketResult.status === 'fulfilled') setQuotes(marketResult.value.quotes);
+    const failures = [verdictResult, marketResult].filter((result) => result.status === 'rejected').length;
+    setLoadState(failures ? 'partial' : 'ready');
+    setLoadMessage(failures === 2 ? 'ENS and market sources are unavailable. Retry when connectivity returns.' : failures === 1 ? 'One live source is unavailable. Verified and dated data remain clearly labeled.' : 'ENS and market sources are live.');
+  }, []);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  const assets = useMemo(() => DEMO_ASSETS.map((asset) => {
+    // Prefer the live CoinGecko CDN image returned by /api/market so photos
+    // stay fresh; fall back to the verified catalog image when offline.
+    const liveImage = asset.marketId ? quotes[asset.marketId]?.image : undefined;
+    const withLiveImage = liveImage ? { ...asset, logo: liveImage } : asset;
+    if (withLiveImage.coverage !== 'VERIFIED_ONCHAIN' || !live?.asset) return withLiveImage;
+    const elapsed = Math.max(0, live.evaluatedAt - (live.observation?.observedAt ?? live.evaluatedAt));
+    return {
+      ...withLiveImage,
+      title: live.asset.displayName,
+      ticker: live.asset.ticker,
+      issuer: live.asset.issuer,
+      state: live.state,
+      auditNote: live.audit ? `${live.audit.status} · ${live.evidence.daysRemaining}d` : 'Unavailable',
+      riskNote: live.observation?.severity ?? 'Unavailable',
+      heartbeat: elapsed < 60 ? `${elapsed}s ago` : `${Math.floor(elapsed / 60)}m ago`,
+    };
+  }), [live, quotes]);
+
+  const classes = useMemo(() => [...new Set(assets.map((asset) => asset.assetClass))].sort(), [assets]);
+  const filtered = assets.filter((asset) => {
+    const needle = query.trim().toLowerCase();
+    const matchesQuery = !needle || [asset.title, asset.ticker, asset.name, asset.issuer, asset.assetClass].some((value) => value.toLowerCase().includes(needle));
+    return matchesQuery && (coverage === 'ALL' || asset.coverage === coverage) && (assetClass === 'ALL' || asset.assetClass === assetClass);
   });
+  const counts = {
+    verified: assets.filter((asset) => asset.coverage === 'VERIFIED_ONCHAIN').length,
+    sourced: assets.filter((asset) => asset.coverage === 'SOURCE_LINKED').length,
+    reference: assets.filter((asset) => asset.coverage === 'MARKET_REFERENCE').length,
+  };
 
-  const passCount = assets.filter((a) => a.state === 'POLICY_PASS').length;
-  const reviewCount = assets.filter((a) => a.state === 'REVIEW').length;
-  const blockedCount = assets.filter((a) => a.state === 'BLOCKED').length;
-
-  async function copyName(name: string, e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  async function copyIdentifier(value: string) {
     try {
-      await navigator.clipboard.writeText(name);
-      setCopiedName(name);
-      setTimeout(() => setCopiedName(null), 1800);
-    } catch {}
+      await navigator.clipboard.writeText(value);
+      setCopied(value);
+      setTimeout(() => setCopied(null), 1500);
+    } catch { /* Clipboard is optional. */ }
   }
 
   return (
     <>
-      {/* Overview Top Command Section */}
       <div className="v-overview-heading">
         <div>
-          <div className="v-overview-eyebrow">
-            <span className="v-eyebrow-dot" aria-hidden="true" />
-            <span>THE EVIDENCE WORKSPACE</span>
-            <span className="v-eyebrow-sep">·</span>
-            <span>CANONICAL PROTOCOL STATE</span>
-          </div>
-          <PageHead
-            title="Every asset. In perspective."
-            sub="Independent sources. Transparent decisions. Explore the evidence behind your ENS-bound assets in this live transparent workspace."
-          />
+          <div className="v-overview-eyebrow"><span className="v-eyebrow-dot" aria-hidden="true" /><span>REAL ASSET INTELLIGENCE</span><span className="v-eyebrow-sep">·</span><span>TRUST LEVELS STAY EXPLICIT</span></div>
+          <PageHead title="Real markets. Evidence attached." sub="Compare tokenized treasuries, equities, property, and crypto without confusing price data with verified trust." />
         </div>
       </div>
 
-      {/* KPI Metric Cards */}
-      <div className="v-metric-grid" role="region" aria-label="Asset verdict summary metrics">
-        <button
-          className={`v-metric-card v-metric-total ${statusFilter === 'ALL' ? 'v-metric-active' : ''}`}
-          onClick={() => setStatusFilter('ALL')}
-          type="button"
-          aria-pressed={statusFilter === 'ALL'}
-        >
-          <div className="v-metric-top">
-            <span className="v-label">Total Assets</span>
-            <Layers size={18} className="v-metric-icon" />
-          </div>
-          <div className="v-metric">{assets.length}</div>
-          <div className="v-muted">Sepolia demo set</div>
-          <div className="v-metric-line"><span style={{ width: '100%' }} /></div>
-          <span className="v-card-crosshair">+</span>
-        </button>
-
-        <button
-          className={`v-metric-card v-metric-pass ${statusFilter === 'POLICY_PASS' ? 'v-metric-active' : ''}`}
-          onClick={() => setStatusFilter(statusFilter === 'POLICY_PASS' ? 'ALL' : 'POLICY_PASS')}
-          type="button"
-          aria-pressed={statusFilter === 'POLICY_PASS'}
-        >
-          <div className="v-metric-top">
-            <span className="v-label">Policy Pass</span>
-            <CheckCircle2 size={18} className="v-metric-icon" style={{ color: 'var(--pass)' }} />
-          </div>
-          <div className="v-metric">{passCount}</div>
-          <div className="v-muted">Fresh evidence · {Math.round((passCount / assets.length) * 100)}%</div>
-          <div className="v-metric-line"><span style={{ width: `${(passCount / assets.length) * 100}%` }} /></div>
-          <span className="v-card-crosshair">+</span>
-        </button>
-
-        <button
-          className={`v-metric-card v-metric-review ${statusFilter === 'REVIEW' ? 'v-metric-active' : ''}`}
-          onClick={() => setStatusFilter(statusFilter === 'REVIEW' ? 'ALL' : 'REVIEW')}
-          type="button"
-          aria-pressed={statusFilter === 'REVIEW'}
-        >
-          <div className="v-metric-top">
-            <span className="v-label">Need Review</span>
-            <AlertTriangle size={18} className="v-metric-icon" style={{ color: 'var(--review)' }} />
-          </div>
-          <div className="v-metric">{reviewCount}</div>
-          <div className="v-muted">Expiry &lt; 14d · {Math.round((reviewCount / assets.length) * 100)}%</div>
-          <div className="v-metric-line"><span style={{ width: `${(reviewCount / assets.length) * 100}%` }} /></div>
-          <span className="v-card-crosshair">+</span>
-        </button>
-
-        <button
-          className={`v-metric-card v-metric-blocked ${statusFilter === 'BLOCKED' ? 'v-metric-active' : ''}`}
-          onClick={() => setStatusFilter(statusFilter === 'BLOCKED' ? 'ALL' : 'BLOCKED')}
-          type="button"
-          aria-pressed={statusFilter === 'BLOCKED'}
-        >
-          <div className="v-metric-top">
-            <span className="v-label">Blocked</span>
-            <XCircle size={18} className="v-metric-icon" style={{ color: 'var(--blocked)' }} />
-          </div>
-          <div className="v-metric">{blockedCount}</div>
-          <div className="v-muted">Expired / revoked · {Math.round((blockedCount / assets.length) * 100)}%</div>
-          <div className="v-metric-line"><span style={{ width: `${(blockedCount / assets.length) * 100}%` }} /></div>
-          <span className="v-card-crosshair">+</span>
-        </button>
+      <div className={`v-source-state ${loadState}`} role="status" aria-live="polite">
+        <span>{loadMessage}</span>
+        {loadState === 'partial' && <button type="button" onClick={() => void refresh()}><RefreshCw size={14} aria-hidden="true" />Retry sources</button>}
       </div>
 
-      {/* Full-Width Asset Verdicts Card */}
-      <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 24 }}>
-        <div className="v-card-header">
-          <div>
-            <div className="v-card-tag">01 / CANONICAL LEDGER</div>
-            <h3 className="v-section-title">Asset Verdicts</h3>
-            <p className="v-muted">
-              Deterministic verdict per asset. Always paired with independent authorities and verifiable records.
-            </p>
-          </div>
-          <div className="v-card-header-badge">
-            <span>{filteredAssets.length} of {assets.length} RESOLVED</span>
-          </div>
-        </div>
+      <div className="v-metric-grid" role="region" aria-label="Catalog coverage summary">
+        <button className={`v-metric-card v-metric-total ${coverage === 'ALL' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'ALL'} onClick={() => setCoverage('ALL')}><div className="v-metric-top"><span className="v-label">Catalog</span><Layers size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{assets.length}</div><div className="v-muted">Across {classes.length} asset classes</div><div className="v-metric-line"><span style={{ width: '100%' }} /></div></button>
+        <button className={`v-metric-card v-metric-pass ${coverage === 'VERIFIED_ONCHAIN' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'VERIFIED_ONCHAIN'} onClick={() => setCoverage(coverage === 'VERIFIED_ONCHAIN' ? 'ALL' : 'VERIFIED_ONCHAIN')}><div className="v-metric-top"><span className="v-label">ENS verified</span><BadgeCheck size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.verified}</div><div className="v-muted">Independent onchain evidence</div><div className="v-metric-line"><span style={{ width: `${counts.verified / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-source ${coverage === 'SOURCE_LINKED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'SOURCE_LINKED'} onClick={() => setCoverage(coverage === 'SOURCE_LINKED' ? 'ALL' : 'SOURCE_LINKED')}><div className="v-metric-top"><span className="v-label">Source linked</span><Database size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.sourced}</div><div className="v-muted">Real issuer-backed products</div><div className="v-metric-line"><span style={{ width: `${counts.sourced / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-market ${coverage === 'MARKET_REFERENCE' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'MARKET_REFERENCE'} onClick={() => setCoverage(coverage === 'MARKET_REFERENCE' ? 'ALL' : 'MARKET_REFERENCE')}><div className="v-metric-top"><span className="v-label">Market reference</span><LineChart size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.reference}</div><div className="v-muted">Context, not trust evidence</div><div className="v-metric-line"><span style={{ width: `${counts.reference / assets.length * 100}%` }} /></div></button>
+      </div>
 
-        {/* Toolbar: Search + 2 Filter Dropdowns Side-by-Side */}
+      <div className="v-card v-glass-card v-fullwidth-card">
+        <div className="v-card-header"><div><div className="v-card-tag">01 / ASSET COVERAGE MAP</div><h3 className="v-section-title">Assets and evidence</h3><p className="v-muted">Logos identify the product. Network marks show where it lives. Coverage labels show what Verdict can actually prove.</p></div><div className="v-card-header-badge">{filtered.length} OF {assets.length} SHOWN</div></div>
         <div className="v-table-toolbar">
-          <div className="v-table-search-box">
-            <Search size={15} className="v-search-icon" aria-hidden="true" />
-            <input
-              className="v-search-input"
-              placeholder="Search asset, ENS name, or ticker…"
-              aria-label="Search assets"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            {q && (
-              <button
-                type="button"
-                className="v-search-clear"
-                onClick={() => setQ('')}
-                aria-label="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </div>
-
-          <div className="v-table-filter-group">
-            {/* Filter 1: State Filter */}
-            <div className="v-select-wrapper">
-              <select
-                className="v-select-filter"
-                aria-label="Filter by verdict state"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as 'ALL' | VerdictState)}
-              >
-                <option value="ALL">All Verdicts</option>
-                <option value="POLICY_PASS">Policy Pass</option>
-                <option value="REVIEW">Need Review</option>
-                <option value="BLOCKED">Blocked</option>
-              </select>
-            </div>
-
-            {/* Filter 2: Asset Class Filter */}
-            <div className="v-select-wrapper">
-              <select
-                className="v-select-filter"
-                aria-label="Filter by asset class"
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-              >
-                <option value="ALL">All Classes</option>
-                <option value="Yield">Yield</option>
-                <option value="Bond">Bond</option>
-                <option value="Treasury">Treasury</option>
-              </select>
-            </div>
-          </div>
+          <div className="v-table-search-box"><Search size={15} className="v-search-icon" aria-hidden="true" /><label className="v-visually-hidden" htmlFor="asset-catalog-search">Search assets</label><input id="asset-catalog-search" className="v-search-input" type="search" placeholder="Search asset, issuer, ticker, or class…" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" className="v-search-clear" onClick={() => setQuery('')} aria-label="Clear search">×</button>}</div>
+          <div className="v-table-filter-group"><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by coverage" value={coverage} onChange={(event) => setCoverage(event.target.value as 'ALL' | CoverageTier)}><option value="ALL">All coverage</option><option value="VERIFIED_ONCHAIN">Verified onchain</option><option value="SOURCE_LINKED">Source linked</option><option value="MARKET_REFERENCE">Market reference</option></select></div><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by asset class" value={assetClass} onChange={(event) => setAssetClass(event.target.value)}><option value="ALL">All classes</option>{classes.map((value) => <option value={value} key={value}>{value}</option>)}</select></div></div>
         </div>
 
-        {/* Full-width Table */}
-        <div className="v-table-wrap">
-          <table className="v-table">
-            <thead>
-              <tr>
-                <th>Asset & Canonical ENS</th>
-                <th>Verdict</th>
-                <th>Audit Evidence</th>
-                <th>Risk Signal</th>
-                <th>Network & Heartbeat</th>
-                <th>Action</th>
-              </tr>
-            </thead>
+        <div className="v-table-wrap v-catalog-table-wrap">
+          <table className="v-table v-catalog-table">
+            <thead><tr><th>Asset</th><th>Coverage</th><th>Market</th><th>Category</th><th>Networks</th><th>Evidence snapshot</th><th><span className="v-visually-hidden">Actions</span></th></tr></thead>
             <tbody>
-              {filteredAssets.map((a) => (
-                <tr key={a.name} className="v-asset-row">
-                  <td>
-                    <div className="v-rowlink-static">
-                      <div className="v-asset-name-group">
-                        <span className="v-asset-name">{a.title}</span>
-                        <span className="v-asset-badge">{a.ticker}</span>
-                        <span className="v-class-badge">{a.assetClass}</span>
-                      </div>
-                      <div className="v-asset-sub-row">
-                        <span className="v-asset-sub">{a.name}</span>
-                        <button
-                          type="button"
-                          className="v-inline-copy-btn"
-                          onClick={(e) => copyName(a.name, e)}
-                          aria-label={`Copy ENS name ${a.name}`}
-                          title="Copy ENS name"
-                        >
-                          {copiedName === a.name ? (
-                            <Check size={11} className="v-copied-icon" />
-                          ) : (
-                            <Copy size={11} />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <StatusChip state={a.state} />
-                  </td>
-                  <td>
-                    <div className="v-cell-main">{a.auditNote}</div>
-                    <div className="v-cell-sub">by audit-001.verdict-auditor.eth</div>
-                  </td>
-                  <td>
-                    <div className="v-cell-main">{a.riskNote}</div>
-                    <div className="v-cell-sub">risk-001.verdict-monitor.eth</div>
-                  </td>
-                  <td>
-                    <div className="v-cell-main">{a.network}</div>
-                    <div className="v-cell-sub">hb: {a.heartbeat}</div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="v-btn-detail"
-                      onClick={() => {
-                        setSelectedAsset(a);
-                        setModalTab('authorities');
-                      }}
-                      aria-haspopup="dialog"
-                    >
-                      Detail <ArrowUpRight size={13} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-
-              {!filteredAssets.length && (
-                <tr>
-                  <td colSpan={6} className="v-table-empty">
-                    <div className="v-empty-box">
-                      <Search size={22} className="v-empty-icon" />
-                      <p>No assets match current filters or search query.</p>
-                      <button
-                        className="v-btn v-btn-secondary"
-                        onClick={() => {
-                          setQ('');
-                          setStatusFilter('ALL');
-                          setClassFilter('ALL');
-                        }}
-                      >
-                        Reset filters
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
+              {filtered.map((asset) => {
+                const quote = asset.marketId ? quotes[asset.marketId] : undefined;
+                return <tr key={asset.id} className="v-asset-row">
+                  <td className="v-catalog-cell-asset"><div className="v-catalog-asset-cell"><AssetLogo asset={asset} /><div><div className="v-asset-name-group"><span className="v-asset-name">{asset.title}</span><span className="v-asset-badge">{asset.ticker}</span></div><div className="v-asset-sub-row"><span className="v-asset-sub">{asset.name}</span><button type="button" className="v-inline-copy-btn" onClick={() => void copyIdentifier(asset.name)} aria-label={`Copy ${asset.name}`}>{copied === asset.name ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}</button></div></div></div></td>
+                  <td className="v-catalog-cell-coverage"><CoverageBadge coverage={asset.coverage} />{asset.coverage === 'VERIFIED_ONCHAIN' && <div className="v-verdict-inline"><StatusChip state={asset.state} /></div>}</td>
+                  <td className="v-catalog-cell-market"><MarketQuote quote={quote} loading={loadState === 'loading' && Boolean(asset.marketId)} /></td>
+                  <td className="v-catalog-cell-category"><div className="v-cell-main">{asset.assetClass}</div><div className="v-cell-sub">{asset.issuer}</div></td>
+                  <td className="v-catalog-cell-networks"><NetworkBadges networks={asset.networks} /></td>
+                  <td className="v-catalog-cell-evidence"><div className="v-cell-main">{asset.snapshot}</div><div className="v-cell-sub">{asset.snapshotAsOf}</div></td>
+                  <td className="v-catalog-cell-action"><button type="button" className="v-btn-detail" onClick={() => setSelected(asset)} aria-haspopup="dialog">Inspect<ArrowUpRight size={13} aria-hidden="true" /></button></td>
+                </tr>;
+              })}
+              {!filtered.length && <tr><td colSpan={7} className="v-table-empty"><div className="v-empty-box"><Search size={22} className="v-empty-icon" aria-hidden="true" /><p>No assets match those filters.</p><button type="button" className="v-btn v-btn-secondary" onClick={() => { setQuery(''); setCoverage('ALL'); setAssetClass('ALL'); }}>Reset filters</button></div></td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Bottom Grid: Authority Stack Beside Recent Activity */}
       <div className="v-dash-bottom-grid">
-        {/* Left Column: Authority Stack */}
-        <div className="v-card v-glass-card">
-          <div className="v-card-header">
-            <div>
-              <div className="v-card-tag">AUTHORITY ORBIT</div>
-              <h3 className="v-section-title">Authority Stack</h3>
-              <p className="v-muted">Independent controllers behind every proof.</p>
-            </div>
-            <span className="v-badge-pill">ENS SEPARATION</span>
-          </div>
-
-          <div className="v-authority-list">
-            <div className="v-authority-item">
-              <div className="v-auth-info">
-                <div className="v-auth-role">
-                  <ShieldCheck size={14} className="v-auth-icon" />
-                  <strong>Issuer Authority</strong>
-                </div>
-                <span className="v-auth-ens">acme.verdict.eth</span>
-              </div>
-              <span className="v-ok">
-                <CheckCircle2 size={14} /> Healthy
-              </span>
-            </div>
-
-            <div className="v-authority-item">
-              <div className="v-auth-info">
-                <div className="v-auth-role">
-                  <FileCheck2 size={14} className="v-auth-icon" />
-                  <strong>Auditor Attestation</strong>
-                </div>
-                <span className="v-auth-ens">audit-001.verdict-auditor.eth</span>
-              </div>
-              <span className="v-warn">
-                <AlertTriangle size={14} /> 1 Expiring
-              </span>
-            </div>
-
-            <div className="v-authority-item">
-              <div className="v-auth-info">
-                <div className="v-auth-role">
-                  <Radio size={14} className="v-auth-icon" />
-                  <strong>Risk Sentinel</strong>
-                </div>
-                <span className="v-auth-ens">risk-001.verdict-monitor.eth</span>
-              </div>
-              <span className="v-bad">
-                <XCircle size={14} /> 1 Stale
-              </span>
-            </div>
-          </div>
-
-          <div className="v-authority-callout">
-            <span className="v-callout-crosshair">+</span>
-            <span className="v-callout-text">
-              Permissions are scoped per ENS node. No single actor can rewrite another authority’s proofs.
-            </span>
-          </div>
-        </div>
-
-        {/* Right Column: Recent Protocol Activity */}
-        <div className="v-card v-glass-card">
-          <div className="v-card-header">
-            <div>
-              <div className="v-card-tag">PROTOCOL HEARTBEAT</div>
-              <h3 className="v-section-title">Recent Activity</h3>
-              <p className="v-muted">
-                Attestations, expiry checks, and authority permission events.
-              </p>
-            </div>
-            <span className="v-badge-pill">LIVE FEED</span>
-          </div>
-
-          <div className="v-activity-list">
-            {DEMO_ACTIVITY.map((e) => (
-              <div className="v-activity-item" key={e.tx}>
-                <div className="v-activity-left">
-                  <span className="v-activity-badge">{e.label}</span>
-                  <div className="v-activity-desc">{e.text}</div>
-                </div>
-                <div className="v-activity-meta">
-                  <span className="v-activity-time">{e.time}</span>
-                  <span className="v-mono v-activity-tx">{e.tx} ↗</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">TRUST BOUNDARY</div><h3 className="v-section-title">What each label means</h3><p className="v-muted">One clear ladder from discoverable data to enforceable evidence.</p></div><ShieldCheck size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-coverage-guide"><div><CoverageBadge coverage="VERIFIED_ONCHAIN" /><p>Independent resolver records and deterministic policy are live.</p></div><div><CoverageBadge coverage="SOURCE_LINKED" /><p>Real issuer facts are linked, but Verdict has not verified them.</p></div><div><CoverageBadge coverage="MARKET_REFERENCE" /><p>Price context only. No asset-quality conclusion is made.</p></div></div></div>
+        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">PROTOCOL HEARTBEAT</div><h3 className="v-section-title">Recent activity</h3><p className="v-muted">The verified asset remains anchored to Sepolia evidence.</p></div><CircleDollarSign size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-activity-list">{DEMO_ACTIVITY.map((event) => <div className="v-activity-item" key={event.tx}><div className="v-activity-left"><span className="v-activity-badge">{event.label}</span><div className="v-activity-desc">{event.text}</div></div><div className="v-activity-meta"><span>{event.time}</span><span className="v-mono">{event.tx}</span></div></div>)}</div></div>
       </div>
 
-      {/* ====================================================================
-          POP-UP MODAL: MERGED AUTHORITIES & RESOLVER PROOF PER ASSET
-          ==================================================================== */}
-      {selectedAsset && (
-        <div
-          className="v-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="asset-modal-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setSelectedAsset(null);
-          }}
-        >
-          <div className="v-modal-dialog">
-            {/* Modal Header */}
-            <div className="v-modal-header">
-              <div>
-                <div className="v-modal-eyebrow">
-                  <span>CANONICAL ENS EVIDENCE PROOF</span>
-                  <span className="v-modal-dot" />
-                  <span>{selectedAsset.network}</span>
-                </div>
-                <h2 id="asset-modal-title" className="v-modal-title">
-                  {selectedAsset.title}
-                  <span className="v-asset-badge" style={{ marginLeft: 8 }}>
-                    {selectedAsset.ticker}
-                  </span>
-                </h2>
-                <div className="v-modal-ens-line">
-                  <code className="v-mono">{selectedAsset.name}</code>
-                  <button
-                    type="button"
-                    className="v-inline-copy-btn"
-                    onClick={(e) => copyName(selectedAsset.name, e)}
-                    aria-label="Copy ENS name"
-                  >
-                    {copiedName === selectedAsset.name ? <Check size={12} /> : <Copy size={12} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="v-modal-header-actions">
-                <StatusChip state={selectedAsset.state} />
-                <button
-                  type="button"
-                  className="v-modal-close"
-                  onClick={() => setSelectedAsset(null)}
-                  aria-label="Close detail modal"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Tabs Navigation */}
-            <div className="v-modal-tabs">
-              <button
-                type="button"
-                className={`v-modal-tab ${modalTab === 'authorities' ? 'active' : ''}`}
-                onClick={() => setModalTab('authorities')}
-              >
-                <KeyRound size={15} />
-                <span>Authorities & EAC Matrix</span>
-              </button>
-              <button
-                type="button"
-                className={`v-modal-tab ${modalTab === 'resolver' ? 'active' : ''}`}
-                onClick={() => setModalTab('resolver')}
-              >
-                <TerminalSquare size={15} />
-                <span>Resolver Proof & Records</span>
-              </button>
-            </div>
-
-            {/* Modal Body Content */}
-            <div className="v-modal-body">
-              {modalTab === 'authorities' ? (
-                <div className="v-modal-section">
-                  {/* Authority Cards for this specific asset */}
-                  <div className="v-modal-auth-grid">
-                    <div className="v-modal-auth-card">
-                      <div className="v-modal-auth-top">
-                        <span className="v-auth-label">ISSUER IDENTITY</span>
-                        <span className="v-ok"><CheckCircle2 size={13} /> Active</span>
-                      </div>
-                      <strong>acme.verdict.eth</strong>
-                      <p>Issuer of canonical asset tokens. Locked out of audit records.</p>
-                    </div>
-
-                    <div className="v-modal-auth-card">
-                      <div className="v-modal-auth-top">
-                        <span className="v-auth-label">AUDITOR ATTESTATION</span>
-                        <span className={selectedAsset.state === 'POLICY_PASS' ? 'v-ok' : selectedAsset.state === 'REVIEW' ? 'v-warn' : 'v-bad'}>
-                          {selectedAsset.auditNote}
-                        </span>
-                      </div>
-                      <strong>audit-001.verdict-auditor.eth</strong>
-                      <p>Independent attestor. Has exclusive permission to write audit-hash.</p>
-                    </div>
-
-                    <div className="v-modal-auth-card">
-                      <div className="v-modal-auth-top">
-                        <span className="v-auth-label">RISK SENTINEL</span>
-                        <span className={selectedAsset.riskNote === 'Low' ? 'v-ok' : 'v-bad'}>
-                          {selectedAsset.riskNote}
-                        </span>
-                      </div>
-                      <strong>risk-001.verdict-monitor.eth</strong>
-                      <p>Heartbeat updated {selectedAsset.heartbeat}. Writes NAV & risk metrics.</p>
-                    </div>
-                  </div>
-
-                  {/* Permission Matrix for this asset */}
-                  <div className="v-modal-subcard">
-                    <div className="v-label">EAC PERMISSION MATRIX (LEAST PRIVILEGE)</div>
-                    <div className="v-table-wrap" style={{ marginTop: 8 }}>
-                      <table className="v-modal-table">
-                        <thead>
-                          <tr>
-                            <th>Record Subpath</th>
-                            <th>Issuer</th>
-                            <th>Auditor</th>
-                            <th>Risk Engine</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <td className="v-mono">SET_TEXT:metadata/*</td>
-                            <td className="v-ok">Allowed ✓</td>
-                            <td className="v-muted">Denied ×</td>
-                            <td className="v-muted">Denied ×</td>
-                          </tr>
-                          <tr>
-                            <td className="v-mono">SET_TEXT:audit-*</td>
-                            <td className="v-bad">LOCKED OUT ×</td>
-                            <td className="v-ok">Allowed ✓</td>
-                            <td className="v-muted">Denied ×</td>
-                          </tr>
-                          <tr>
-                            <td className="v-mono">SET_TEXT:heartbeat/nav</td>
-                            <td className="v-muted">Denied ×</td>
-                            <td className="v-muted">Denied ×</td>
-                            <td className="v-ok">Allowed ✓</td>
-                          </tr>
-                          <tr>
-                            <td className="v-mono">TRANSFER_NODE</td>
-                            <td className="v-ok">Safe Multi-sig ✓</td>
-                            <td className="v-muted">Denied ×</td>
-                            <td className="v-muted">Denied ×</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Unauthorized write attempt demo */}
-                  <div className="v-modal-revert-box">
-                    <div className="v-revert-header">
-                      <Lock size={15} />
-                      <span>ONCHAIN ENFORCEMENT PROOF</span>
-                    </div>
-                    <div className="v-revert-code">
-                      <span>Attempt: Issuer (0x17A…9b) → SET_TEXT:audit-hash on {selectedAsset.name}</span>
-                      <strong className="v-revert-status">BLOCKED BY PERMISSIONED RESOLVER — Transaction Reverted</strong>
-                      <span className="v-revert-meta">Sepolia tx proof: 0x91d58…04be · Zero issuer bypass guaranteed.</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="v-modal-section">
-                  {/* Raw ENS Records */}
-                  <div className="v-modal-subcard">
-                    <div className="v-label">RAW RESOLUTION RECORDS (READ DIRECTLY VIA ENS)</div>
-                    <div className="v-record-list">
-                      <div className="v-record-row">
-                        <span className="v-record-key">issuer</span>
-                        <code className="v-record-val">acme.verdict.eth</code>
-                      </div>
-                      <div className="v-record-row">
-                        <span className="v-record-key">asset-class</span>
-                        <code className="v-record-val">{selectedAsset.assetClass.toLowerCase()}</code>
-                      </div>
-                      <div className="v-record-row">
-                        <span className="v-record-key">audit-hash</span>
-                        <code className="v-record-val">sha256:89a74c728e9102bf923a8e91d84b2c41</code>
-                      </div>
-                      <div className="v-record-row">
-                        <span className="v-record-key">audit-expiry</span>
-                        <code className="v-record-val">1788912000 ({selectedAsset.auditNote})</code>
-                      </div>
-                      <div className="v-record-row">
-                        <span className="v-record-key">heartbeat</span>
-                        <code className="v-record-val">1788911988 ({selectedAsset.heartbeat})</code>
-                      </div>
-                      <div className="v-record-row">
-                        <span className="v-record-key">agent-context</span>
-                        <code className="v-record-val">portfolio suitability / RWA rebalancer</code>
-                      </div>
-                      <div className="v-record-row">
-                        <span className="v-record-key">agent-endpoint[mcp]</span>
-                        <code className="v-record-val">https://feed.acme.verdict.eth/mcp</code>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Contract resolver addresses & second client proof */}
-                  <div className="v-modal-cli-box">
-                    <div className="v-cli-title">
-                      <span>SECOND-CLIENT VERIFICATION</span>
-                      <span className="v-cli-badge">NO HARDCODED DATA</span>
-                    </div>
-                    <pre className="v-cli-terminal">
-                      <code>
-                        <span className="v-dim">$</span> ens resolve {selectedAsset.name} text audit-hash{'\n'}
-                        &gt; sha256:89a74c728e9102bf923a8e91d84b2c41{'\n'}
-                        <span className="v-dim">$</span> ens resolve {selectedAsset.name} addr{'\n'}
-                        &gt; 0x84e9182a0b1274efc28e90a1639c091f84b7172a (Permissioned Resolver){'\n'}
-                        <span className="v-pass-t">Proof Matched ✓ Policy evaluated deterministically</span>
-                      </code>
-                    </pre>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="v-modal-footer">
-              <span className="v-modal-footnote">
-                Deterministic policy gating: valid audit + fresh signal = POLICY_PASS
-              </span>
-              <button
-                type="button"
-                className="v-btn v-btn-secondary"
-                onClick={() => setSelectedAsset(null)}
-              >
-                Close Detail
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {selected && <AssetDialog asset={selected} quote={selected.marketId ? quotes[selected.marketId] : undefined} live={live} onClose={() => setSelected(null)} />}
     </>
   );
 }

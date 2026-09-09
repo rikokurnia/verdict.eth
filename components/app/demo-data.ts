@@ -1,43 +1,276 @@
 import type { VerdictState } from '@/lib/policy';
 
+export type CoverageTier = 'VERIFIED_ONCHAIN' | 'SOURCE_LINKED' | 'MARKET_REFERENCE';
+export type NetworkId =
+  | 'ethereum' | 'sepolia' | 'solana' | 'stellar' | 'polygon' | 'gnosis' | 'bitcoin'
+  | 'arbitrum' | 'base' | 'avalanche' | 'bsc' | 'tron' | 'provenance' | 'aptos';
+
 export type DemoAsset = {
+  id: string;
   title: string;
   name: string;
   ticker: string;
   assetClass: string;
   issuer: string;
   state: VerdictState;
+  coverage: CoverageTier;
+  description: string;
+  logo: string;
+  networks: NetworkId[];
+  network: string;
+  marketId?: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  snapshot?: string;
+  snapshotAsOf?: string;
   auditNote: string;
   riskNote: string;
   heartbeat: string;
-  network: string;
 };
 
+const LIVE = 'Live market reference · CoinGecko';
+const ISSUER_LINKED = 'Issuer attestations linked';
+const NO_POLICY = 'No Verdict policy';
+
+/**
+ * Real RWA catalog.
+ * - `marketId` values are live-verified CoinGecko coin IDs (RWA category).
+ * - `logo` URLs are the real CoinGecko CDN images returned by the
+ *   `coins/markets` API for each `marketId`; `/api/market` re-fetches them
+ *   live and the dashboard prefers the live image with this as fallback.
+ * - `networks` reflect each issuer's documented primary chains.
+ */
 export const DEMO_ASSETS: DemoAsset[] = [
   {
-    title: 'USD Yield 001', name: 'usd-yield-001.acme.verdict.eth', ticker: 'USDY-001',
-    assetClass: 'Yield', issuer: 'ACME', state: 'POLICY_PASS',
-    auditNote: 'Valid · 27d', riskNote: 'Low', heartbeat: '12s ago', network: 'Sepolia',
+    id: 'verdict-usdy-001', title: 'USD Yield 001', name: 'usd-yield-001.acme.verdict.eth', ticker: 'USDY-001',
+    assetClass: 'ENS Verified', issuer: 'ACME demo issuer', state: 'POLICY_PASS', coverage: 'VERIFIED_ONCHAIN',
+    description: 'Fictional Sepolia asset used to prove independent issuer, AI auditor, and risk-monitor permissions end to end.',
+    logo: '/icon.svg', networks: ['sepolia'], network: 'Ethereum Sepolia',
+    sourceLabel: 'ENSv2 evidence graph', sourceUrl: 'https://eth-sepolia.blockscout.com/address/0xB18cCDb9fFE2A3CB50Dd00c3Ece15e55c98410cE',
+    snapshot: 'AI evidence verified', snapshotAsOf: 'Live Sepolia state', auditNote: 'Active', riskNote: 'Fresh', heartbeat: 'Resolving…',
   },
   {
-    title: 'USD Yield 002', name: 'usd-yield-002.acme.verdict.eth', ticker: 'USDY-002',
-    assetClass: 'Yield', issuer: 'ACME', state: 'REVIEW',
-    auditNote: 'Expiring · 7d', riskNote: 'Low', heartbeat: '40s ago', network: 'Sepolia',
+    id: 'blackrock-buidl', title: 'BlackRock USD Institutional Digital Liquidity Fund', name: 'blackrock-usd-institutional-digital-liquidity-fund', ticker: 'BUIDL',
+    assetClass: 'Treasury', issuer: 'BlackRock / Securitize', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "BlackRock's tokenized short-term Treasury liquidity fund for qualified purchasers, administered by Securitize with a $1 NAV target.",
+    logo: 'https://coin-images.coingecko.com/coins/images/36291/large/blackrock.png?1711013223',
+    networks: ['ethereum', 'solana', 'polygon'], network: 'Ethereum + 8 networks', marketId: 'blackrock-usd-institutional-digital-liquidity-fund',
+    sourceLabel: 'Securitize issuer platform', sourceUrl: 'https://securitize.io/',
+    snapshot: '$1 NAV target · short-term U.S. Treasury exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
   },
   {
-    title: 'EUR Bond 003', name: 'eur-bond-003.acme.verdict.eth', ticker: 'EURB-003',
-    assetClass: 'Bond', issuer: 'ACME', state: 'BLOCKED',
-    auditNote: 'Expired 14m ago', riskNote: 'Stale', heartbeat: '2h ago', network: 'Sepolia',
+    id: 'circle-usyc', title: 'Circle USYC', name: 'hashnote-usyc', ticker: 'USYC',
+    assetClass: 'Treasury', issuer: 'Circle (Hashnote)', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Circle's tokenized money-market fund share backed by short-term U.S. government securities.",
+    logo: 'https://coin-images.coingecko.com/coins/images/51054/large/Hashnote_SDYC_200x200.png?1730370965',
+    networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'hashnote-usyc',
+    sourceLabel: 'Hashnote issuer disclosures', sourceUrl: 'https://usyc.hashnote.com/',
+    snapshot: 'Money-market fund share · T-bill collateral', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
   },
   {
-    title: 'US T-Bill 004', name: 'us-tbill-004.acme.verdict.eth', ticker: 'USTB-004',
-    assetClass: 'Treasury', issuer: 'ACME', state: 'BLOCKED',
-    auditNote: 'Revoked', riskNote: 'Conflict', heartbeat: '5m ago', network: 'Sepolia',
+    id: 'ondo-usdy', title: 'Ondo US Dollar Yield', name: 'ondo-us-dollar-yield', ticker: 'USDY',
+    assetClass: 'Treasury', issuer: 'Ondo', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'A yield-bearing token secured by bank deposits and short-term US Treasuries, offered subject to eligibility restrictions.',
+    logo: 'https://coin-images.coingecko.com/coins/images/31700/large/usdy_%281%29.png?1696530524',
+    networks: ['ethereum', 'solana', 'arbitrum'], network: 'Ethereum + Solana + Arbitrum', marketId: 'ondo-us-dollar-yield',
+    sourceLabel: 'Ondo issuer disclosures', sourceUrl: 'https://ondo.finance/',
+    snapshot: 'Yield-bearing dollar token · T-bill and deposit collateral', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'ondo-ousg', title: 'Ondo Short-Term U.S. Government Bond Fund', name: 'ousg', ticker: 'OUSG',
+    assetClass: 'Treasury', issuer: 'Ondo', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Ondo's tokenized short-term U.S. government bond fund with daily liquidity windows for qualified holders.",
+    logo: 'https://coin-images.coingecko.com/coins/images/29023/large/OUSG.png?1696527993',
+    networks: ['ethereum', 'polygon', 'solana'], network: 'Ethereum + Polygon + Solana', marketId: 'ousg',
+    sourceLabel: 'Ondo issuer disclosures', sourceUrl: 'https://ondo.finance/',
+    snapshot: 'Short-duration government bond exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'franklin-benji', title: 'Franklin Templeton BENJI', name: 'franklin-templeton-benji', ticker: 'BENJI',
+    assetClass: 'Money Market', issuer: 'Franklin Templeton', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Shares of the U.S.-registered Franklin OnChain U.S. Government Money Fund (FOBXX) with onchain share records; 1 BENJI = 1 fund share.',
+    logo: 'https://coin-images.coingecko.com/coins/images/66409/large/Benji_Logo.png?1749371083',
+    networks: ['stellar', 'polygon', 'ethereum'], network: 'Stellar + Polygon + 7 more', marketId: 'franklin-templeton-benji',
+    sourceLabel: 'Franklin Templeton source', sourceUrl: 'https://digitalassets.franklintempleton.com/benji/',
+    snapshot: '$1 stable NAV target · government securities', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'superstate-ustb', title: 'Invesco Short Duration US Government Securities Fund', name: 'superstate-short-duration-us-government-securities-fund-ustb', ticker: 'USTB',
+    assetClass: 'Treasury', issuer: 'Superstate / Invesco', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Superstate short-duration U.S. government securities fund with onchain share records for qualified holders.',
+    logo: 'https://coin-images.coingecko.com/coins/images/35012/large/Invesco_icon_lg.png?1780816895',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'superstate-short-duration-us-government-securities-fund-ustb',
+    sourceLabel: 'Superstate issuer platform', sourceUrl: 'https://superstate.co/',
+    snapshot: 'Short-duration government securities exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'anemoy-jtrsy', title: 'Janus Henderson Anemoy Treasury Fund', name: 'janus-henderson-anemoy-treasury-fund', ticker: 'JTRSY',
+    assetClass: 'Treasury', issuer: 'Janus Henderson / Anemoy', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Janus Henderson–Anemoy tokenized short-term Treasury fund issued via Centrifuge for qualified holders.',
+    logo: 'https://coin-images.coingecko.com/coins/images/70445/large/JTRSY.png?1762078582',
+    networks: ['ethereum'], network: 'Ethereum (Centrifuge)', marketId: 'janus-henderson-anemoy-treasury-fund',
+    sourceLabel: 'Centrifuge issuer protocol', sourceUrl: 'https://centrifuge.io/',
+    snapshot: 'Short-term Treasury fund exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'spiko-eutbl', title: 'Spiko EU T-Bills Money Market Fund', name: 'eutbl', ticker: 'EUTBL',
+    assetClass: 'Money Market', issuer: 'Spiko', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Spiko's euro money-market token backed by EU Treasury bills for eligible European investors.",
+    logo: 'https://coin-images.coingecko.com/coins/images/39657/large/EUTBL.png?1723517425',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'eutbl',
+    sourceLabel: 'CoinGecko market data', sourceUrl: 'https://www.coingecko.com/en/coins/eutbl',
+    snapshot: 'Euro T-bill money-market exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'spiko-eur', title: 'Spiko Amundi Overnight Swap Fund (EUR)', name: 'spiko-amundi-overnight-swap-fund-eur', ticker: 'EURSAFO',
+    assetClass: 'Money Market', issuer: 'Spiko / Amundi', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Spiko–Amundi euro overnight money-market token for onchain euro cash management.",
+    logo: 'https://coin-images.coingecko.com/coins/images/102172591/large/Fund_eurSAF0.png?1774104814',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'spiko-amundi-overnight-swap-fund-eur',
+    sourceLabel: 'CoinGecko market data', sourceUrl: 'https://www.coingecko.com/en/coins/spiko-amundi-overnight-swap-fund-eur',
+    snapshot: 'Euro overnight money-market exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'anemoy-jaaa', title: 'Janus Henderson Anemoy AAA CLO Fund', name: 'janus-henderson-anemoy-aaa-clo-fund', ticker: 'JAAA',
+    assetClass: 'Private Credit', issuer: 'Janus Henderson / Anemoy', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Janus Henderson–Anemoy tokenized AAA CLO fund issued via Centrifuge for qualified holders.',
+    logo: 'https://coin-images.coingecko.com/coins/images/70446/large/jaaa.png?1762078666',
+    networks: ['ethereum'], network: 'Ethereum (Centrifuge)', marketId: 'janus-henderson-anemoy-aaa-clo-fund',
+    sourceLabel: 'Centrifuge issuer protocol', sourceUrl: 'https://centrifuge.io/',
+    snapshot: 'AAA collateralized-loan-obligation exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'figure-ylds', title: 'YLDS', name: 'ylds', ticker: 'YLDS',
+    assetClass: 'Money Market', issuer: 'Figure', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Figure's SEC-registered yield-bearing stablecoin accruing interest on Provenance Blockchain.",
+    logo: 'https://coin-images.coingecko.com/coins/images/66486/large/YLDS.png?1772560579',
+    networks: ['provenance'], network: 'Provenance', marketId: 'ylds',
+    sourceLabel: 'Figure issuer platform', sourceUrl: 'https://figure.com/',
+    snapshot: '$1 reference token value · yield-bearing stablecoin', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'tether-xaut', title: 'Tether Gold', name: 'tether-gold', ticker: 'XAUT',
+    assetClass: 'Gold', issuer: 'Tether', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Fungible token backed by allocated physical gold held in Swiss vaults; 1 XAUT tracks one troy ounce of gold.',
+    logo: 'https://coin-images.coingecko.com/coins/images/10481/large/logo.png?1774627372',
+    networks: ['ethereum', 'tron'], network: 'Ethereum + Tron', marketId: 'tether-gold',
+    sourceLabel: 'Tether Gold disclosures', sourceUrl: 'https://tether.to/',
+    snapshot: 'Allocated-gold backing · per-ounce pricing', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'paxos-paxg', title: 'PAX Gold', name: 'pax-gold', ticker: 'PAXG',
+    assetClass: 'Gold', issuer: 'Paxos', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Regulated ERC-20 backed 1:1 by allocated London Good Delivery gold bars held in custody.',
+    logo: 'https://coin-images.coingecko.com/coins/images/9519/large/asset-paxg.png?1785284785',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'pax-gold',
+    sourceLabel: 'Paxos product source', sourceUrl: 'https://paxos.com/',
+    snapshot: 'Allocated-gold backing · per-ounce pricing', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'kinesis-kau', title: 'Kinesis Gold', name: 'kinesis-gold', ticker: 'KAU',
+    assetClass: 'Gold', issuer: 'Kinesis', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'Kinesis gold token backed 1:1 by allocated physical bullion with yield-share mechanics for holders.',
+    logo: 'https://coin-images.coingecko.com/coins/images/29788/large/kau-currency-ticker.png?1696528718',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'kinesis-gold',
+    sourceLabel: 'Kinesis issuer platform', sourceUrl: 'https://kinesis.money/',
+    snapshot: 'Allocated-gold backing · per-gram pricing', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'nvidia-xstock', title: 'NVIDIA xStock', name: 'nvidia-xstock', ticker: 'NVDAX',
+    assetClass: 'Tokenized Stock', issuer: 'Backed / xStocks', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'A tokenized tracker certificate for NVIDIA equity exposure, fully collateralized 1:1. It is not the underlying NVIDIA share itself.',
+    logo: 'https://coin-images.coingecko.com/coins/images/55633/large/Ticker_NVDA__Company_Name_NVIDIA_Corp__size_200x200_2x.png?1746862704',
+    networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'nvidia-xstock',
+    sourceLabel: 'xStocks product catalog', sourceUrl: 'https://xstocks.fi/',
+    snapshot: 'Tokenized equity exposure · 1:1 collateralized tracker', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'tesla-xstock', title: 'Tesla xStock', name: 'tesla-xstock', ticker: 'TSLAX',
+    assetClass: 'Tokenized Stock', issuer: 'Backed / xStocks', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: 'A tokenized tracker certificate for Tesla equity exposure, fully collateralized 1:1. It is not the underlying Tesla share itself.',
+    logo: 'https://coin-images.coingecko.com/coins/images/55638/large/Ticker_TSLA__Company_Name_Tesla_Inc.__size_200x200_2x.png?1746863299',
+    networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'tesla-xstock',
+    sourceLabel: 'xStocks product catalog', sourceUrl: 'https://xstocks.fi/',
+    snapshot: 'Tokenized equity exposure · 1:1 collateralized tracker', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'maple-syrup', title: 'Maple Finance', name: 'syrup', ticker: 'SYRUP',
+    assetClass: 'Private Credit', issuer: 'Maple Finance', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Ecosystem token for Maple's onchain private-credit marketplace connecting institutional borrowers and lenders.",
+    logo: 'https://coin-images.coingecko.com/coins/images/51232/large/_syrup_token_logo.png?1747292046',
+    networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'syrup',
+    sourceLabel: 'Maple issuer protocol', sourceUrl: 'https://maple.finance/',
+    snapshot: 'Onchain private-credit marketplace token', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'figure-heloc', title: 'Figure Heloc', name: 'figure-heloc', ticker: 'FIGR_HELOC',
+    assetClass: 'Private Credit', issuer: 'Figure', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Figure's tokenized home-equity line-of-credit exposure recorded on Provenance Blockchain.",
+    logo: 'https://coin-images.coingecko.com/coins/images/68480/large/figure.png?1755863954',
+    networks: ['provenance'], network: 'Provenance', marketId: 'figure-heloc',
+    sourceLabel: 'Figure issuer platform', sourceUrl: 'https://figure.com/',
+    snapshot: 'Home-equity credit exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'blockchain-bcap', title: 'Blockchain Capital', name: 'blockchain-capital', ticker: 'BCAP',
+    assetClass: 'Private Equity', issuer: 'Blockchain Capital', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "Blockchain Capital's tokenized venture fund share — one of the first security tokens ever issued.",
+    logo: 'https://coin-images.coingecko.com/coins/images/56040/large/bcap_logo_200.png?1748088291',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'blockchain-capital',
+    sourceLabel: 'Blockchain Capital disclosures', sourceUrl: 'https://blockchain.capital/',
+    snapshot: 'Tokenized venture-fund exposure', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'onre-onyc', title: 'OnRe Tokenized Reinsurance', name: 'onyc', ticker: 'ONYC',
+    assetClass: 'Insurance', issuer: 'OnRe', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    description: "OnRe's tokenized reinsurance pool token targeting underwriting-linked returns on Solana.",
+    logo: 'https://coin-images.coingecko.com/coins/images/67072/large/3D_ONYC.png?1779524172',
+    networks: ['solana'], network: 'Solana', marketId: 'onyc',
+    sourceLabel: 'CoinGecko market data', sourceUrl: 'https://www.coingecko.com/en/coins/onyc',
+    snapshot: 'Reinsurance-linked pool token', snapshotAsOf: LIVE,
+    auditNote: ISSUER_LINKED, riskNote: NO_POLICY, heartbeat: 'Market feed',
+  },
+  {
+    id: 'bitcoin', title: 'Bitcoin', name: 'bitcoin', ticker: 'BTC', assetClass: 'Crypto',
+    issuer: 'Decentralized network', state: 'UNAVAILABLE', coverage: 'MARKET_REFERENCE',
+    description: 'Native Bitcoin used as a liquid market benchmark. No issuer or RWA evidence is implied.',
+    logo: 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400',
+    networks: ['bitcoin'], network: 'Bitcoin', marketId: 'bitcoin',
+    sourceLabel: 'CoinGecko market data', sourceUrl: 'https://www.coingecko.com/en/coins/bitcoin',
+    snapshot: 'Market benchmark', snapshotAsOf: LIVE, auditNote: 'Not an RWA', riskNote: 'Market data only', heartbeat: 'Market feed',
+  },
+  {
+    id: 'ethereum', title: 'Ethereum', name: 'ethereum', ticker: 'ETH', assetClass: 'Crypto',
+    issuer: 'Decentralized network', state: 'UNAVAILABLE', coverage: 'MARKET_REFERENCE',
+    description: 'Native Ethereum used as the settlement-network benchmark for Verdict and tokenized assets.',
+    logo: 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628',
+    networks: ['ethereum'], network: 'Ethereum', marketId: 'ethereum',
+    sourceLabel: 'CoinGecko market data', sourceUrl: 'https://www.coingecko.com/en/coins/ethereum',
+    snapshot: 'Settlement benchmark', snapshotAsOf: LIVE, auditNote: 'Not an RWA', riskNote: 'Market data only', heartbeat: 'Market feed',
   },
 ];
 
 export const DEMO_ACTIVITY = [
-  { label: 'AUDIT UPDATED', text: 'Audit hash and expiry changed by audit-001.auditor.eth', time: '12 sec ago', tx: '0x78f…a12' },
-  { label: 'VERDICT CHANGED', text: 'eur-bond-003.acme.verdict.eth flipped to BLOCKED', time: '14 min ago', tx: '0x3bc…77e' },
-  { label: 'WRITE BLOCKED', text: 'Issuer attempted SET_TEXT:audit-hash — reverted', time: '32 min ago', tx: '0x91d…04b' },
+  { label: 'AI AUDIT WRITTEN', text: 'Gemini result committed by the scoped auditor wallet', time: 'Sepolia block 11667477', tx: '0x7e578…ace5' },
+  { label: 'RISK UPDATED', text: 'Independent monitor wrote the latest reason code', time: 'Sepolia block 11667479', tx: '0x22613…4053' },
+  { label: 'ACCESS VERIFIED', text: 'Unauthorized text-key writes revert on both resolvers', time: 'Latest permission audit', tx: 'EAC proof' },
 ];
