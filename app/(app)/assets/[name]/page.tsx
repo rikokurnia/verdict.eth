@@ -1,152 +1,206 @@
 'use client';
 
-import { use, useState } from 'react';
-import { CheckCircle2, XCircle, AlertTriangle, Unplug } from 'lucide-react';
+import { use, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Unplug, XCircle } from 'lucide-react';
 import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
+import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type Scenario = 'live' | 'expiring' | 'expired' | 'offline';
 
 const SCENARIOS: { id: Scenario; label: string }[] = [
-  { id: 'live', label: 'Live' },
+  { id: 'live', label: 'Live Sepolia' },
   { id: 'expiring', label: 'Expiring → review' },
   { id: 'expired', label: 'Expired → blocked' },
   { id: 'offline', label: 'Resolver offline' },
 ];
 
-const BASE_EVIDENCE: Record<string, Evidence> = {
-  'usd-yield-001.acme.verdict.eth': { daysRemaining: 27, fresh: true, revoked: false, available: true, riskConflict: false },
-  'usd-yield-002.acme.verdict.eth': { daysRemaining: 7, fresh: true, revoked: false, available: true, riskConflict: false },
-  'eur-bond-003.acme.verdict.eth': { daysRemaining: 0, fresh: false, revoked: false, available: true, riskConflict: false },
-  'us-tbill-004.acme.verdict.eth': { daysRemaining: 40, fresh: true, revoked: true, available: true, riskConflict: true },
+const UNAVAILABLE: Evidence = {
+  daysRemaining: 0,
+  fresh: false,
+  revoked: false,
+  available: false,
+  riskConflict: false,
 };
 
 const DETAIL: Record<VerdictState, { ok: string[]; bad: string[]; warn: string[] }> = {
-  POLICY_PASS: { ok: ['Audit is valid', 'Risk signal is fresh', 'Heartbeat is fresh'], bad: [], warn: [] },
-  REVIEW: { ok: ['Risk signal is fresh', 'Heartbeat is fresh'], bad: [], warn: ['Audit approaching expiry — review required'] },
-  BLOCKED: { ok: ['ENS resolution successful'], bad: ['Blocking evidence active — see reason'], warn: [] },
+  POLICY_PASS: { ok: ['Independent audit is active', 'Risk observation is fresh', 'Evidence subjects match the asset'], bad: [], warn: [] },
+  REVIEW: { ok: ['Risk observation is fresh', 'Evidence subjects match the asset'], bad: [], warn: ['Audit is approaching expiry — review required'] },
+  BLOCKED: { ok: ['ENS resolution successful'], bad: ['Blocking evidence is active — see reason'], warn: [] },
   UNAVAILABLE: { ok: [], bad: [], warn: [] },
 };
 
 const VERDICT_CLS: Record<VerdictState, string> = {
-  POLICY_PASS: 'v-verdict-pass', REVIEW: 'v-verdict-review',
-  BLOCKED: 'v-verdict-blocked', UNAVAILABLE: 'v-verdict-unavailable',
+  POLICY_PASS: 'v-verdict-pass',
+  REVIEW: 'v-verdict-review',
+  BLOCKED: 'v-verdict-blocked',
+  UNAVAILABLE: 'v-verdict-unavailable',
 };
 
 const TOAST_KIND = { POLICY_PASS: 'pass', REVIEW: 'review', BLOCKED: 'blocked', UNAVAILABLE: 'info' } as const;
 
+function shortHash(value: string | undefined) {
+  return value && value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value || '—';
+}
+
+function dateTime(timestamp: number | undefined) {
+  return timestamp ? new Date(timestamp * 1000).toLocaleString() : '—';
+}
+
 export default function AssetDetailPage({ params }: { params: Promise<{ name: string }> }) {
   const [scenario, setScenario] = useState<Scenario>('live');
   const [copied, setCopied] = useState(false);
+  const [live, setLive] = useState<VerdictApiResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toasts, push } = useToasts();
   const { name } = use(params);
-  const asset = DEMO_ASSETS.find((a) => a.name === name) ?? DEMO_ASSETS[0];
+  const decodedName = decodeURIComponent(name).toLowerCase();
+  const fallback = DEMO_ASSETS.find((asset) => asset.name === decodedName) ?? DEMO_ASSETS[0];
 
-  const base = BASE_EVIDENCE[asset.name] ?? BASE_EVIDENCE[DEMO_ASSETS[0].name];
-  const evidence: Evidence =
-    scenario === 'live' ? base :
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    fetch(`/api/verdict?name=${encodeURIComponent(decodedName)}`, { cache: 'no-store', signal: controller.signal })
+      .then(async (response) => setLive(await response.json() as VerdictApiResponse))
+      .catch(() => setLive(null))
+      .finally(() => setLoading(false));
+    return () => controller.abort();
+  }, [decodedName]);
+
+  const base = live?.evidence ?? UNAVAILABLE;
+  const simulatedEvidence = useMemo<Evidence>(() => (
     scenario === 'expiring' ? { ...base, daysRemaining: 7, revoked: false, available: true } :
-    scenario === 'expired' ? { ...base, daysRemaining: 0, available: true } :
-    { ...base, available: false };
-  const result = evaluate(evidence);
+    scenario === 'expired' ? { ...base, daysRemaining: 0, revoked: false, available: true } :
+    scenario === 'offline' ? UNAVAILABLE :
+    base
+  ), [base, scenario]);
+  const result = scenario === 'live' && live
+    ? { state: live.state, reason: live.reason }
+    : evaluate(simulatedEvidence);
   const detail = DETAIL[result.state];
+
+  const display = {
+    title: live?.asset?.displayName ?? fallback.title,
+    ticker: live?.asset?.ticker ?? fallback.ticker,
+    assetClass: live?.asset?.assetClass ?? fallback.assetClass,
+    issuer: live?.asset?.issuer ?? fallback.issuer,
+    network: live ? `Sepolia · chain ${live.chainId}` : fallback.network,
+  };
+  const assetRecords = live?.sources.find((source) => source.name === decodedName)?.records;
 
   function pick(id: Scenario, label: string) {
     setScenario(id);
-    if (id !== 'live') push(TOAST_KIND[evaluate(
-      id === 'expiring' ? { ...base, daysRemaining: 7, revoked: false, available: true } :
-      id === 'expired' ? { ...base, daysRemaining: 0, available: true } :
-      { ...base, available: false },
-    ).state], 'Scenario: ' + label, evaluate(
-      id === 'expiring' ? { ...base, daysRemaining: 7, revoked: false, available: true } :
-      id === 'expired' ? { ...base, daysRemaining: 0, available: true } :
-      { ...base, available: false },
-    ).reason);
+    if (id === 'live') return;
+    const evidence = id === 'expiring'
+      ? { ...base, daysRemaining: 7, revoked: false, available: true }
+      : id === 'expired'
+        ? { ...base, daysRemaining: 0, revoked: false, available: true }
+        : UNAVAILABLE;
+    const simulated = evaluate(evidence);
+    push(TOAST_KIND[simulated.state], `Scenario: ${label}`, simulated.reason);
   }
 
   async function copy() {
-    try { await navigator.clipboard.writeText(asset.name); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* noop */ }
+    try {
+      await navigator.clipboard.writeText(decodedName);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* Clipboard access is optional. */ }
   }
 
   return (
     <>
       <div className="v-asset-head">
         <div>
-          <h2>{asset.title}</h2>
+          <h2>{display.title}</h2>
           <div className="v-ensline">
-            <span>{asset.name}</span>
+            <span>{decodedName}</span>
             <button className="v-copy-btn" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
-            <span>Ticker {asset.ticker}</span>
+            <span>Ticker {display.ticker}</span>
           </div>
         </div>
       </div>
-      <div className="v-scenarios" role="group" aria-label="Demo scenarios">
-        {SCENARIOS.map((s) => (
-          <button key={s.id} className="v-scen" aria-pressed={scenario === s.id} onClick={() => pick(s.id, s.label)}>
-            {s.label}
+
+      <div className="v-scenarios" role="group" aria-label="Verdict scenarios">
+        {SCENARIOS.map((item) => (
+          <button key={item.id} className="v-scen" aria-pressed={scenario === item.id} onClick={() => pick(item.id, item.label)}>
+            {item.label}
           </button>
         ))}
       </div>
-      <div style={{ marginBottom: 16 }}><StatusChip state={result.state} /></div>
+
+      <div style={{ marginBottom: 16 }}>
+        <StatusChip state={loading && scenario === 'live' ? 'UNAVAILABLE' : result.state} />
+        {loading && scenario === 'live' && <span className="v-muted" style={{ marginLeft: 10 }}>Resolving pinned Sepolia state…</span>}
+      </div>
+
       <div className="v-split">
-        <div className={'v-verdict ' + VERDICT_CLS[result.state]}>
-          <div className="v-label">Verdict</div>
+        <div className={`v-verdict ${VERDICT_CLS[result.state]}`}>
+          <div className="v-label">{scenario === 'live' ? 'Live on-chain verdict' : 'Local policy simulation'}</div>
           <h3>{result.state.replace('_', ' ')}</h3>
           <p style={{ fontSize: 14, margin: '0 0 10px' }}>{result.reason}</p>
           <ul>
-            {detail.ok.map((r) => <li key={r}><CheckCircle2 size={16} />{r}</li>)}
-            {detail.warn.map((r) => <li key={r}><AlertTriangle size={16} />{r}</li>)}
-            {detail.bad.map((r) => <li key={r}><XCircle size={16} />{r}</li>)}
-            {result.state === 'UNAVAILABLE' && <li><Unplug size={16} />Resolver request failed — no decision inferred.</li>}
+            {detail.ok.map((row) => <li key={row}><CheckCircle2 size={16} />{row}</li>)}
+            {detail.warn.map((row) => <li key={row}><AlertTriangle size={16} />{row}</li>)}
+            {detail.bad.map((row) => <li key={row}><XCircle size={16} />{row}</li>)}
+            {result.state === 'UNAVAILABLE' && <li><Unplug size={16} />No decision is inferred from missing evidence.</li>}
           </ul>
-          <p className="v-muted" style={{ marginTop: 12 }}>Evaluated just now · policy v0</p>
+          <p className="v-muted" style={{ marginTop: 12 }}>
+            {live?.sourceBlock ? `Pinned block ${live.sourceBlock} · ${live.policyId}` : 'Waiting for a verified source block'}
+          </p>
         </div>
         <div className="v-card">
           <div className="v-label">Asset</div>
           <dl className="v-kv" style={{ marginTop: 10 }}>
-            <dt>Ticker</dt><dd className="v-mono">{asset.ticker}</dd>
-            <dt>Class</dt><dd>{asset.assetClass}</dd>
-            <dt>Issuer</dt><dd>{asset.issuer}</dd>
-            <dt>Network</dt><dd>{asset.network}</dd>
+            <dt>Ticker</dt><dd className="v-mono">{display.ticker}</dd>
+            <dt>Class</dt><dd>{display.assetClass}</dd>
+            <dt>Issuer</dt><dd>{display.issuer}</dd>
+            <dt>Network</dt><dd>{display.network}</dd>
+            <dt>Deployment</dt><dd className="v-mono">{shortHash(live?.asset?.deployment)}</dd>
           </dl>
         </div>
       </div>
+
       <div className="v-card" style={{ marginTop: 16 }}>
-        <div className="v-label">Authority graph</div>
-        <div className="v-graph" role="img" aria-label={`Issuer, auditor and risk authorities resolve to ${asset.title}`}>
-          <div className="v-node"><strong>Issuer</strong>acme.verdict.eth</div>
-          <div className="v-edge"><span>audit-*</span></div>
-          <div className="v-node v-node-center"><strong>Asset</strong>{asset.ticker}</div>
-          <div className="v-edge"><span>risk-*</span></div>
-          <div className="v-node"><strong>Auditor</strong>audit-001.auditor.eth</div>
+        <div className="v-label">Independent authority graph</div>
+        <div className="v-graph" role="img" aria-label={`Issuer, auditor and risk authorities resolve to ${display.title}`}>
+          <div className="v-node"><strong>Issuer</strong>{display.issuer}</div>
+          <div className="v-edge"><span>asset</span></div>
+          <div className="v-node v-node-center"><strong>Asset</strong>{display.ticker}</div>
+          <div className="v-edge"><span>evidence</span></div>
+          <div className="v-node"><strong>Auditor + monitor</strong>{live?.audit?.name ?? '—'}<br />{live?.observation?.name ?? '—'}</div>
         </div>
       </div>
+
       <div className="v-split">
         <div className="v-card">
-          <div className="v-label">ENS records</div>
+          <div className="v-label">Resolved ENS records</div>
           <dl className="v-kv" style={{ marginTop: 10 }}>
-            <dt>issuer</dt><dd className="v-mono">acme.verdict.eth</dd>
-            <dt>CLASS</dt><dd className="v-mono">{asset.assetClass.toLowerCase()}</dd>
-            <dt>audit-hash</dt><dd className="v-mono">sha256:89a…</dd>
-            <dt>audit-expiry</dt><dd className="v-mono">{asset.auditNote}</dd>
-            <dt>heartbeat</dt><dd className="v-mono">{asset.heartbeat}</dd>
-            <dt>agent-context</dt><dd className="v-mono">portfolio suitability</dd>
+            <dt>issuer</dt><dd className="v-mono">{display.issuer}</dd>
+            <dt>class</dt><dd className="v-mono">{display.assetClass}</dd>
+            <dt>audit</dt><dd className="v-mono">{live?.audit?.name ?? '—'}</dd>
+            <dt>audit-hash</dt><dd className="v-mono">{shortHash(live?.audit?.documentHash)}</dd>
+            <dt>risk</dt><dd className="v-mono">{live?.observation?.name ?? '—'}</dd>
+            <dt>reason</dt><dd className="v-mono">{live?.observation?.reasonCode ?? '—'}</dd>
+            <dt>schema</dt><dd className="v-mono">{assetRecords?.['verdict.schema'] ?? '—'}</dd>
           </dl>
         </div>
         <div className="v-card">
           <div className="v-label">Lifecycle</div>
           <dl className="v-kv" style={{ marginTop: 10 }}>
-            <dt>Audit expiry</dt><dd>{asset.auditNote}</dd>
-            <dt>Revocable</dt><dd>{asset.name.includes('tbill') ? 'Revoked by auditor' : 'Active'}</dd>
-            <dt>Transfer</dt><dd>Soulbound tranche disabled</dd>
-            <dt>Genesis</dt><dd>No expiry</dd>
+            <dt>Audit issued</dt><dd>{dateTime(live?.audit?.issuedAt)}</dd>
+            <dt>Audit expiry</dt><dd>{dateTime(live?.audit?.expiresAt)}</dd>
+            <dt>Audit status</dt><dd>{live?.audit?.status ?? '—'}</dd>
+            <dt>Observed</dt><dd>{dateTime(live?.observation?.observedAt)}</dd>
+            <dt>Risk status</dt><dd>{live?.observation?.status ?? '—'}</dd>
           </dl>
         </div>
       </div>
+
       <p className="v-muted" style={{ marginTop: 16 }}>
-        <Unplug size={13} style={{ verticalAlign: -2 }} /> Live Sepolia resolution, permission proofs and transactions wire up in contract phase. Current values are labeled demo data.
+        <CheckCircle2 size={13} style={{ verticalAlign: -2 }} /> Live data is resolved through the dedicated ENSv2 Sepolia Universal Resolver. Scenario buttons alter only local policy inputs; they never mutate chain state.
       </p>
       <ToastStack toasts={toasts} />
     </>

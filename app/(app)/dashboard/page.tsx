@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   CheckCircle2,
@@ -24,8 +24,10 @@ import { PageHead } from '@/components/app/app-shell';
 import StatusChip from '@/components/app/status-chip';
 import { DEMO_ASSETS, DEMO_ACTIVITY, type DemoAsset } from '@/components/app/demo-data';
 import type { VerdictState } from '@/lib/policy';
+import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 export default function DashboardPage() {
+  const [assets, setAssets] = useState<DemoAsset[]>(DEMO_ASSETS);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | VerdictState>('ALL');
   const [classFilter, setClassFilter] = useState<string>('ALL');
@@ -34,7 +36,30 @@ export default function DashboardPage() {
   const [modalTab, setModalTab] = useState<'authorities' | 'resolver'>('authorities');
 
   const query = q.trim().toLowerCase();
-  const filteredAssets = DEMO_ASSETS.filter((a) => {
+  useEffect(() => {
+    fetch('/api/verdict', { cache: 'no-store' })
+      .then((response) => response.json())
+      .then((live: VerdictApiResponse) => {
+        if (!live.asset) return;
+        const elapsed = Math.max(0, live.evaluatedAt - (live.observation?.observedAt ?? live.evaluatedAt));
+        const heartbeat = elapsed < 60 ? `${elapsed}s ago` : `${Math.floor(elapsed / 60)}m ago`;
+        setAssets((current) => current.map((asset) => asset.name === live.name ? {
+          ...asset,
+          title: live.asset!.displayName,
+          ticker: live.asset!.ticker,
+          assetClass: live.asset!.assetClass,
+          issuer: live.asset!.issuer,
+          state: live.state,
+          auditNote: live.audit ? `${live.audit.status} · ${live.evidence.daysRemaining}d` : 'Unavailable',
+          riskNote: live.observation?.severity ?? 'Unavailable',
+          heartbeat,
+          network: `Sepolia · #${live.sourceBlock ?? '—'}`,
+        } : asset));
+      })
+      .catch(() => {});
+  }, []);
+
+  const filteredAssets = assets.filter((a) => {
     const matchesQuery =
       !query ||
       a.title.toLowerCase().includes(query) ||
@@ -48,9 +73,9 @@ export default function DashboardPage() {
     return matchesQuery && matchesStatus && matchesClass;
   });
 
-  const passCount = DEMO_ASSETS.filter((a) => a.state === 'POLICY_PASS').length;
-  const reviewCount = DEMO_ASSETS.filter((a) => a.state === 'REVIEW').length;
-  const blockedCount = DEMO_ASSETS.filter((a) => a.state === 'BLOCKED').length;
+  const passCount = assets.filter((a) => a.state === 'POLICY_PASS').length;
+  const reviewCount = assets.filter((a) => a.state === 'REVIEW').length;
+  const blockedCount = assets.filter((a) => a.state === 'BLOCKED').length;
 
   async function copyName(name: string, e: React.MouseEvent) {
     e.preventDefault();
@@ -92,7 +117,7 @@ export default function DashboardPage() {
             <span className="v-label">Total Assets</span>
             <Layers size={18} className="v-metric-icon" />
           </div>
-          <div className="v-metric">{DEMO_ASSETS.length}</div>
+          <div className="v-metric">{assets.length}</div>
           <div className="v-muted">Sepolia demo set</div>
           <div className="v-metric-line"><span style={{ width: '100%' }} /></div>
           <span className="v-card-crosshair">+</span>
@@ -109,8 +134,8 @@ export default function DashboardPage() {
             <CheckCircle2 size={18} className="v-metric-icon" style={{ color: 'var(--pass)' }} />
           </div>
           <div className="v-metric">{passCount}</div>
-          <div className="v-muted">Fresh evidence · {Math.round((passCount / DEMO_ASSETS.length) * 100)}%</div>
-          <div className="v-metric-line"><span style={{ width: `${(passCount / DEMO_ASSETS.length) * 100}%` }} /></div>
+          <div className="v-muted">Fresh evidence · {Math.round((passCount / assets.length) * 100)}%</div>
+          <div className="v-metric-line"><span style={{ width: `${(passCount / assets.length) * 100}%` }} /></div>
           <span className="v-card-crosshair">+</span>
         </button>
 
@@ -125,8 +150,8 @@ export default function DashboardPage() {
             <AlertTriangle size={18} className="v-metric-icon" style={{ color: 'var(--review)' }} />
           </div>
           <div className="v-metric">{reviewCount}</div>
-          <div className="v-muted">Expiry &lt; 14d · {Math.round((reviewCount / DEMO_ASSETS.length) * 100)}%</div>
-          <div className="v-metric-line"><span style={{ width: `${(reviewCount / DEMO_ASSETS.length) * 100}%` }} /></div>
+          <div className="v-muted">Expiry &lt; 14d · {Math.round((reviewCount / assets.length) * 100)}%</div>
+          <div className="v-metric-line"><span style={{ width: `${(reviewCount / assets.length) * 100}%` }} /></div>
           <span className="v-card-crosshair">+</span>
         </button>
 
@@ -141,8 +166,8 @@ export default function DashboardPage() {
             <XCircle size={18} className="v-metric-icon" style={{ color: 'var(--blocked)' }} />
           </div>
           <div className="v-metric">{blockedCount}</div>
-          <div className="v-muted">Expired / revoked · {Math.round((blockedCount / DEMO_ASSETS.length) * 100)}%</div>
-          <div className="v-metric-line"><span style={{ width: `${(blockedCount / DEMO_ASSETS.length) * 100}%` }} /></div>
+          <div className="v-muted">Expired / revoked · {Math.round((blockedCount / assets.length) * 100)}%</div>
+          <div className="v-metric-line"><span style={{ width: `${(blockedCount / assets.length) * 100}%` }} /></div>
           <span className="v-card-crosshair">+</span>
         </button>
       </div>
@@ -158,7 +183,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="v-card-header-badge">
-            <span>{filteredAssets.length} of {DEMO_ASSETS.length} RESOLVED</span>
+            <span>{filteredAssets.length} of {assets.length} RESOLVED</span>
           </div>
         </div>
 
@@ -264,11 +289,11 @@ export default function DashboardPage() {
                   </td>
                   <td>
                     <div className="v-cell-main">{a.auditNote}</div>
-                    <div className="v-cell-sub">by audit-001.auditor.eth</div>
+                    <div className="v-cell-sub">by audit-001.verdict-auditor.eth</div>
                   </td>
                   <td>
                     <div className="v-cell-main">{a.riskNote}</div>
-                    <div className="v-cell-sub">sentinel-01.risk.eth</div>
+                    <div className="v-cell-sub">risk-001.verdict-monitor.eth</div>
                   </td>
                   <td>
                     <div className="v-cell-main">{a.network}</div>
@@ -348,7 +373,7 @@ export default function DashboardPage() {
                   <FileCheck2 size={14} className="v-auth-icon" />
                   <strong>Auditor Attestation</strong>
                 </div>
-                <span className="v-auth-ens">audit-001.auditor.eth</span>
+                <span className="v-auth-ens">audit-001.verdict-auditor.eth</span>
               </div>
               <span className="v-warn">
                 <AlertTriangle size={14} /> 1 Expiring
@@ -361,7 +386,7 @@ export default function DashboardPage() {
                   <Radio size={14} className="v-auth-icon" />
                   <strong>Risk Sentinel</strong>
                 </div>
-                <span className="v-auth-ens">sentinel-01.risk.eth</span>
+                <span className="v-auth-ens">risk-001.verdict-monitor.eth</span>
               </div>
               <span className="v-bad">
                 <XCircle size={14} /> 1 Stale
@@ -503,7 +528,7 @@ export default function DashboardPage() {
                           {selectedAsset.auditNote}
                         </span>
                       </div>
-                      <strong>audit-001.auditor.eth</strong>
+                      <strong>audit-001.verdict-auditor.eth</strong>
                       <p>Independent attestor. Has exclusive permission to write audit-hash.</p>
                     </div>
 
@@ -514,7 +539,7 @@ export default function DashboardPage() {
                           {selectedAsset.riskNote}
                         </span>
                       </div>
-                      <strong>sentinel-01.risk.eth</strong>
+                      <strong>risk-001.verdict-monitor.eth</strong>
                       <p>Heartbeat updated {selectedAsset.heartbeat}. Writes NAV & risk metrics.</p>
                     </div>
                   </div>

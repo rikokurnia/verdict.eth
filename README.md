@@ -15,9 +15,15 @@ verdict.eth (Root Registry)
  └── acme.verdict.eth (Issuer)
       └── usd-yield-001.acme.verdict.eth (Canonical Asset Identity)
            ├── Identity Records (Ticker, Documents, Metadata) -> Issuer authority
-           ├── Attestation Records (Audit Hash, Expiry) -> audit-001.auditor.eth
-           └── Real-time Signals (Heartbeat, Health) -> Risk monitor
+           ├── Attestation Records -> audit-001.verdict-auditor.eth
+           └── Risk Signals -> risk-001.verdict-monitor.eth
 ```
+
+The auditor and monitor use separate resolver proxies, signing wallets, and
+recovery-admin wallets. Their AI workers have `ROLE_SET_TEXT` only for eight
+explicit dynamic keys each. They have no root text permission and cannot
+upgrade their resolvers. Fixed subject and authority bindings are not writable
+by the workers.
 
 ### Deterministic Policy Engine
 Evaluates asset evidence in real time into 4 discrete states:
@@ -33,7 +39,8 @@ Evaluates asset evidence in real time into 4 discrete states:
 - **Framework**: [Next.js](https://nextjs.org/) (App Router), React 19, TypeScript
 - **Styling & Motion**: Vanilla CSS, GSAP, Archivo Variable Typography
 - **Protocol**: [ENSv2](https://ens.domains/) (Hierarchical Registry, Enhanced Access Control, UniversalResolverV2)
-- **Smart Contracts**: Solidity, Foundry
+- **AI evidence classification**: Gemini structured JSON with local semantic validation
+- **Onchain components**: Deployed ENSv2 Permissioned Registries and Permissioned Resolvers; no custom Solidity
 - **Media & Assets**: Local Hyperframes rendering, SVG vector icons
 
 ---
@@ -72,7 +79,31 @@ npm test
 
 # Type check
 npm run typecheck
+
+# Resolve the evidence graph through an independent CLI
+npm run verify:ens
 ```
+
+### AI audit worker
+
+Set `SEPOLIA_RPC_URL` and `GEMINI_API_KEY` in `.env.local`. Signing keys are
+encrypted files under the ignored `.secrets/` directory and are never loaded by
+the Next.js backend.
+
+```bash
+# Analyze the local fictional evidence without writing
+npm run audit:ai
+
+# Analyze, validate, and write only the allowed ENSv2 records
+npm run audit:ai:write
+
+# Idempotently verify exact roles and unauthorized-write reverts
+npm run configure:ens-permissions
+```
+
+The included evidence is explicitly fictional Sepolia demo data. The model
+cannot choose a wallet, resolver, ENS name, or record key, and confidence is
+capped at 95.
 
 ---
 

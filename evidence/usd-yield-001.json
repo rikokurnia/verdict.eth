@@ -1,0 +1,29 @@
+{
+  "notice": "Fictional Sepolia hackathon demo evidence. This is not an investment product or assurance report.",
+  "subject": "usd-yield-001.acme.verdict.eth",
+  "evidenceVersion": "2026-09-09.1",
+  "issuerAssertions": {
+    "assetStatus": "active",
+    "assetClass": "tokenized short-duration US Treasury exposure",
+    "jurisdiction": "demo-only",
+    "redemptionWindowBusinessDays": 2
+  },
+  "independentAuditEvidence": {
+    "scope": [
+      "asset identity binding",
+      "reported reserve coverage",
+      "document completeness"
+    ],
+    "materialExceptions": [],
+    "reserveCoverageRatio": 1.04,
+    "documentsComplete": true,
+    "subjectBindingVerified": true
+  },
+  "riskObservations": {
+    "navAsOf": "2026-09-09T00:00:00Z",
+    "reserveReportAsOf": "2026-09-08T00:00:00Z",
+    "redemptionOperational": true,
+    "sanctionsScreeningStatus": "demo-clear",
+    "openCriticalAlerts": 0
+  }
+}

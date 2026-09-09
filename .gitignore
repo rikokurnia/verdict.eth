@@ -1,7 +1,9 @@
 node_modules/
 .next/
 .env*
+.secrets/
 *.tsbuildinfo
 video/node_modules/
 video/.hyperframes/
 lab/
+.gstack/
