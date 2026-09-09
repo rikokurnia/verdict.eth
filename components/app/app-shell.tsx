@@ -5,29 +5,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutGrid,
-  Diamond,
-  KeyRound,
   Clock3,
   Bot,
-  Activity,
-  TerminalSquare,
-  Settings,
-  Pause,
-  Play,
-  ArrowUpRight,
+  Wallet,
+  LogOut,
 } from 'lucide-react';
 import { VerdictMark } from '@/components/marks';
 import Dock from '@/components/Dock';
+import { useWallet } from '@/components/wallet-context';
 
 const ROUTES = [
   { href: '/dashboard', label: 'Overview', icon: LayoutGrid },
-  { href: '/assets', label: 'Assets', icon: Diamond },
-  { href: '/authorities', label: 'Authorities', icon: KeyRound },
-  { href: '/lifecycle', label: 'Lifecycle', icon: Clock3 },
   { href: '/agents', label: 'Agents', icon: Bot },
-  { href: '/activity', label: 'Activity', icon: Activity },
-  { href: '/debug', label: 'Resolver', icon: TerminalSquare },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/lifecycle', label: 'Lifecycle', icon: Clock3 },
 ];
 
 export function PageHead({ title, sub }: { title: string; sub: string }) {
@@ -44,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [reduced, setReduced] = useState(false);
   const [compact, setCompact] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const { account, isConnected, disconnect, openDialog } = useWallet();
 
   useEffect(() => {
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -56,40 +46,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     sync();
     motion.addEventListener('change', sync);
     touch.addEventListener('change', sync);
-    try {
-      setPaused(localStorage.getItem('verdict-video-paused') === 'true');
-    } catch {}
     return () => {
       motion.removeEventListener('change', sync);
       touch.removeEventListener('change', sync);
     };
   }, []);
 
-  const motionOff = reduced || paused;
-
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (motionOff) {
+    if (reduced) {
       v.pause();
     } else {
       v.play().catch(() => {});
     }
-  }, [motionOff]);
+  }, [reduced]);
 
   const current = ROUTES.find(
     (r) => pathname === r.href || (r.href !== '/dashboard' && pathname.startsWith(r.href + '/')),
   );
-
-  function toggleMotion() {
-    setPaused((p) => {
-      const next = !p;
-      try {
-        localStorage.setItem('verdict-video-paused', String(next));
-      } catch {}
-      return next;
-    });
-  }
 
   return (
     <div className="v-app v-wave-workspace">
@@ -117,42 +92,39 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Link href="/" className="v-brand" aria-label="Verdict home">
           <VerdictMark className="v-brand-symbol" />
           <span className="v-brand-text">Verdict</span>
-          <span className="v-terminal-tag">TRUST TERMINAL</span>
         </Link>
 
         <div className="v-workspace-location">
           <span>WORKSPACE</span>
           <span className="v-location-divider">/</span>
-          <span className="v-location-current">{current?.label ?? 'Asset Detail'}</span>
+          <span className="v-location-current">{current?.label ?? 'Overview'}</span>
         </div>
 
         <div className="v-workspace-actions">
-          <span className="v-network-badge">
-            <span className="v-network-pulse" aria-hidden="true" />
-            Sepolia <small>DEMO</small>
-          </span>
-
-          <button
-            className="v-motion-toggle"
-            onClick={toggleMotion}
-            disabled={reduced}
-            aria-label={
-              reduced
-                ? 'Motion disabled by system preference'
-                : paused
-                ? 'Resume background video'
-                : 'Pause background video'
-            }
-            title={reduced ? 'Reduced motion enabled' : paused ? 'Resume video' : 'Pause video'}
-            aria-pressed={motionOff}
-          >
-            {motionOff ? <Play size={14} /> : <Pause size={14} />}
-            <span className="v-motion-label">{motionOff ? 'Video Paused' : 'Video Active'}</span>
-          </button>
-
-          <Link href="/" className="v-header-link">
-            Landing <ArrowUpRight size={13} />
-          </Link>
+          {isConnected ? (
+            <div className="v-wallet-badge">
+              <span className="v-wallet-dot" aria-hidden="true" />
+              <span className="v-wallet-addr">{account.slice(0, 6)}…{account.slice(-4)}</span>
+              <button
+                type="button"
+                className="v-wallet-disconnect-btn"
+                onClick={disconnect}
+                title="Disconnect session & return to landing"
+              >
+                <LogOut size={13} />
+                <span>Disconnect</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="v-wallet-connect-btn"
+              onClick={openDialog}
+            >
+              <Wallet size={14} />
+              <span>Connect Wallet</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -167,7 +139,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="v-footer-right">
           <Link href="/" className="v-footer-link">
-            About Verdict <ArrowUpRight size={13} />
+            About Verdict
           </Link>
           <span className="v-footer-disclaimer">Illustrative data. No live onchain verification.</span>
         </div>
