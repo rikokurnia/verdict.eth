@@ -2390,3 +2390,179 @@
     transition: none !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Gated Access & Authentication Screen
+   -------------------------------------------------------------------------- */
+.v-gate-screen {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0 !important;
+}
+
+.v-gate-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.v-gate-card {
+  background: rgba(6, 18, 34, 0.88);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(163, 209, 255, 0.28);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 40px rgba(112, 165, 255, 0.12);
+  border-radius: 20px;
+  padding: 44px 36px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.v-gate-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(163, 209, 255, 0.7), transparent);
+}
+
+.v-gate-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(112, 165, 255, 0.12);
+  border: 1px solid rgba(163, 209, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 0 24px rgba(112, 165, 255, 0.25);
+  color: #A3D1FF;
+}
+
+.v-gate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #9DB6CD;
+  background: rgba(10, 26, 48, 0.75);
+  border: 1px solid rgba(163, 209, 255, 0.2);
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.v-gate-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #F5F9FD;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.v-gate-desc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #A3C2DE;
+  margin: 0 0 28px;
+  max-width: 440px;
+}
+
+.v-gate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.v-gate-btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: linear-gradient(135deg, #A3D1FF 0%, #6BA3E8 100%);
+  color: #061222;
+  font-weight: 650;
+  font-size: 14px;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(112, 165, 255, 0.35);
+  transition: all 0.2s ease;
+}
+
+.v-gate-btn-primary:hover {
+  background: linear-gradient(135deg, #BAE0FF 0%, #7CB4F5 100%);
+  box-shadow: 0 6px 26px rgba(112, 165, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.v-gate-btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: rgba(163, 209, 255, 0.07);
+  border: 1px solid rgba(163, 209, 255, 0.2);
+  color: #D8E6F3;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.v-gate-btn-secondary:hover {
+  background: rgba(163, 209, 255, 0.14);
+  border-color: rgba(163, 209, 255, 0.35);
+  color: #F5F9FD;
+}
+
+.v-gate-footnote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+  font-size: 11px;
+  color: #7A97B2;
+}
+
+.v-gate-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(163, 209, 255, 0.2);
+  border-top-color: #A3D1FF;
+  animation: v-gate-spin 0.9s linear infinite;
+  margin: 12px 0 6px;
+}
+
+@keyframes v-gate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
