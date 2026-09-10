@@ -105,6 +105,9 @@ export type QuartetRun = {
   finishedAt: string;
   durationMs: number;
   model: string;
+  /** official = institutional quartet weights; custom = operator policy lens applied. */
+  mode: 'official' | 'custom';
+  customPolicy?: { subname: string; owner: string; policy: string };
   /** Which engine served each call (failover can mix providers in one run). */
   engines: Record<'legal' | 'custody' | 'technical' | 'synthesis', CallEngine>;
   /** Billed token usage per call, when the provider reports it. */

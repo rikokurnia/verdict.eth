@@ -62,6 +62,8 @@ function InspectorCard({ id, label, run }: { id: InspectorId; label: string; run
 export default function AgentQuartet() {
   const [subject, setSubject] = useState(OPTIONS[1]?.value ?? OPTIONS[0].value);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [mode, setMode] = useState<'official' | 'custom'>('official');
+  const [customSubname, setCustomSubname] = useState('');
   const [running, setRunning] = useState(false);
   const [lines, setLines] = useState<TermLine[]>([]);
   const [run, setRun] = useState<QuartetRun | null>(null);
@@ -83,6 +85,25 @@ export default function AgentQuartet() {
   }, []);
 
   useEffect(() => { void loadHistory(); }, [loadHistory]);
+
+  useEffect(() => {
+    try {
+      const remembered = localStorage.getItem('verdict-custom-agent');
+      if (remembered) {
+        setCustomSubname(remembered);
+        setMode('custom');
+      }
+    } catch { /* storage optional */ }
+    function onMinted(event: Event) {
+      const subname = (event as CustomEvent<string>).detail;
+      if (typeof subname === 'string' && subname) {
+        setCustomSubname(subname);
+        setMode('custom');
+      }
+    }
+    window.addEventListener('verdict:auditor-minted', onMinted);
+    return () => window.removeEventListener('verdict:auditor-minted', onMinted);
+  }, []);
 
   useEffect(() => {
     const term = termRef.current;
@@ -112,13 +133,20 @@ export default function AgentQuartet() {
   }
 
   function start() {
+    const custom = customSubname.trim().toLowerCase();
+    if (mode === 'custom' && !/^(?=.{1,255}$)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.eth$/.test(custom)) {
+      setError('Enter your auditor subname (e.g. zero-risk.verdict.eth) for custom mode.');
+      return;
+    }
     sourceRef.current?.close();
     setRunning(true);
     setError(null);
     setRun(null);
     setLines([]);
-    appendLine({ kind: 'run-start', label: `$ inspect ${subject}` });
-    const source = new EventSource(`/api/agents/stream?subject=${encodeURIComponent(subject)}`);
+    appendLine({ kind: 'run-start', label: `$ inspect ${subject}${mode === 'custom' ? ` through ${custom}` : ''}` });
+    const params = new URLSearchParams({ subject, mode });
+    if (mode === 'custom') params.set('agentSubname', custom);
+    const source = new EventSource(`/api/agents/stream?${params.toString()}`);
     sourceRef.current = source;
     source.onmessage = (event) => {
       try {
@@ -158,7 +186,7 @@ export default function AgentQuartet() {
     <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
       <div className="v-card-header">
         <div>
-          <div className="v-card-tag">02 / 4-AGENT INSPECTION</div>
+          <div className="v-card-tag">03 / 4-AGENT INSPECTION</div>
           <h3 className="v-section-title">Legal · Custody · Technical → Consensus</h3>
           <p className="v-muted">
             Three inspectors assess live evidence in parallel on one shared key, then the synthesizer maps
@@ -168,6 +196,47 @@ export default function AgentQuartet() {
       </div>
 
       <div className="v-table-toolbar">
+        <div style={{ display: 'flex', gap: 8 }} role="group" aria-label="Inspection mode">
+          <button
+            type="button"
+            className={`v-btn ${mode === 'official' ? '' : 'v-btn-secondary'}`.trim()}
+            aria-pressed={mode === 'official'}
+            disabled={running}
+            onClick={() => setMode('official')}
+          >
+            Mode A · Official Quartet
+          </button>
+          <button
+            type="button"
+            className={`v-btn ${mode === 'custom' ? '' : 'v-btn-secondary'}`.trim()}
+            aria-pressed={mode === 'custom'}
+            disabled={running}
+            onClick={() => setMode('custom')}
+            title={customSubname || 'Mint an auditor below, then run through its lens'}
+          >
+            Mode B · Custom{customSubname ? ` (${customSubname.split('.')[0]})` : ''}
+          </button>
+        </div>
+      </div>
+      {mode === 'custom' && (
+        <div className="v-table-search-box" style={{ marginTop: 10 }}>
+          <label className="v-visually-hidden" htmlFor="quartet-custom-subname">Custom auditor subname</label>
+          <input
+            id="quartet-custom-subname"
+            className="v-search-input"
+            style={{ fontFamily: 'var(--font-mono)' }}
+            type="text"
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="zero-risk.verdict.eth"
+            value={customSubname}
+            onChange={(event) => setCustomSubname(event.target.value.toLowerCase())}
+            disabled={running}
+          />
+        </div>
+      )}
+
+      <div className="v-table-toolbar" style={{ marginTop: mode === 'custom' ? 10 : 0 }}>
         <div className="v-asset-picker" ref={pickerRef}>
           <button
             type="button"
@@ -230,7 +299,9 @@ export default function AgentQuartet() {
             {INSPECTORS.map(({ id, label }) => <InspectorCard key={id} id={id} label={label} run={run} />)}
           </div>
           <div className="v-card" style={{ marginTop: 12 }}>
-            <div className="v-label">Consensus · {run.model} · {Math.round(run.durationMs / 1000)}s · {new Date(run.finishedAt).toLocaleString()}</div>
+            <div className="v-label">
+              Consensus · {(run.mode ?? 'official') === 'custom' ? `custom lens ${run.customPolicy?.subname ?? ''}` : 'official quartet'} · {run.model} · {Math.round(run.durationMs / 1000)}s · {new Date(run.finishedAt).toLocaleString()}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
               <StatusChip state={run.synthesis.policy_state} />
               <span className="v-mono" style={{ fontSize: 12 }}>{run.synthesis.verdict} · {run.synthesis.overall_score}/100</span>

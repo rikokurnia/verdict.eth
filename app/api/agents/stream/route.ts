@@ -12,10 +12,19 @@ function send(controller: ReadableStreamDefaultController, payload: unknown) {
 }
 
 export async function GET(request: Request) {
-  const subject = new URL(request.url).searchParams.get('subject')?.trim() ?? '';
+  const params = new URL(request.url).searchParams;
+  const subject = params.get('subject')?.trim() ?? '';
+  const mode = params.get('mode') === 'custom' ? 'custom' : 'official';
+  const agentSubname = params.get('agentSubname')?.trim().toLowerCase() ?? '';
   const isDemo = subject ? isDemoAssetSubject(subject) : false;
   if (!subject || (!isDemo && !MARKET_IDS.has(subject))) {
     return new Response('data: {"kind":"error","label":"Invalid subject"}\n\n', {
+      status: 400,
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  }
+  if (mode === 'custom' && !agentSubname) {
+    return new Response('data: {"kind":"error","label":"agentSubname required for custom mode"}\n\n', {
       status: 400,
       headers: { 'content-type': 'text/event-stream' },
     });
@@ -27,7 +36,9 @@ export async function GET(request: Request) {
       const emit = (event: Omit<QuartetEvent, 't'>) =>
         send(controller, { ...event, t: new Date().toISOString() });
       try {
-        const run = await runQuartetStream(resolved, false, emit);
+        const run = await runQuartetStream(resolved, false, emit, {
+          customPolicySubname: mode === 'custom' ? agentSubname : undefined,
+        });
         send(controller, { kind: 'result', t: new Date().toISOString(), run });
       } catch (error) {
         send(controller, {

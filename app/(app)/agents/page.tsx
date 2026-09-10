@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Search } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
+import AgentFactory from '@/components/app/agent-factory';
 import AgentQuartet from '@/components/app/agent-quartet';
 import StatusChip from '@/components/app/status-chip';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
@@ -195,6 +196,13 @@ export default function AgentsPage() {
         {askError && askState !== 'error' && <p className="v-muted" role="alert">{askError}</p>}
       </div>
 
+      <AgentFactory
+        onMinted={(subname) => {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('verdict:auditor-minted', { detail: subname }));
+          }
+        }}
+      />
       <AgentQuartet />
 
       <div className="v-split" style={{ marginTop: 16 }}>
