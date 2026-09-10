@@ -38,14 +38,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [reduced, setReduced] = useState(false);
   const [compact, setCompact] = useState(false);
   const { account, isConnected, ready, connect, disconnect, openDialog } = useWallet();
-  const hasPrompted = useRef(false);
-
-  useEffect(() => {
-    if (ready && !isConnected && !hasPrompted.current) {
-      hasPrompted.current = true;
-      connect();
-    }
-  }, [ready, isConnected, connect]);
 
   useEffect(() => {
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -253,7 +245,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 type="button"
                 className="v-wallet-disconnect-btn"
                 onClick={disconnect}
-                title="Disconnect session & return to landing"
+                title="Disconnect session"
               >
                 <LogOut size={13} />
                 <span>Disconnect</span>

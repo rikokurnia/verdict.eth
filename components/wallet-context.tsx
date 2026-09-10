@@ -23,13 +23,23 @@ function InnerWalletBridge({ children }: { children: React.ReactNode }) {
   const { connectWallet } = useConnectWallet();
   const router = useRouter();
 
-  // Connected state: either external wallet connected via 1-click connectWallet, or authenticated session
+  // Persistent user preference for manual disconnection
+  const [manuallyDisconnected, setManuallyDisconnected] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.localStorage.getItem('verdict_wallet_disconnected') === 'true';
+    }
+    return false;
+  });
+
+  // Connected state: only when not manually disconnected, and either external wallet is connected or authenticated session exists
   const isConnected = useMemo(() => {
+    if (manuallyDisconnected) return false;
     return Boolean((wallets && wallets.length > 0 && !!wallets[0]?.address) || authenticated);
-  }, [wallets, authenticated]);
+  }, [manuallyDisconnected, wallets, authenticated]);
 
   // Primary address resolution from connected external wallet or Privy session:
   const account = useMemo(() => {
+    if (manuallyDisconnected) return '';
     if (wallets && wallets.length > 0 && wallets[0]?.address) {
       return wallets[0].address;
     }
@@ -47,19 +57,27 @@ function InnerWalletBridge({ children }: { children: React.ReactNode }) {
       return `0x${clean.padEnd(40, '0').slice(0, 40)}`;
     }
     return '';
-  }, [wallets, user]);
+  }, [manuallyDisconnected, wallets, user]);
 
   const [pendingConnect, setPendingConnect] = useState(false);
 
   useEffect(() => {
     if (ready && pendingConnect) {
       setPendingConnect(false);
+      setManuallyDisconnected(false);
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('verdict_wallet_disconnected');
+      }
       connectWallet();
     }
   }, [ready, pendingConnect, connectWallet]);
 
   // 1-click external wallet connection without requiring secondary SIWE signature
   const connect = useCallback(() => {
+    setManuallyDisconnected(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('verdict_wallet_disconnected');
+    }
     if (!ready) {
       setPendingConnect(true);
       return;
@@ -68,20 +86,27 @@ function InnerWalletBridge({ children }: { children: React.ReactNode }) {
   }, [ready, connectWallet]);
 
   const disconnect = useCallback(async () => {
+    setManuallyDisconnected(true);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('verdict_wallet_disconnected', 'true');
+    }
     try {
       if (wallets && wallets.length > 0) {
-        for (const w of wallets) {
-          try {
-            w.disconnect();
-          } catch {}
-        }
+        await Promise.allSettled(
+          wallets.map(async (w) => {
+            try {
+              await w.disconnect();
+            } catch {}
+          })
+        );
       }
-      await logout();
+      if (authenticated) {
+        await logout();
+      }
     } catch {
       // ignore
     }
-    router.push('/');
-  }, [wallets, logout, router]);
+  }, [wallets, authenticated, logout]);
 
   return (
     <WalletContext.Provider
