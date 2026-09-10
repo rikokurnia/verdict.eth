@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, RefreshCw, Search } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
+import AgentQuartet from '@/components/app/agent-quartet';
 import StatusChip from '@/components/app/status-chip';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
@@ -193,6 +194,8 @@ export default function AgentsPage() {
         )}
         {askError && askState !== 'error' && <p className="v-muted" role="alert">{askError}</p>}
       </div>
+
+      <AgentQuartet />
 
       <div className="v-split" style={{ marginTop: 16 }}>
         <div className="v-card">
