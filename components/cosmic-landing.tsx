@@ -24,8 +24,7 @@ function FloatingCore({ small = false }: { small?: boolean }) {
 
 export default function CosmicLanding() {
   const router = useRouter();
-  const { isConnected, connect } = useWallet();
-  const [wantsWorkspace, setWantsWorkspace] = useState(false);
+  const { isConnected, ready, connect } = useWallet();
 
   const journey = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -36,17 +35,16 @@ export default function CosmicLanding() {
   const [paused, setPaused] = useState(false);
   const [token, setToken] = useState(1);
 
+  // When wallet is connected on the landing page, directly redirect to dashboard
   useEffect(() => {
-    if (wantsWorkspace && isConnected) {
-      setWantsWorkspace(false);
+    if (ready && isConnected) {
       router.push('/dashboard');
     }
-  }, [wantsWorkspace, isConnected, router]);
+  }, [ready, isConnected, router]);
 
   const handleProtectedNav = (e: React.MouseEvent) => {
     if (!isConnected) {
       e.preventDefault();
-      setWantsWorkspace(true);
       connect();
     }
   };
@@ -83,7 +81,11 @@ export default function CosmicLanding() {
   const middle = Math.min(Math.max(0,(progress-.27)/.09), Math.max(0,(.72-progress)/.1),1);
   const last = Math.max(0, Math.min(1,(progress-.64)/.1));
   const current = progress < .3 ? 0 : progress < .68 ? 1 : 2;
-  const nav = <><a href="#cosmic-start">The idea</a><a href="#cosmic-evidence">The evidence</a><Link href="/dashboard" onClick={handleProtectedNav}>Open workspace <ArrowUpRight size={13}/></Link></>;
+  const nav = <>
+    <a key="start" href="#cosmic-start">The idea</a>
+    <a key="evidence" href="#cosmic-evidence">The evidence</a>
+    <Link key="workspace" href="/dashboard" onClick={handleProtectedNav}>Open workspace <ArrowUpRight size={13}/></Link>
+  </>;
   return <div className={`cosmic-page ${reduced ? 'cosmic-reduced' : ''} ${paused ? 'cosmic-paused' : ''}`}>
     <a className="cosmic-skip" href="#cosmic-start">Skip to content</a>
     <header className="cosmic-nav"><Link href="/" className="cosmic-brand" aria-label="Verdict home"><VerdictMark/>Verdict<span>THE EVIDENCE LAYER</span></Link><nav aria-label="Main navigation">{nav}</nav><div className="cosmic-nav-actions"><WalletConnect/><button ref={menuTrigger} className="cosmic-menu" aria-label="Open menu" onClick={() => mobileMenu.current?.showModal()}><Menu size={22}/></button></div></header>

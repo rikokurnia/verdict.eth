@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PrivyProvider, usePrivy, useWallets } from '@privy-io/react-auth';
+import { PrivyProvider, usePrivy, useWallets, useConnectWallet } from '@privy-io/react-auth';
 
 interface WalletContextType {
   account: string;
@@ -18,65 +18,76 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | null>(null);
 
 function InnerWalletBridge({ children }: { children: React.ReactNode }) {
-  const { ready, authenticated, user, login, logout } = usePrivy();
+  const { ready, authenticated, user, logout } = usePrivy();
   const { wallets } = useWallets();
+  const { connectWallet } = useConnectWallet();
   const router = useRouter();
 
-  // Primary address resolution from Privy session:
+  // Connected state: either external wallet connected via 1-click connectWallet, or authenticated session
+  const isConnected = useMemo(() => {
+    return Boolean((wallets && wallets.length > 0 && !!wallets[0]?.address) || authenticated);
+  }, [wallets, authenticated]);
+
+  // Primary address resolution from connected external wallet or Privy session:
   const account = useMemo(() => {
-    if (!authenticated || !user) return '';
     if (wallets && wallets.length > 0 && wallets[0]?.address) {
       return wallets[0].address;
     }
-    if (user.wallet?.address) {
+    if (user?.wallet?.address) {
       return user.wallet.address;
     }
-    // Check linked accounts for wallet
-    const walletAccount = user.linkedAccounts?.find(
+    const walletAccount = user?.linkedAccounts?.find(
       (a) => a.type === 'wallet' && 'address' in a && typeof a.address === 'string'
     ) as { address: string } | undefined;
     if (walletAccount?.address) {
       return walletAccount.address;
     }
-    // Fallback if authenticated via social/email without explicit wallet
-    if (user.id) {
+    if (user?.id) {
       const clean = user.id.replace(/[^0-9a-fA-F]/g, '');
       return `0x${clean.padEnd(40, '0').slice(0, 40)}`;
     }
     return '';
-  }, [authenticated, user, wallets]);
+  }, [wallets, user]);
 
-  const [pendingLogin, setPendingLogin] = useState(false);
+  const [pendingConnect, setPendingConnect] = useState(false);
 
   useEffect(() => {
-    if (ready && pendingLogin) {
-      setPendingLogin(false);
-      login();
+    if (ready && pendingConnect) {
+      setPendingConnect(false);
+      connectWallet();
     }
-  }, [ready, pendingLogin, login]);
+  }, [ready, pendingConnect, connectWallet]);
 
+  // 1-click external wallet connection without requiring secondary SIWE signature
   const connect = useCallback(() => {
     if (!ready) {
-      setPendingLogin(true);
+      setPendingConnect(true);
       return;
     }
-    login();
-  }, [ready, login]);
+    connectWallet();
+  }, [ready, connectWallet]);
 
   const disconnect = useCallback(async () => {
     try {
+      if (wallets && wallets.length > 0) {
+        for (const w of wallets) {
+          try {
+            w.disconnect();
+          } catch {}
+        }
+      }
       await logout();
     } catch {
       // ignore
     }
     router.push('/');
-  }, [logout, router]);
+  }, [wallets, logout, router]);
 
   return (
     <WalletContext.Provider
       value={{
         account,
-        isConnected: authenticated,
+        isConnected,
         ready,
         connect,
         disconnect,
@@ -102,10 +113,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           accentColor: '#70A5FF',
           showWalletLoginFirst: true,
           logo: '/icon.svg',
+          walletList: ['detected_wallets', 'metamask', 'coinbase_wallet', 'rainbow', 'wallet_connect'],
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: 'users-without-wallets',
+            createOnLogin: 'off',
           },
         },
       }}
