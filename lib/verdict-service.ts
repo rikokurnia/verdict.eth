@@ -76,7 +76,29 @@ export async function resolveVerdict(name: string = ENSV2_SEPOLIA.names.asset): 
     rpc,
   );
 
-  const assetSource = await readRecords(universal, name, [
+  // Namespace-alias following: alias parents (arb./base.) declare their
+  // canonical target in verdict.alias.canonical. One hop, self-targets and
+  // malformed targets refused — the deployment predates resolver setAlias.
+  let effectiveName = name;
+  let aliasedFrom: string | null = null;
+  const labels = name.split('.');
+  if (labels.length > 2) {
+    const parent = labels.slice(1).join('.');
+    try {
+      const query = textInterface.encodeFunctionData('text', [namehash(parent), 'verdict.alias.canonical']);
+      const [raw] = await universal.resolve(dnsEncode(parent), query, { blockTag: sourceBlock });
+      const [target] = textInterface.decodeFunctionResult('text', raw);
+      const candidate = String(target).toLowerCase();
+      if (candidate && candidate !== name && /^(?=.{1,255}$)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.eth$/.test(candidate)) {
+        aliasedFrom = name;
+        effectiveName = candidate;
+      }
+    } catch {
+      // No alias pointer — resolve the requested name directly.
+    }
+  }
+
+  const assetSource = await readRecords(universal, effectiveName, [
     'verdict.schema',
     'verdict.asset.displayName',
     'verdict.asset.ticker',
@@ -122,7 +144,7 @@ export async function resolveVerdict(name: string = ENSV2_SEPOLIA.names.asset): 
     ], sourceBlock),
   ]);
 
-  if (auditSource.records['verdict.subject'] !== name || observationSource.records['verdict.subject'] !== name) {
+  if (auditSource.records['verdict.subject'] !== effectiveName || observationSource.records['verdict.subject'] !== effectiveName) {
     throw new Error('Independent evidence subject does not match the requested asset');
   }
 
@@ -150,6 +172,8 @@ export async function resolveVerdict(name: string = ENSV2_SEPOLIA.names.asset): 
   return {
     ok: true,
     name,
+    aliasedFrom,
+    resolvedName: effectiveName,
     chainId: ENSV2_SEPOLIA.chainId,
     sourceBlock,
     evaluatedAt: now,
@@ -219,6 +243,8 @@ export function unavailableVerdict(name: string, reason: string): VerdictApiResp
   return {
     ok: false,
     name,
+    aliasedFrom: null,
+    resolvedName: name,
     chainId: ENSV2_SEPOLIA.chainId,
     sourceBlock: null,
     evaluatedAt: Math.floor(Date.now() / 1000),

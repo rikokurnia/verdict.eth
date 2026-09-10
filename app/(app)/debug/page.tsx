@@ -1,6 +1,7 @@
 import { PageHead } from '@/components/app/app-shell';
 import StatusChip from '@/components/app/status-chip';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import { readLifecycleProofs } from '@/lib/lifecycle-proofs';
 import { resolveVerdict, unavailableVerdict } from '@/lib/verdict-service';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ function short(value: string) {
 
 export default async function DebugPage() {
   const verdict = await resolveVerdict().catch(() => unavailableVerdict(ENSV2_SEPOLIA.names.asset, 'Sepolia read failed.'));
+  const proofs = await readLifecycleProofs().catch(() => null);
   const txs = [
     ['Asset records', ENSV2_SEPOLIA.transactions.assetRecords],
     ['Audit records', ENSV2_SEPOLIA.transactions.auditRecords],
@@ -73,6 +75,43 @@ export default async function DebugPage() {
             </div>
           ))}
         </dl>
+      </div>
+
+      <div className="v-card" style={{ marginTop: 16 }}>
+        <div className="v-label">Namespace aliasing · edit once, both resolve</div>
+        {!proofs ? <p className="v-muted">Alias proofs unavailable.</p> : (
+          <div className="v-table-wrap" style={{ marginTop: 10 }}>
+            <table className="v-table">
+              <thead><tr><th>Alias path</th><th>Shared subregistry</th><th>Direct read</th><th>Via pointer</th><th>Identical</th></tr></thead>
+              <tbody>
+                {proofs.aliases.map((alias) => (
+                  <tr key={alias.parent}>
+                    <td className="v-mono">{alias.path}</td>
+                    <td>{alias.sharesSubregistry ? '✓ shared' : '× missing'}</td>
+                    <td className="v-mono">{alias.pathTitle === '' ? '(empty — no setAlias here)' : alias.pathTitle}</td>
+                    <td className="v-mono">{alias.followedTitle || '—'}</td>
+                    <td>{alias.identical ? `✓ matches canonical` : '× divergent'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="v-muted" style={{ marginTop: 8 }}>
+          arb./base. share the acme subregistry and declare their canonical target onchain; readers follow
+          the pointer (this deployment predates resolver setAlias — proven by implementation ABI).
+        </p>
+      </div>
+
+      <div className="v-card" style={{ marginTop: 16 }}>
+        <div className="v-label">Lifecycle artifacts · soulbound, forever, emancipated</div>
+        {!proofs ? <p className="v-muted">Artifact proofs unavailable.</p> : (
+          <dl className="v-kv" style={{ marginTop: 10 }}>
+            <dt>Soulbound</dt><dd className="v-mono">{proofs.soulbound?.name} · owner {short(proofs.soulbound?.owner ?? '')} · transfer {proofs.soulbound?.blocked ? 'blocked ✓ (no transfer admin)' : 'NOT blocked'}</dd>
+            <dt>Forever</dt><dd className="v-mono">{proofs.forever?.name} · expiry {proofs.forever?.expiry} {proofs.forever?.isMax ? '✓ uint64 max' : ''}</dd>
+            <dt>Emancipation</dt><dd className="v-mono">{proofs.emancipation?.registry} · dangerous root roles {proofs.emancipation?.dangerousHeld ? 'HELD' : 'revoked ✓'} · registrar {proofs.emancipation?.registrarHeld ? 'kept ✓' : 'lost'}</dd>
+          </dl>
+        )}
       </div>
     </>
   );

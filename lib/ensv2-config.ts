@@ -22,6 +22,9 @@ export const ENSV2_SEPOLIA = {
     audit: 'audit-001.verdict-auditor.eth',
     observation: 'risk-001.verdict-monitor.eth',
     agent: 'treasury-agent.verdict.eth',
+    aliasParents: ['arb.verdict.eth', 'base.verdict.eth'],
+    soulbound: 'kyc-001.acme.verdict.eth',
+    forever: 'genesis.acme.verdict.eth',
   },
   actors: {
     auditorWorker: '0xeABF723A3a2985aEB61D5853BfFF7eb8e83e6232',

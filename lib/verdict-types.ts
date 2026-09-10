@@ -9,6 +9,10 @@ export type RecordSource = {
 export type VerdictApiResponse = {
   ok: boolean;
   name: string;
+  /** Set when the requested name followed an onchain alias pointer. */
+  aliasedFrom: string | null;
+  /** The canonical name whose records were actually evaluated. */
+  resolvedName: string;
   chainId: number;
   sourceBlock: number | null;
   evaluatedAt: number;

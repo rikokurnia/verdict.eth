@@ -2,6 +2,7 @@ node_modules/
 .next/
 .env*
 .secrets/
+.cache/
 *.tsbuildinfo
 video/node_modules/
 video/.hyperframes/

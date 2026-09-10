@@ -5,6 +5,7 @@ import { RefreshCw } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
 import StatusChip from '@/components/app/status-chip';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import type { LifecycleProofs } from '@/lib/lifecycle-proofs';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -27,14 +28,19 @@ function shortHash(value: string | undefined) {
 
 export default function LifecyclePage() {
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
+  const [proofs, setProofs] = useState<LifecycleProofs | null>(null);
   const [loadState, setLoadState] = useState<LoadState>('loading');
 
   const refresh = useCallback(async () => {
     setLoadState('loading');
     try {
-      const response = await fetch('/api/verdict', { cache: 'no-store' });
-      if (!response.ok) throw new Error('resolver unavailable');
-      setLive((await response.json()) as VerdictApiResponse);
+      const [verdictResponse, proofsResponse] = await Promise.all([
+        fetch('/api/verdict', { cache: 'no-store' }),
+        fetch('/api/lifecycle-proofs', { cache: 'no-store' }),
+      ]);
+      if (!verdictResponse.ok) throw new Error('resolver unavailable');
+      setLive((await verdictResponse.json()) as VerdictApiResponse);
+      if (proofsResponse.ok) setProofs((await proofsResponse.json()) as LifecycleProofs);
       setLoadState('ready');
     } catch {
       setLoadState('error');
@@ -113,10 +119,18 @@ export default function LifecyclePage() {
           <div className="v-muted">{live?.observation ? `${live.observation.severity} · ${live.observation.reasonCode}` : 'Monitor observation unavailable'}</div>
         </div>
         <div className="v-card">
-          <div className="v-label">Namespace policy · static demo</div>
-          <div style={{ margin: '8px 0' }}><StatusChip state="POLICY_PASS" /></div>
-          <div style={{ fontSize: 14 }}>Soulbound + forever names configured</div>
-          <div className="v-muted">Enforced by EAC roles and registry policy — capability demo, not a verdict.</div>
+          <div className="v-label">Soulbound + forever · live</div>
+          <div style={{ margin: '8px 0' }}>
+            <StatusChip state={!proofs ? 'UNAVAILABLE' : proofs.soulbound?.blocked && proofs.forever?.isMax ? 'POLICY_PASS' : 'BLOCKED'} />
+          </div>
+          <div style={{ fontSize: 14 }}>
+            {!proofs ? 'Resolving registry proofs…'
+              : `Transfer ${proofs.soulbound?.blocked ? 'blocked' : 'NOT blocked'} · expiry ${proofs.forever?.isMax ? 'uint64 max' : proofs.forever?.expiry ?? 'unknown'}`}
+          </div>
+          <div className="v-muted">
+            {proofs?.soulbound ? `${proofs.soulbound.name} · owner ${shortHash(proofs.soulbound.owner)} · no transfer admin` : 'Soulbound proof unavailable'}
+            {proofs?.emancipation ? ` · acme ${proofs.emancipation.emancipated ? 'emancipated ✓' : 'NOT emancipated'}` : ''}
+          </div>
         </div>
       </div>
 
@@ -143,8 +157,8 @@ export default function LifecyclePage() {
       )}
 
       <p className="v-muted" style={{ marginTop: 16 }}>
-        Three of four states resolve live from independent ENSv2 authorities at a pinned source block.
-        The namespace-policy card documents registry capability; it never affects the verdict.
+        All four states resolve live from ENSv2 at a pinned source block: expiring audit, revocable
+        attestation, and now soulbound transfer-blocking plus forever expiry with an emancipated registry.
       </p>
     </>
   );

@@ -124,6 +124,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
             <span>{decodedName}</span>
             <button className="v-copy-btn" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
             <span>Ticker {display.ticker}</span>
+            {live?.aliasedFrom && <span>Alias → {live.resolvedName}</span>}
           </div>
         </div>
       </div>

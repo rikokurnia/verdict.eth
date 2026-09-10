@@ -121,7 +121,7 @@ export default function AgentsPage() {
     : 'Resolve an asset above to compute the next due action.';
 
   const steps: { label: string; detail: string; ok: boolean }[] = result ? [
-    { label: 'Resolve identity', detail: `Universal ${shortHash(result.infrastructure.universalResolver)} → resolver ${shortHash(result.sources[0]?.resolver)}`, ok: result.sources.length > 0 },
+    { label: 'Resolve identity', detail: result.aliasedFrom ? `alias ${result.aliasedFrom} → canonical ${result.resolvedName} · resolver ${shortHash(result.sources[0]?.resolver)}` : `Universal ${shortHash(result.infrastructure.universalResolver)} → resolver ${shortHash(result.sources[0]?.resolver)}`, ok: result.sources.length > 0 },
     { label: 'Read issuer branch', detail: result.asset ? `${result.asset.displayName} · ${result.asset.ticker} · ${result.asset.issuer}` : 'Issuer records missing', ok: Boolean(result.asset) },
     { label: 'Read auditor authority', detail: result.audit ? `${result.audit.name} · ${result.audit.status}` : 'Auditor records missing', ok: Boolean(result.audit) },
     { label: 'Read risk authority', detail: result.observation ? `${result.observation.name} · ${result.observation.severity} · ${result.observation.reasonCode}` : 'Risk records missing', ok: Boolean(result.observation) },
