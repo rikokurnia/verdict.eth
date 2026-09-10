@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PrivyProvider, usePrivy, useWallets } from '@privy-io/react-auth';
 
@@ -46,8 +46,20 @@ function InnerWalletBridge({ children }: { children: React.ReactNode }) {
     return '';
   }, [authenticated, user, wallets]);
 
+  const [pendingLogin, setPendingLogin] = useState(false);
+
+  useEffect(() => {
+    if (ready && pendingLogin) {
+      setPendingLogin(false);
+      login();
+    }
+  }, [ready, pendingLogin, login]);
+
   const connect = useCallback(() => {
-    if (!ready) return;
+    if (!ready) {
+      setPendingLogin(true);
+      return;
+    }
     login();
   }, [ready, login]);
 

@@ -38,6 +38,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [reduced, setReduced] = useState(false);
   const [compact, setCompact] = useState(false);
   const { account, isConnected, ready, connect, disconnect, openDialog } = useWallet();
+  const hasPrompted = useRef(false);
+
+  useEffect(() => {
+    if (ready && !isConnected && !hasPrompted.current) {
+      hasPrompted.current = true;
+      connect();
+    }
+  }, [ready, isConnected, connect]);
 
   useEffect(() => {
     const motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -68,10 +76,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const current = ROUTES.find(
     (r) => pathname === r.href || (r.href !== '/dashboard' && pathname.startsWith(r.href + '/')),
   );
-  const allowReadOnly = true;
 
   // 1. Loading state while Privy restores local session
-  if (!ready && !allowReadOnly) {
+  if (!ready) {
     return (
       <div className="v-app v-wave-workspace v-gate-screen">
         <div className="v-video-background" aria-hidden="true">
@@ -104,7 +111,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // 2. Gate Lock Screen: Wallet connection required to enter dashboard
-  if (!isConnected && !allowReadOnly) {
+  if (!isConnected) {
     return (
       <div className="v-app v-wave-workspace v-gate-screen">
         {/* Background Video with Cosmic Mountains & Ambient Gradients */}

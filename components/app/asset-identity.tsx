@@ -21,13 +21,40 @@ export function AssetLogo({ asset, size = 42 }: { asset: DemoAsset; size?: numbe
   return <span className="v-asset-logo" style={{ width: size, height: size }}><Image src={asset.logo} alt={`${asset.title} logo`} width={size} height={size} sizes={`${size}px`} /></span>;
 }
 
+const CHAIN_ICON_SLUGS: Record<NetworkId, string> = {
+  ethereum: 'ethereum',
+  // Sepolia has no icon on the CDN — it is Ethereum testnet, so the real
+  // Ethereum logo is the honest mark, with the "Sepolia" text label kept.
+  sepolia: 'ethereum',
+  solana: 'solana',
+  stellar: 'stellar',
+  polygon: 'polygon',
+  gnosis: 'gnosis',
+  bitcoin: 'bitcoin',
+  arbitrum: 'arbitrum',
+  base: 'base',
+  avalanche: 'avalanche',
+  bsc: 'bsc',
+  tron: 'tron',
+  provenance: 'provenance',
+  aptos: 'aptos',
+};
+
 function NetworkGlyph({ network }: { network: NetworkId }) {
-  if (network === 'ethereum' || network === 'sepolia') return <Image src="/assets/ethereum.png" alt="" width={16} height={16} aria-hidden="true" />;
-  if (network === 'bitcoin') return <Image src="/assets/bitcoin.png" alt="" width={16} height={16} aria-hidden="true" />;
-  if (network === 'solana') return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4h11l2 2H6L4 4Zm2 5h11l-2 2H4l2-2Zm-2 5h11l2 2H6l-2-2Z" fill="currentColor" /></svg>;
-  if (network === 'polygon') return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m7.3 6.2 2.7-1.6 2.7 1.6v3.1L10 10.9 7.3 9.3m0 0L4.6 11v3.1l2.7 1.6 2.7-1.6V11m2.7-1.7 2.7-1.6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-  if (network === 'stellar') return <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.4" fill="none" stroke="currentColor" strokeWidth="1.6" /><path d="M3 13.3 17 6.7M3.8 9.4 16.2 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>;
-  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 13.8 10 3l6 10.8-6 3.2-6-3.2Z" fill="none" stroke="currentColor" strokeWidth="1.6" /><path d="m6.8 12.2 3.2-5.7 3.2 5.7-3.2 1.7-3.2-1.7Z" fill="currentColor" opacity=".65" /></svg>;
+  // Real chain logos served by the DefiLlama icons CDN (verified HTTP 200
+  // per slug). No generated placeholders.
+  return (
+    <img
+      src={`https://icons.llamao.fi/icons/chains/rsz_${CHAIN_ICON_SLUGS[network]}.jpg`}
+      alt=""
+      width={16}
+      height={16}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      style={{ borderRadius: '50%', objectFit: 'cover' }}
+      aria-hidden="true"
+    />
+  );
 }
 
 export function NetworkBadges({ networks }: { networks: NetworkId[] }) {
