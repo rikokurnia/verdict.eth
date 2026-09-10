@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { readLastGood, writeLastGood } from '@/lib/market-cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,14 +92,24 @@ export async function GET() {
   try {
     try {
       const quotes = await fetchMarkets(controller.signal);
-      return NextResponse.json({ ok: true, source: 'CoinGecko', quotes }, { headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' } });
+      writeLastGood(quotes);
+      return NextResponse.json({ ok: true, source: 'CoinGecko', quotes }, { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900' } });
     } catch (marketsError) {
       console.warn('Market markets feed failed, trying simple price fallback', marketsError);
       const quotes = await fetchSimpleFallback(controller.signal);
-      return NextResponse.json({ ok: true, source: 'CoinGecko', quotes }, { headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' } });
+      writeLastGood(quotes);
+      return NextResponse.json({ ok: true, source: 'CoinGecko', quotes }, { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900' } });
     }
   } catch (error) {
     console.error('Market data fetch failed', error);
+    // Degrade to the last good snapshot instead of blanking the dashboard.
+    const lastGood = readLastGood();
+    if (lastGood) {
+      return NextResponse.json(
+        { ok: true, source: 'CoinGecko', stale: true, savedAt: lastGood.savedAt, quotes: lastGood.quotes },
+        { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } },
+      );
+    }
     return NextResponse.json({ ok: false, source: 'CoinGecko', quotes: {} }, { status: 502 });
   } finally {
     clearTimeout(timer);

@@ -2287,6 +2287,108 @@
   border-color: var(--primary);
 }
 
+/* Primary buttons inside the dark workspace: the base .v-btn carries no
+   background, which renders as a native white button. Theme it properly. */
+.v-wave-workspace .v-btn:not(.v-btn-secondary) {
+  background: linear-gradient(135deg, #A3D1FF 0%, #6BA3E8 100%);
+  border-color: transparent;
+  color: #061222;
+  font-weight: 650;
+  box-shadow: 0 4px 20px rgba(112, 165, 255, 0.35);
+  white-space: nowrap;
+}
+.v-wave-workspace .v-btn:not(.v-btn-secondary):hover:not(:disabled) {
+  background: linear-gradient(135deg, #BAE0FF 0%, #7CB4F5 100%);
+  box-shadow: 0 6px 26px rgba(112, 165, 255, 0.5);
+}
+.v-wave-workspace .v-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.v-wave-workspace .v-btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Custom asset picker with logos (native <select> cannot render images). */
+.v-asset-picker { position: relative; flex: 1; min-width: 0; }
+.v-asset-picker-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(6, 22, 38, 0.56);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.v-asset-picker-btn:hover:not(:disabled) { border-color: var(--primary); }
+.v-asset-picker-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.v-asset-picker-btn img { border-radius: 50%; flex-shrink: 0; }
+.v-asset-picker-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-asset-picker-chev { margin-left: auto; flex-shrink: 0; color: var(--muted); }
+.v-asset-picker-list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0A1B2E;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+.v-asset-picker-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.v-asset-picker-opt:hover { background: rgba(144, 183, 227, 0.12); }
+.v-asset-picker-opt[aria-selected="true"] { background: rgba(144, 183, 227, 0.18); }
+.v-asset-picker-opt img { border-radius: 50%; flex-shrink: 0; }
+.v-asset-picker-ticker { font-family: var(--font-mono); font-size: 11px; color: var(--primary); flex-shrink: 0; }
+.v-asset-picker-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+
+/* Live execution terminal. */
+.v-term {
+  max-height: 340px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.v-term-ts { color: var(--on-dark-muted); margin-right: 8px; }
+.v-term-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  margin-left: 4px;
+  vertical-align: -2px;
+  background: #7BD9A5;
+  animation: v-term-blink 1s steps(2) infinite;
+}
+@keyframes v-term-blink { 50% { opacity: 0; } }
+
 /* --------------------------------------------------------------------------
    Responsive Breakpoints
    -------------------------------------------------------------------------- */

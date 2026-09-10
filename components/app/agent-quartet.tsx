@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 import StatusChip from '@/components/app/status-chip';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
@@ -13,11 +14,21 @@ const INSPECTORS: { id: InspectorId; label: string }[] = [
 ];
 
 const OPTIONS = [
-  { value: ENSV2_SEPOLIA.names.asset, label: `Demo asset · ${ENSV2_SEPOLIA.names.asset}` },
-  ...DEMO_ASSETS.filter((a) => a.marketId).map((a) => ({ value: a.marketId as string, label: `${a.ticker} · ${a.title}` })),
+  { value: ENSV2_SEPOLIA.names.asset, ticker: 'USDY-001', label: 'USD Yield 001 · demo asset', logo: '/icon.svg' },
+  ...DEMO_ASSETS.filter((a) => a.marketId).map((a) => ({
+    value: a.marketId as string,
+    ticker: a.ticker,
+    label: `${a.title}`,
+    logo: a.logo,
+  })),
 ];
 
 type HistoryEntry = { file: string; recordedAt: string; run: QuartetRun };
+type TermLine = { ts: string; kind: string; label: string; detail?: string; ms?: number };
+
+function clock(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 function Grounding({ value }: { value: string }) {
   const cls = value === 'live' ? 'v-pass-t' : value === 'curated' ? 'v-dim' : 'v-block-t';
@@ -50,11 +61,17 @@ function InspectorCard({ id, label, run }: { id: InspectorId; label: string; run
 
 export default function AgentQuartet() {
   const [subject, setSubject] = useState(OPTIONS[1]?.value ?? OPTIONS[0].value);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [running, setRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  const [lines, setLines] = useState<TermLine[]>([]);
   const [run, setRun] = useState<QuartetRun | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const termRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const sourceRef = useRef<EventSource | null>(null);
+
+  const selected = OPTIONS.find((o) => o.value === subject) ?? OPTIONS[0];
 
   const loadHistory = useCallback(async () => {
     try {
@@ -68,37 +85,74 @@ export default function AgentQuartet() {
   useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   useEffect(() => {
-    if (!running) return;
-    const started = Date.now();
-    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 500);
-    return () => clearInterval(timer);
-  }, [running]);
+    const term = termRef.current;
+    if (term) term.scrollTop = term.scrollHeight;
+  }, [lines, running]);
 
-  async function start() {
-    setRunning(true);
-    setElapsed(0);
-    setError(null);
-    setRun(null);
-    try {
-      const response = await fetch('/api/agents/run', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ subject, write: false }),
-      });
-      const body = (await response.json()) as { ok: boolean; run?: QuartetRun; error?: string };
-      if (!response.ok || !body.ok || !body.run) throw new Error(body.error ?? 'Inspection failed');
-      setRun(body.run);
-      void loadHistory();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Inspection failed');
-    } finally {
-      setRunning(false);
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function onPointerDown(event: PointerEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) setPickerOpen(false);
     }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setPickerOpen(false);
+    }
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [pickerOpen]);
+
+  useEffect(() => () => { sourceRef.current?.close(); }, []);
+
+  function appendLine(entry: { t?: string; kind: string; label: string; detail?: string; ms?: number }) {
+    setLines((prev) => [...prev, { ts: clock(entry.t ?? new Date().toISOString()), kind: entry.kind, label: entry.label, detail: entry.detail, ms: entry.ms }]);
   }
 
-  const stage = elapsed < 12 ? 'Gathering live evidence (market · contract · verification · issuer page)…'
-    : elapsed < 60 ? 'Inspectors running in parallel (legal · custody · technical)…'
-    : 'Synthesizing consensus…';
+  function start() {
+    sourceRef.current?.close();
+    setRunning(true);
+    setError(null);
+    setRun(null);
+    setLines([]);
+    appendLine({ kind: 'run-start', label: `$ inspect ${subject}` });
+    const source = new EventSource(`/api/agents/stream?subject=${encodeURIComponent(subject)}`);
+    sourceRef.current = source;
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data as string) as {
+          kind: string; label?: string; detail?: string; ms?: number; t?: string; run?: QuartetRun;
+        };
+        if (data.kind === 'result' && data.run) {
+          setRun(data.run);
+          setRunning(false);
+          source.close();
+          void loadHistory();
+          return;
+        }
+        if (data.kind === 'error') {
+          setError(data.detail ?? data.label ?? 'Inspection failed');
+          setRunning(false);
+          source.close();
+          return;
+        }
+        appendLine({ t: data.t, kind: data.kind, label: data.label ?? data.kind, detail: data.detail, ms: data.ms });
+      } catch {
+        setError('Unreadable stream frame.');
+        setRunning(false);
+        source.close();
+      }
+    };
+    source.onerror = () => {
+      if (sourceRef.current === source) {
+        setError('Stream interrupted. Retry when connectivity returns.');
+        setRunning(false);
+      }
+      source.close();
+    };
+  }
 
   return (
     <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
@@ -113,29 +167,61 @@ export default function AgentQuartet() {
         </div>
       </div>
 
-      <form
-        className="v-table-toolbar"
-        onSubmit={(event) => { event.preventDefault(); void start(); }}
-      >
-        <div className="v-select-wrapper" style={{ flex: 1 }}>
-          <label className="v-visually-hidden" htmlFor="quartet-subject">Inspection subject</label>
-          <select
-            id="quartet-subject"
-            className="v-select-filter"
-            value={subject}
-            onChange={(event) => setSubject(event.target.value)}
+      <div className="v-table-toolbar">
+        <div className="v-asset-picker" ref={pickerRef}>
+          <button
+            type="button"
+            className="v-asset-picker-btn"
+            aria-haspopup="listbox"
+            aria-expanded={pickerOpen}
+            aria-label="Inspection subject"
             disabled={running}
-            style={{ width: '100%' }}
+            onClick={() => setPickerOpen((open) => !open)}
           >
-            {OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+            <img src={selected.logo} alt="" width={22} height={22} loading="lazy" referrerPolicy="no-referrer" />
+            <span className="v-asset-picker-label"><strong>{selected.ticker}</strong> · {selected.label}</span>
+            <ChevronDown size={15} className="v-asset-picker-chev" aria-hidden="true" />
+          </button>
+          {pickerOpen && (
+            <ul className="v-asset-picker-list" role="listbox" aria-label="Inspection subject">
+              {OPTIONS.map((option) => (
+                <li key={option.value} role="option" aria-selected={option.value === subject}>
+                  <button
+                    type="button"
+                    className="v-asset-picker-opt"
+                    aria-selected={option.value === subject}
+                    onClick={() => { setSubject(option.value); setPickerOpen(false); }}
+                  >
+                    <img src={option.logo} alt="" width={22} height={22} loading="lazy" referrerPolicy="no-referrer" />
+                    <span className="v-asset-picker-ticker">{option.ticker}</span>
+                    <span className="v-asset-picker-name">{option.label}</span>
+                    {option.value === subject && <Check size={14} aria-hidden="true" style={{ marginLeft: 'auto' }} />}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <button type="submit" className="v-btn" disabled={running} aria-busy={running}>
-          {running ? `Inspecting… ${elapsed}s` : 'Run inspection'}
+        <button type="button" className="v-btn" onClick={start} disabled={running} aria-busy={running}>
+          {running ? 'Inspecting…' : 'Run inspection'}
         </button>
-      </form>
+      </div>
 
-      {running && <p className="v-muted" role="status" aria-live="polite">{stage} Inspectors typically take 30–90s.</p>}
+      {(running || lines.length > 0) && (
+        <div ref={termRef} className="v-cli v-term" style={{ marginTop: 12 }} role="log" aria-live="polite" aria-label="Live inspection log">
+          {lines.map((line, i) => (
+            <div key={`${line.ts}-${i}`}>
+              <span className="v-term-ts">{line.ts}</span>
+              <span className={line.kind === 'error' ? 'v-block-t' : line.kind === 'done' || line.kind === 'inspector-ok' || line.kind === 'synthesis-ok' ? 'v-pass-t' : undefined}>
+                {line.label}
+              </span>
+              {line.detail && <span className="v-dim"> · {line.detail}</span>}
+              {typeof line.ms === 'number' && <span className="v-dim"> · {line.ms >= 1000 ? `${(line.ms / 1000).toFixed(1)}s` : `${line.ms}ms`}</span>}
+            </div>
+          ))}
+          {running && <div><span className="v-term-ts">{clock(new Date().toISOString())}</span><span className="v-term-cursor" aria-hidden="true" /></div>}
+        </div>
+      )}
       {error && <p className="v-block-t" role="alert">{error}</p>}
 
       {run && (
@@ -153,6 +239,15 @@ export default function AgentQuartet() {
             <dl className="v-kv" style={{ marginTop: 10 }}>
               <dt>Mapped severity</dt><dd className="v-mono">{run.synthesis.mapped.severity} · {run.synthesis.mapped.reasonCode}</dd>
               <dt>Confidence</dt><dd>{run.synthesis.mapped.confidence}% · valid {run.synthesis.mapped.validityDays}d</dd>
+              <dt>Engines</dt>
+              <dd className="v-mono">
+                {(Object.entries(run.engines ?? {}) as [string, { provider: string; model: string }][]).map(([call, engine]) => `${call}:${engine.provider}`).join(' · ') || run.model}
+              </dd>
+              <dt>Tokens</dt>
+              <dd className="v-mono">
+                {(run.usage ?? []).reduce((sum, u) => sum + (u.inputTokens ?? 0), 0).toLocaleString()} in ·{' '}
+                {(run.usage ?? []).reduce((sum, u) => sum + (u.outputTokens ?? 0), 0).toLocaleString()} out
+              </dd>
               <dt>Contract</dt>
               <dd className="v-mono">
                 {run.evidenceSummary.contractAddress ?? 'no EVM contract in evidence'}

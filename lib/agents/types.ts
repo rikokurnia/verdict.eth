@@ -96,6 +96,8 @@ export type EvidencePack = {
   builtAt: string;
 };
 
+export type CallEngine = { provider: string; model: string };
+
 export type QuartetRun = {
   id: string;
   subject: string;
@@ -103,6 +105,10 @@ export type QuartetRun = {
   finishedAt: string;
   durationMs: number;
   model: string;
+  /** Which engine served each call (failover can mix providers in one run). */
+  engines: Record<'legal' | 'custody' | 'technical' | 'synthesis', CallEngine>;
+  /** Billed token usage per call, when the provider reports it. */
+  usage: { call: string; provider: string; model: string; inputTokens: number | null; outputTokens: number | null }[];
   reports: Record<InspectorId, InspectorReport>;
   synthesis: Synthesis;
   evidenceSummary: {

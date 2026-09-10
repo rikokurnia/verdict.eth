@@ -13,6 +13,13 @@ import {
   type QuartetRun,
   type Synthesis,
 } from './types';
+import {
+  extractJson,
+  isRetryable,
+  providerChain,
+  sleep,
+  type ProviderId,
+} from './providers';
 
 const DEMO_ASSET = ENSV2_SEPOLIA.names.asset;
 const RUNS_DIR = join(process.cwd(), '.secrets', 'agent-runs');
@@ -32,74 +39,75 @@ function loadEnvFile(): Record<string, string> {
   }
 }
 
-function geminiConfig() {
-  const file = loadEnvFile();
-  const apiKey = process.env.GEMINI_API_KEY || file.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
-  return { apiKey, model: process.env.GEMINI_MODEL || file.GEMINI_MODEL || 'gemini-3.6-flash' };
+export type RunContext = {
+  chain: ReturnType<typeof providerChain>;
+  /** Providers that failed this run are skipped for its remaining calls. */
+  cooledDown: Set<ProviderId>;
+  usage: QuartetRun['usage'];
+};
+
+export function newRunContext(): RunContext {
+  return { chain: providerChain(), cooledDown: new Set(), usage: [] };
 }
 
-function extractJson(text: string): unknown {
-  const clean = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  return JSON.parse(clean);
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function callGemini(system: string, user: string, timeoutMs: number): Promise<unknown> {
-  const { apiKey, model } = geminiConfig();
-  let lastError: unknown = null;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
-          body: JSON.stringify({
-            systemInstruction: { role: 'system', parts: [{ text: system }] },
-            contents: [{ role: 'user', parts: [{ text: user }] }],
-            generationConfig: { temperature: 0, responseMimeType: 'application/json' },
-          }),
-          signal: controller.signal,
-        },
-      );
-      if (response.status === 503 || response.status === 429 || (response.status >= 500 && response.status < 600)) {
-        lastError = new Error(`Gemini request failed (${response.status})`);
-      } else {
-        if (!response.ok) throw new Error(`Gemini request failed (${response.status})`);
-        const body = (await response.json()) as {
-          candidates?: { content?: { parts?: { text?: string }[] } }[];
-        };
-        const text = body?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
-        if (!text) throw new Error('Gemini returned no content');
-        return extractJson(text);
+/**
+ * One model call with ordered failover (default gemini → deepseek → muse).
+ * Each provider gets up to 2 attempts; a provider that fails is cooled down
+ * for the rest of the run so quota-dead keys don't slow every later call.
+ */
+async function callChain(
+  ctx: RunContext,
+  call: string,
+  system: string,
+  user: string,
+  timeoutMs: number,
+): Promise<{ parsed: unknown; engine: { provider: string; model: string } }> {
+  const errors: string[] = [];
+  for (const provider of ctx.chain) {
+    if (ctx.cooledDown.has(provider.id)) continue;
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const result = await provider.chat(system, user, timeoutMs);
+        const parsed = extractJson(result.text);
+        ctx.usage.push({
+          call,
+          provider: provider.id,
+          model: provider.model,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+        });
+        return { parsed, engine: { provider: provider.id, model: provider.model } };
+      } catch (error) {
+        lastError = error;
+        if (!isRetryable(error)) break;
+        if (attempt < 2) await sleep(4000);
       }
-    } catch (error) {
-      // Network-level failures (flaky egress) are retried; API 4xx and
-      // validation-shaped errors throw immediately above.
-      lastError = error;
-    } finally {
-      clearTimeout(timer);
     }
-    if (attempt < 3) await sleep(attempt === 1 ? 4000 : 10000);
+    const message = lastError instanceof Error ? lastError.message : 'unknown failure';
+    errors.push(`${provider.id}: ${message}`);
+    ctx.cooledDown.add(provider.id);
   }
-  throw lastError instanceof Error ? lastError : new Error('Gemini request failed');
+  throw new Error(`All providers failed for ${call} (${errors.join(' | ')})`);
 }
 
-async function runInspector(id: InspectorId, pack: EvidencePack): Promise<InspectorReport> {
-  const raw = await callGemini(promptFor(id), userMessage(pack), 90_000);
-  return validateInspectorReport(id, raw);
+async function runInspector(
+  ctx: RunContext,
+  id: InspectorId,
+  pack: EvidencePack,
+): Promise<{ report: InspectorReport; engine: { provider: string; model: string } }> {
+  const { parsed, engine } = await callChain(ctx, id, promptFor(id), userMessage(pack), 90_000);
+  return { report: validateInspectorReport(id, parsed), engine };
 }
 
-async function runSynthesizer(pack: EvidencePack, reports: Record<InspectorId, InspectorReport>): Promise<Synthesis> {
+async function runSynthesizer(
+  ctx: RunContext,
+  pack: EvidencePack,
+  reports: Record<InspectorId, InspectorReport>,
+): Promise<{ synthesis: Synthesis; engine: { provider: string; model: string } }> {
   const input = `EVIDENCE PACK:\n${JSON.stringify(pack)}\n\nINSPECTOR REPORTS:\n${JSON.stringify(reports)}`;
-  const raw = await callGemini(SYNTHESIZER_PROMPT, input, 90_000);
-  return validateSynthesis(raw);
+  const { parsed, engine } = await callChain(ctx, 'synthesis', SYNTHESIZER_PROMPT, input, 90_000);
+  return { synthesis: validateSynthesis(parsed), engine };
 }
 
 function slug(value: string) {
@@ -130,7 +138,7 @@ async function loadWallet(name: string, provider: JsonRpcProvider) {
  * scoped record keys. Only ever runs for the ENS demo asset, through the
  * auditor/monitor wallets, inside their EAC text-record allowance.
  */
-async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint: string) {
+async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint: string, engineModel: string) {
   const file = loadEnvFile();
   const rpcUrl = process.env.SEPOLIA_RPC_URL || file.SEPOLIA_RPC_URL;
   if (!rpcUrl) throw new Error('SEPOLIA_RPC_URL is not configured');
@@ -140,7 +148,7 @@ async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint:
   // Content-bound fingerprint of the evidence + reports behind this decision.
   const sourceHash = keccak256(toUtf8Bytes(evidenceFingerprint));
   const common = {
-    model: geminiConfig().model,
+    model: engineModel,
     confidence: String(m.confidence),
     rationale: m.rationale,
     sourceHash,
@@ -186,20 +194,52 @@ async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint:
   return { audit, risk };
 }
 
-export async function runQuartet(subject: string, write: boolean): Promise<QuartetRun> {
+export type QuartetEvent = {
+  t: string;
+  kind: 'run-start' | 'evidence' | 'inspector-start' | 'inspector-ok' | 'synthesis-start' | 'synthesis-ok' | 'write' | 'done' | 'error';
+  label: string;
+  detail?: string;
+  ms?: number;
+};
+export type QuartetEmit = (event: Omit<QuartetEvent, 't'>) => void;
+
+export async function runQuartetStream(subject: string, write: boolean, emit: QuartetEmit): Promise<QuartetRun> {
   const started = Date.now();
   const startedAt = new Date(started).toISOString();
+  const ctx = newRunContext();
+  const chainLabel = ctx.chain.map((p) => p.id).join(' → ') || 'none configured';
   const isDemoAsset = subject.toLowerCase() === DEMO_ASSET;
-  const pack = isDemoAsset ? await buildDemoAssetEvidence(DEMO_ASSET) : await buildCatalogEvidence(subject);
-  const { model } = geminiConfig();
+  emit({ kind: 'run-start', label: `Subject ${subject}`, detail: `engines ${chainLabel} · ${isDemoAsset ? 'live ENS evidence' : 'live external evidence'}` });
 
-  const [legal, custody, technical] = await Promise.all([
-    runInspector('legal', pack),
-    runInspector('custody', pack),
-    runInspector('technical', pack),
-  ]);
-  const reports = { legal, custody, technical };
-  const synthesis = await runSynthesizer(pack, reports);
+  const pack = isDemoAsset
+    ? await buildDemoAssetEvidence(DEMO_ASSET, (step) =>
+        emit({ kind: 'evidence', label: `evidence · ${step.key}`, detail: step.detail, ms: step.ms }))
+    : await buildCatalogEvidence(subject, (step) =>
+        emit({ kind: 'evidence', label: `evidence · ${step.key}`, detail: step.detail, ms: step.ms }));
+
+  const ids: InspectorId[] = ['legal', 'custody', 'technical'];
+  for (const id of ids) emit({ kind: 'inspector-start', label: `inspector → ${id}`, detail: 'running in parallel' });
+  const timedInspector = (id: InspectorId) => {
+    const t0 = Date.now();
+    return runInspector(ctx, id, pack).then(({ report, engine }) => {
+      emit({ kind: 'inspector-ok', label: `inspector ✓ ${id}`, detail: `${report.status} · ${report.score}/100 · via ${engine.provider}`, ms: Date.now() - t0 });
+      return { id, report, engine };
+    });
+  };
+  const settled = await Promise.all(ids.map(timedInspector));
+  const reports = Object.fromEntries(settled.map(({ id, report }) => [id, report])) as Record<InspectorId, InspectorReport>;
+  const engines = Object.fromEntries(settled.map(({ id, engine }) => [id, engine])) as QuartetRun['engines'];
+
+  emit({ kind: 'synthesis-start', label: 'synthesizer → consensus', detail: 'weights legal 30 · custody 40 · technical 30' });
+  const synthT0 = Date.now();
+  const { synthesis, engine: synthEngine } = await runSynthesizer(ctx, pack, reports);
+  engines.synthesis = synthEngine;
+  emit({
+    kind: 'synthesis-ok',
+    label: `consensus ✓ ${synthesis.verdict}`,
+    detail: `${synthesis.overall_score}/100 → ${synthesis.policy_state} · via ${synthEngine.provider}`,
+    ms: Date.now() - synthT0,
+  });
 
   const run: QuartetRun = {
     id: `${started}-${slug(subject)}`,
@@ -207,7 +247,9 @@ export async function runQuartet(subject: string, write: boolean): Promise<Quart
     startedAt,
     finishedAt: new Date().toISOString(),
     durationMs: Date.now() - started,
-    model,
+    model: synthEngine.model,
+    engines,
+    usage: ctx.usage,
     reports,
     synthesis,
     evidenceSummary: {
@@ -222,22 +264,32 @@ export async function runQuartet(subject: string, write: boolean): Promise<Quart
   if (write && isDemoAsset) {
     try {
       const fingerprint = JSON.stringify({ subject: pack.subject, builtAt: pack.builtAt, reports });
-      run.write.transactions = await writeDemoAssetDecision(synthesis, fingerprint);
+      const transactions = await writeDemoAssetDecision(synthesis, fingerprint, synthEngine.model);
+      run.write.transactions = transactions;
       run.write.performed = true;
       run.write.reason = 'Mapped decision written through scoped auditor/monitor wallets.';
+      emit({ kind: 'write', label: 'chain write ✓ demo asset', detail: transactions.audit.hash.slice(0, 18) });
     } catch (error) {
       run.write.reason = error instanceof Error ? error.message : 'Onchain write failed';
+      emit({ kind: 'write', label: 'chain write × failed', detail: run.write.reason });
     }
   } else if (write && !isDemoAsset) {
     run.write.reason = 'Writes are only enabled for the ENS demo asset; catalog assets are inspect-only.';
+    emit({ kind: 'write', label: 'chain write skipped', detail: run.write.reason });
   } else {
     run.write.reason = 'Dry run — no chain writes requested.';
+    emit({ kind: 'write', label: 'inspect-only', detail: run.write.reason });
   }
 
   run.finishedAt = new Date().toISOString();
   run.durationMs = Date.now() - started;
   persist(run);
+  emit({ kind: 'done', label: `done in ${Math.round(run.durationMs / 1000)}s`, detail: `${synthesis.verdict} ${synthesis.overall_score}/100 → ${synthesis.policy_state}`, ms: run.durationMs });
   return run;
+}
+
+export async function runQuartet(subject: string, write: boolean): Promise<QuartetRun> {
+  return runQuartetStream(subject, write, () => {});
 }
 
 export function isDemoAssetSubject(subject: string) {

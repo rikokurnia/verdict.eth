@@ -24,7 +24,7 @@ import StatusChip from '@/components/app/status-chip';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type Quote = { usd: number; change24h: number | null; updatedAt: number | null; image?: string };
-type MarketResponse = { ok: boolean; source: string; quotes: Record<string, Quote> };
+type MarketResponse = { ok: boolean; source: string; stale?: boolean; savedAt?: string; quotes: Record<string, Quote> };
 type LoadState = 'loading' | 'ready' | 'partial';
 
 const COVERAGE_COPY: Record<CoverageTier, string> = {
@@ -161,9 +161,15 @@ export default function DashboardPage() {
     ]);
     if (verdictResult.status === 'fulfilled') setLive(verdictResult.value);
     if (marketResult.status === 'fulfilled') setQuotes(marketResult.value.quotes);
+    const marketStale = marketResult.status === 'fulfilled' && marketResult.value.stale === true;
     const failures = [verdictResult, marketResult].filter((result) => result.status === 'rejected').length;
-    setLoadState(failures ? 'partial' : 'ready');
-    setLoadMessage(failures === 2 ? 'ENS and market sources are unavailable. Retry when connectivity returns.' : failures === 1 ? 'One live source is unavailable. Verified and dated data remain clearly labeled.' : 'ENS and market sources are live.');
+    setLoadState(failures ? 'partial' : marketStale ? 'partial' : 'ready');
+    setLoadMessage(
+      failures === 2 ? 'ENS and market sources are unavailable. Retry when connectivity returns.'
+      : failures === 1 ? 'One live source is unavailable. Verified and dated data remain clearly labeled.'
+      : marketStale ? `Market feed rate-limited — showing last cached snapshot${marketResult.status === 'fulfilled' && marketResult.value.savedAt ? ` (${new Date(marketResult.value.savedAt).toLocaleTimeString()})` : ''}. Prices may lag.`
+      : 'ENS and market sources are live.',
+    );
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);

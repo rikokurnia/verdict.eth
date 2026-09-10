@@ -49,6 +49,20 @@ type BsContract = {
   is_proxy?: boolean | null;
 };
 
+export type EvidenceStep = { key: string; ok: boolean; ms: number; detail?: string };
+export type EvidenceStepCb = (step: EvidenceStep) => void;
+
+function timed<T>(key: string, work: Promise<T>, onStep: EvidenceStepCb | undefined, detail: (v: T) => string | undefined): Promise<T> {
+  const t0 = Date.now();
+  return work.then((value) => {
+    onStep?.({ key, ok: true, ms: Date.now() - t0, detail: detail(value) });
+    return value;
+  }).catch((error) => {
+    onStep?.({ key, ok: false, ms: Date.now() - t0 });
+    throw error;
+  });
+}
+
 function catalogAsset(marketId: string) {
   const asset = DEMO_ASSETS.find((a) => a.marketId === marketId);
   if (!asset) throw new Error(`Unknown catalog asset: ${marketId}`);
@@ -97,14 +111,16 @@ async function liveVerification(address: string): Promise<EvidencePack['verifica
   };
 }
 
-export async function buildCatalogEvidence(marketId: string): Promise<EvidencePack> {
+export async function buildCatalogEvidence(marketId: string, onStep?: EvidenceStepCb): Promise<EvidencePack> {
   const asset = catalogAsset(marketId);
   const [market, contract, issuerPage] = await Promise.all([
-    liveMarket(marketId),
-    liveContract(marketId),
-    fetchTextHead(asset.sourceUrl, 10_000),
+    timed('market', liveMarket(marketId), onStep, (m) => (m ? `$${m.usd}` : 'unavailable')),
+    timed('contract', liveContract(marketId), onStep, (c) => (c ? c.address : 'none found')),
+    timed('issuer-page', fetchTextHead(asset.sourceUrl, 10_000), onStep, (p) => (p.reachable ? p.title ?? 'reachable' : 'unreachable')),
   ]);
-  const verification = contract ? await liveVerification(contract.address) : null;
+  const verification = contract
+    ? await timed('verification', liveVerification(contract.address), onStep, (v) => (v?.isVerified === true ? `verified · ${v.name ?? 'unknown name'}` : v?.isVerified === false ? 'unverified' : 'unreachable'))
+    : null;
   return {
     subject: marketId,
     subjectKind: 'catalog-rwa',
@@ -128,8 +144,8 @@ export async function buildCatalogEvidence(marketId: string): Promise<EvidencePa
   };
 }
 
-export async function buildDemoAssetEvidence(ensName: string): Promise<EvidencePack> {
-  const verdict = await resolveVerdict(ensName);
+export async function buildDemoAssetEvidence(ensName: string, onStep?: EvidenceStepCb): Promise<EvidencePack> {
+  const verdict = await timed('ens-evidence', resolveVerdict(ensName), onStep, (v) => `${v.state} · block ${v.sourceBlock ?? '—'}`);
   if (!verdict.ok || !verdict.asset || !verdict.audit || !verdict.observation) {
     throw new Error(`Live ENS evidence unavailable for ${ensName}: ${verdict.reason}`);
   }
