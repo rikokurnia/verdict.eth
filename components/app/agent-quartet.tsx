@@ -99,57 +99,15 @@ const idle = (): Record<AgentId, AgentVisualState> => ({
 });
 const time = (value: string) =>
   new Date(value).toLocaleTimeString([], { hour12: false });
-export type UnifiedVerdict = "VERIFIED" | "REVIEW" | "BLOCKED" | "UNAUDITED";
-
-export function getUnifiedVerdict(value?: string | null): UnifiedVerdict {
-  if (!value) return "UNAUDITED";
-  const norm = value.toUpperCase().trim();
-  if (
-    norm === "PASS" ||
-    norm === "POLICY_PASS" ||
-    norm === "VERIFIED" ||
-    norm === "ACTIVE"
-  ) {
-    return "VERIFIED";
-  }
-  if (norm === "WARN" || norm === "REVIEW") {
-    return "REVIEW";
-  }
-  if (
-    norm === "FAIL" ||
-    norm === "BLOCKED" ||
-    norm === "REVOKED" ||
-    norm === "CRITICAL"
-  ) {
-    return "BLOCKED";
-  }
-  return "UNAUDITED";
-}
+import {
+  StatusBadge,
+  getUnifiedVerdict,
+  type UnifiedVerdict,
+} from '@/components/app/status-badge';
+export { StatusBadge, getUnifiedVerdict, type UnifiedVerdict };
 
 const resultState = (value: string): AgentVisualState =>
   getUnifiedVerdict(value) === "VERIFIED" ? "completed" : "flagged";
-
-export function StatusBadge({
-  status,
-  size = "md",
-  className = "",
-}: {
-  status?: string | null;
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}) {
-  const unified = getUnifiedVerdict(status);
-  const colorClass = s[`statusBadge_${unified.toLowerCase()}`];
-  const sizeClass = s[`statusBadge_${size}`];
-  return (
-    <span
-      className={`${s.statusBadge} ${colorClass} ${sizeClass} ${className}`.trim()}
-      aria-label={`Status: ${unified}`}
-    >
-      {unified}
-    </span>
-  );
-}
 
 function DataEdge(props: EdgeProps) {
   const [curve] = getBezierPath(props);

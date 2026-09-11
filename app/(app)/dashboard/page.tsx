@@ -21,7 +21,7 @@ import { PageHead } from '@/components/app/app-shell';
 import { AssetLogo, CoverageBadge, NetworkBadges } from '@/components/app/asset-identity';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type CoverageTier, type DemoAsset } from '@/components/app/demo-data';
 import { ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
-import StatusChip from '@/components/app/status-chip';
+import { StatusBadge, getAssetVerdict } from '@/components/app/status-badge';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type Quote = { usd: number; change24h: number | null; updatedAt: number | null; image?: string };
@@ -263,21 +263,29 @@ export default function DashboardPage() {
 
         <div className="v-table-wrap v-catalog-table-wrap">
           <table className="v-table v-catalog-table">
-            <thead><tr><th>Asset</th><th>Coverage</th><th>Market</th><th>Category</th><th>Networks</th><th>Evidence snapshot</th><th><span className="v-visually-hidden">Actions</span></th></tr></thead>
+            <thead>
+              <tr>
+                <th className="v-catalog-th-asset">Asset</th>
+                <th className="v-catalog-th-verdict">Verdict</th>
+                <th className="v-catalog-th-market">Market</th>
+                <th className="v-catalog-th-category">Category</th>
+                <th className="v-catalog-th-networks">Networks</th>
+                <th className="v-catalog-th-action">Action</th>
+              </tr>
+            </thead>
             <tbody>
               {filtered.map((asset) => {
                 const quote = asset.marketId ? quotes[asset.marketId] : undefined;
                 return <tr key={asset.id} className="v-asset-row">
                   <td className="v-catalog-cell-asset"><div className="v-catalog-asset-cell"><AssetLogo asset={asset} /><div><div className="v-asset-name-group"><span className="v-asset-name">{asset.title}</span><span className="v-asset-badge">{asset.ticker}</span></div><div className="v-asset-sub-row"><span className="v-asset-sub">{asset.name}</span><button type="button" className="v-inline-copy-btn" onClick={() => void copyIdentifier(asset.name)} aria-label={`Copy ${asset.name}`}>{copied === asset.name ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}</button>{asset.name.endsWith('.eth') && <a className="v-inline-copy-btn" href={ENS_EXPLORER_NAME_URL(asset.name)} target="_blank" rel="noreferrer" aria-label={`Open ${asset.name} on app.ens.domains`} title={`Open ${asset.name} on app.ens.domains`}><ExternalLink size={12} aria-hidden="true" /></a>}</div></div></div></td>
-                  <td className="v-catalog-cell-coverage"><CoverageBadge coverage={asset.coverage} />{asset.coverage === 'VERIFIED_ONCHAIN' && <div className="v-verdict-inline"><StatusChip state={asset.state} /></div>}</td>
+                  <td className="v-catalog-cell-verdict"><StatusBadge status={getAssetVerdict(asset)} size="md" /></td>
                   <td className="v-catalog-cell-market"><MarketQuote quote={quote} loading={loadState === 'loading' && Boolean(asset.marketId)} /></td>
                   <td className="v-catalog-cell-category"><div className="v-cell-main">{asset.assetClass}</div><div className="v-cell-sub">{asset.issuer}</div></td>
                   <td className="v-catalog-cell-networks"><NetworkBadges networks={asset.networks} /></td>
-                  <td className="v-catalog-cell-evidence"><div className="v-cell-main">{asset.snapshot}</div><div className="v-cell-sub">{asset.snapshotAsOf}</div></td>
                   <td className="v-catalog-cell-action"><button type="button" className="v-btn-detail" onClick={() => setSelected(asset)} aria-haspopup="dialog">Inspect<ArrowUpRight size={13} aria-hidden="true" /></button></td>
                 </tr>;
               })}
-              {!filtered.length && <tr><td colSpan={7} className="v-table-empty"><div className="v-empty-box"><Search size={22} className="v-empty-icon" aria-hidden="true" /><p>No assets match those filters.</p><button type="button" className="v-btn v-btn-secondary" onClick={() => { setQuery(''); setCoverage('ALL'); setAssetClass('ALL'); }}>Reset filters</button></div></td></tr>}
+              {!filtered.length && <tr><td colSpan={6} className="v-table-empty"><div className="v-empty-box"><Search size={22} className="v-empty-icon" aria-hidden="true" /><p>No assets match those filters.</p><button type="button" className="v-btn v-btn-secondary" onClick={() => { setQuery(''); setCoverage('ALL'); setAssetClass('ALL'); }}>Reset filters</button></div></td></tr>}
             </tbody>
           </table>
         </div>

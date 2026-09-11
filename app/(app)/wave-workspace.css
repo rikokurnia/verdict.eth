@@ -2547,7 +2547,91 @@
 .v-metric-source .v-metric-line > span { background: #a3d1ff; }
 .v-metric-market .v-metric-line > span { background: #a48dff; }
 
-.v-catalog-table { min-width: 1120px; }
+.v-catalog-table {
+  width: 100%;
+  min-width: 960px;
+}
+
+.v-catalog-th-asset { width: 30%; min-width: 250px; }
+.v-catalog-th-verdict { width: 14%; min-width: 120px; }
+.v-catalog-th-market { width: 15%; min-width: 125px; }
+.v-catalog-th-category { width: 16%; min-width: 135px; }
+.v-catalog-th-networks { width: 15%; min-width: 135px; }
+.v-catalog-th-action { width: 10%; min-width: 90px; text-align: right; }
+
+.v-catalog-cell-verdict {
+  white-space: nowrap;
+}
+
+.v-catalog-cell-action {
+  text-align: right;
+}
+
+/* Standardized Institutional Verdict Badges */
+.v-verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 5px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.v-verdict-badge-sm {
+  font-size: 9px;
+  padding: 3.5px 7px;
+}
+
+.v-verdict-badge-md {
+  font-size: 10px;
+  padding: 5.5px 9.5px;
+}
+
+.v-verdict-badge-lg {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  letter-spacing: 0.09em;
+}
+
+/* VERIFIED: Green / Emerald (bg-emerald-500/10 text-emerald-400 border-emerald-500/30) */
+.v-verdict-badge-verified {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+}
+
+/* REVIEW: Amber / Yellow (bg-amber-500/10 text-amber-400 border-amber-500/30) */
+.v-verdict-badge-review {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.08);
+}
+
+/* BLOCKED: Red / Crimson (bg-red-500/10 text-red-400 border-red-500/30) */
+.v-verdict-badge-blocked {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.08);
+}
+
+/* UNAUDITED: Neutral Gray (bg-neutral-800/40 text-neutral-400 border-neutral-700/30) */
+.v-verdict-badge-unaudited {
+  background: rgba(38, 38, 38, 0.4);
+  color: #a3a3a3;
+  border: 1px solid rgba(82, 82, 82, 0.3);
+  box-shadow: none;
+}
+
 .v-catalog-asset-cell { display: flex; align-items: center; gap: 12px; min-width: 265px; }
 .v-asset-logo {
   display: inline-grid;
@@ -2690,8 +2774,8 @@
     background: rgba(6, 18, 34, .66);
   }
   .v-wave-workspace .v-catalog-table tbody td { display: block; padding: 0; border: 0; min-width: 0; }
-  .v-catalog-cell-asset, .v-catalog-cell-networks, .v-catalog-cell-evidence, .v-catalog-cell-action { grid-column: 1 / -1; }
-  .v-catalog-cell-coverage::before, .v-catalog-cell-market::before, .v-catalog-cell-category::before, .v-catalog-cell-networks::before, .v-catalog-cell-evidence::before {
+  .v-catalog-cell-asset, .v-catalog-cell-networks, .v-catalog-cell-action { grid-column: 1 / -1; }
+  .v-catalog-cell-verdict::before, .v-catalog-cell-market::before, .v-catalog-cell-category::before, .v-catalog-cell-networks::before {
     display: block;
     margin-bottom: 5px;
     color: var(--muted);
@@ -2700,11 +2784,10 @@
     letter-spacing: .1em;
     text-transform: uppercase;
   }
-  .v-catalog-cell-coverage::before { content: 'Coverage'; }
+  .v-catalog-cell-verdict::before { content: 'Verdict'; }
   .v-catalog-cell-market::before { content: 'Market'; }
   .v-catalog-cell-category::before { content: 'Category'; }
   .v-catalog-cell-networks::before { content: 'Networks'; }
-  .v-catalog-cell-evidence::before { content: 'Evidence snapshot'; }
   .v-catalog-cell-action .v-btn-detail { width: 100%; }
   .v-catalog-table-wrap { overflow: visible; }
 }
