@@ -126,6 +126,9 @@ function AssetDialog({ asset, quote, live, onClose }: { asset: DemoAsset; quote?
         <div className="v-modal-footer">
           <span className="v-modal-footnote">Market price is informational and never changes Verdict’s evidence policy.</span>
           <div className="v-dialog-actions">
+            {asset.name.endsWith('.eth') && (
+              <a className="v-btn v-btn-secondary" href={`/assets/${encodeURIComponent(asset.name)}`}>Onchain ENS proof<ArrowUpRight size={14} aria-hidden="true" /></a>
+            )}
             <a className="v-btn v-btn-secondary" href={asset.sourceUrl} target="_blank" rel="noreferrer">Open {asset.sourceLabel}<ExternalLink size={14} aria-hidden="true" /></a>
             <button type="button" className="v-btn" onClick={() => dialogRef.current?.close()}>Close</button>
           </div>

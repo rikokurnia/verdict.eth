@@ -17,8 +17,11 @@ export async function GET(request: Request) {
     return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('ENSv2 verdict resolution failed', error);
+    const hint = name.endsWith('.rwa.verdict.eth')
+      ? 'This is a registry profile, not a verdict asset — open its onchain profile page for live ENS records.'
+      : 'Inspect the source block and retry.';
     return NextResponse.json(
-      unavailableVerdict(name, 'Inspect the source block and retry.'),
+      unavailableVerdict(name, hint),
       { status: 502, headers: { 'Cache-Control': 'no-store' } },
     );
   }

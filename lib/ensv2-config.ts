@@ -16,6 +16,7 @@ export const ENSV2_SEPOLIA = {
     acmeRegistry: '0x49a694BFfcc57DFbdb8347238BB3c40e7A5a6e5d',
     auditorRegistry: '0xc41926ea9855A291F8EdA917B064550f13F9dF08',
     monitorRegistry: '0x97BBD31Ee3B140f601eA7852B647255BCA6048C5',
+    rwaRegistry: '0xFD32461986A0914d272d0EA14d008F67EC18f65e',
   },
   names: {
     asset: 'usd-yield-001.acme.verdict.eth',

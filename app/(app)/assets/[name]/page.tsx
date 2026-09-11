@@ -5,6 +5,8 @@ import { AlertTriangle, CheckCircle2, Unplug, XCircle } from 'lucide-react';
 import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
+import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import type { EnsProfile } from '@/lib/ens-profile';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
@@ -53,6 +55,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
   const [scenario, setScenario] = useState<Scenario>('live');
   const [copied, setCopied] = useState(false);
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
+  const [profile, setProfile] = useState<EnsProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toasts, push } = useToasts();
   const { name } = use(params);
@@ -74,6 +77,21 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
     return () => controller.abort();
   }, [decodedName]);
 
+  // Registry profiles (rwa.*) carry identity records, not verdict evidence.
+  // When no verdict resolves, show the live onchain profile as proof instead.
+  useEffect(() => {
+    if (loading || live || !decodedName.endsWith('.rwa.verdict.eth')) return;
+    const controller = new AbortController();
+    fetch(`/api/profile?name=${encodeURIComponent(decodedName)}`, { cache: 'no-store', signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const result = (await response.json()) as EnsProfile;
+        if (result.ok) setProfile(result);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [loading, live, decodedName]);
+
   const base = live?.evidence ?? UNAVAILABLE;
   const simulatedEvidence = useMemo<Evidence>(() => (
     scenario === 'expiring' ? { ...base, daysRemaining: 7, revoked: false, available: true } :
@@ -87,12 +105,13 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
   const detail = DETAIL[result.state];
 
   const display = {
-    title: live?.asset?.displayName ?? fallback.title,
-    ticker: live?.asset?.ticker ?? fallback.ticker,
-    assetClass: live?.asset?.assetClass ?? fallback.assetClass,
-    issuer: live?.asset?.issuer ?? fallback.issuer,
+    title: live?.asset?.displayName ?? profile?.records['verdict.asset.displayName'] ?? fallback.title,
+    ticker: live?.asset?.ticker ?? profile?.records['verdict.asset.ticker'] ?? fallback.ticker,
+    assetClass: live?.asset?.assetClass ?? profile?.records['verdict.asset.class'] ?? fallback.assetClass,
+    issuer: live?.asset?.issuer ?? profile?.records['verdict.asset.issuer'] ?? fallback.issuer,
     network: live ? `Sepolia · chain ${live.chainId}` : fallback.network,
   };
+  const profileMode = !loading && !live && profile !== null;
   const assetRecords = live?.sources.find((source) => source.name === decodedName)?.records;
 
   function pick(id: Scenario, label: string) {
@@ -140,8 +159,31 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
       <div style={{ marginBottom: 16 }}>
         <StatusChip state={loading && scenario === 'live' ? 'UNAVAILABLE' : result.state} />
         {loading && scenario === 'live' && <span className="v-muted" style={{ marginLeft: 10 }}>Resolving pinned Sepolia state…</span>}
+        {profileMode && <span className="v-muted" style={{ marginLeft: 10 }}>Registry profile — identity evidence, not a verdict.</span>}
       </div>
 
+      {profileMode && profile ? (
+        <div className="v-card">
+          <div className="v-label">Onchain ENS proof · {profile.name}</div>
+          <p style={{ fontSize: 14, margin: '10px 0' }}>
+            {profile.records['verdict.profile.authority'] ?? ''} — every row below resolved live from Sepolia at block {profile.sourceBlock}.
+          </p>
+          <dl className="v-kv" style={{ marginTop: 10 }}>
+            {Object.entries(profile.records).filter(([, v]) => v).map(([key, value]) => (
+              <div key={key} style={{ display: 'contents' }}>
+                <dt>{key}</dt><dd className="v-mono" style={{ overflowWrap: 'anywhere' }}>{value}</dd>
+              </div>
+            ))}
+            <dt>Resolver</dt><dd className="v-mono"><a href={`${ENSV2_SEPOLIA.explorer}/address/${profile.resolver}`} target="_blank" rel="noreferrer">{shortHash(profile.resolver)} ↗</a></dd>
+            {profile.registration && (
+              <>
+                <dt>Registration</dt><dd>{profile.registration.statusLabel} · owner <span className="v-mono">{shortHash(profile.registration.owner)}</span></dd>
+                <dt>Expiry</dt><dd>{new Date(profile.registration.expiry * 1000).toLocaleDateString()} · token <span className="v-mono">{shortHash(profile.registration.tokenId)}</span></dd>
+              </>
+            )}
+          </dl>
+        </div>
+      ) : (
       <div className="v-split">
         <div className={`v-verdict ${VERDICT_CLS[result.state]}`}>
           <div className="v-label">{scenario === 'live' ? 'Live on-chain verdict' : 'Local policy simulation'}</div>
@@ -168,6 +210,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
           </dl>
         </div>
       </div>
+      )}
 
       <div className="v-card" style={{ marginTop: 16 }}>
         <div className="v-label">Independent authority graph</div>
