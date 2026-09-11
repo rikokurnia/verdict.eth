@@ -1,371 +1,649 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
-import StatusChip from '@/components/app/status-chip';
-import { DEMO_ASSETS } from '@/components/app/demo-data';
-import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
-import { INSPECTOR_STATUS_TO_POLICY, type InspectorId, type QuartetRun } from '@/lib/agents/types';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactFlow,
+  Background,
+  getBezierPath,
+  type EdgeProps,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import Particles, { ParticlesProvider } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import {
+  Play,
+  ArrowUpRight,
+  ChevronDown,
+  ShieldCheck,
+  Radio,
+  RotateCcw,
+} from "lucide-react";
+import AgentTerminalCard, {
+  type AgentFlowNode,
+  type AgentId,
+  type AgentVisualState,
+} from "@/components/ui/agent-terminal-card";
+import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
+import { DEMO_ASSETS } from "./demo-data";
+import type { QuartetRun } from "@/lib/agents/types";
+import s from "./agent-orchestra.module.css";
 
-const INSPECTORS: { id: InspectorId; label: string }[] = [
-  { id: 'legal', label: 'Legal & Compliance' },
-  { id: 'custody', label: 'Custody & Backing' },
-  { id: 'technical', label: 'Smart Contract' },
-];
-
-const OPTIONS = [
-  { value: ENSV2_SEPOLIA.names.asset, ticker: 'USDY-001', label: 'USD Yield 001 · demo asset', logo: '/icon.svg' },
+const ids: AgentId[] = ["legal", "custody", "technical", "consensus"];
+const definitions = {
+  legal: {
+    name: "Legal & Compliance",
+    ensName: ENS.names.audit,
+    address: ENS.proxies.auditorResolver,
+    avatarUrl: "/assets/agent-assets/satelit1.png",
+    labels: [
+      "Resolve authority & registry",
+      "Assess ownership & compliance",
+      "Return legal findings",
+    ],
+  },
+  custody: {
+    name: "Custody & Backing",
+    ensName: "Auditor resolver ↗",
+    address: ENS.proxies.auditorResolver,
+    avatarUrl: "/assets/agent-assets/plane2.png",
+    labels: [
+      "Receive shared evidence",
+      "Assess reserves & collateral",
+      "Return custody findings",
+    ],
+  },
+  technical: {
+    name: "Smart Contract Tech",
+    ensName: ENS.names.agent,
+    address: ENS.proxies.namespaceResolver,
+    avatarUrl: "/assets/agent-assets/drone.png",
+    labels: [
+      "Receive contract evidence",
+      "Assess bytecode & access roles",
+      "Return technical findings",
+    ],
+  },
+  consensus: {
+    name: "Consensus Synthesizer",
+    ensName: "Verdict registry ↗",
+    address: ENS.proxies.verdictRegistry,
+    avatarUrl: "/assets/agent-assets/satelit2.png",
+    labels: [
+      "Ingest three inspector reports",
+      "Compute weighted risk matrix",
+      "Finalize inspect-only verdict",
+    ],
+  },
+};
+const options = [
+  { value: ENS.names.asset, label: "USDY-001 · USD Yield 001" },
   ...DEMO_ASSETS.filter((a) => a.marketId).map((a) => ({
-    value: a.marketId as string,
-    ticker: a.ticker,
-    label: `${a.title}`,
-    logo: a.logo,
+    value: a.marketId!,
+    label: `${a.ticker} · ${a.title}`,
   })),
 ];
+type Frame = {
+  kind: string;
+  label?: string;
+  detail?: string;
+  t?: string;
+  run?: QuartetRun;
+};
+type Entry = { file: string; recordedAt: string; run: QuartetRun };
+const idle = (): Record<AgentId, AgentVisualState> => ({
+  legal: "idle",
+  custody: "idle",
+  technical: "idle",
+  consensus: "idle",
+});
+const time = (value: string) =>
+  new Date(value).toLocaleTimeString([], { hour12: false });
+const resultState = (value: string): AgentVisualState =>
+  value === "PASS" ? "completed" : "flagged";
 
-type HistoryEntry = { file: string; recordedAt: string; run: QuartetRun };
-type TermLine = { ts: string; kind: string; label: string; detail?: string; ms?: number };
-
-function clock(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-function Grounding({ value }: { value: string }) {
-  const cls = value === 'live' ? 'v-pass-t' : value === 'curated' ? 'v-dim' : 'v-block-t';
-  return <span className={cls} style={{ fontSize: 11, textTransform: 'uppercase' }}>{value}</span>;
-}
-
-function InspectorCard({ id, label, run }: { id: InspectorId; label: string; run: QuartetRun }) {
-  const report = run.reports[id];
+function DataEdge(props: EdgeProps) {
+  const [curve] = getBezierPath(props);
+  const lane = props.sourceX - 185 - Number(props.data?.lane ?? 0) * 9;
+  const path = props.data?.narrow
+    ? `M${props.sourceX},${props.sourceY} Q${props.sourceX},${props.sourceY + 15} ${lane},${props.sourceY + 15} L${lane},${props.targetY - 20} Q${lane},${props.targetY - 8} ${props.targetX},${props.targetY - 8} L${props.targetX},${props.targetY}`
+    : curve;
+  const state = String(props.data?.state ?? "idle");
   return (
-    <div className="v-card">
-      <div className="v-label">{label}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
-        <StatusChip state={INSPECTOR_STATUS_TO_POLICY[report.status]} />
-        <span className="v-mono" style={{ fontSize: 12 }}>{report.status} · {report.score}/100</span>
-      </div>
-      <div className="v-metric-line" aria-hidden="true"><span style={{ width: `${report.score}%` }} /></div>
-      <ul style={{ fontSize: 13, margin: '10px 0 0', paddingLeft: 18 }}>
-        {report.findings.slice(0, 4).map((finding) => <li key={finding.slice(0, 60)}>{finding}</li>)}
-      </ul>
-      {report.evidence_urls.length > 0 && (
-        <div className="v-mono" style={{ fontSize: 11, marginTop: 8 }}>
-          {report.evidence_urls.slice(0, 3).map((url) => (
-            <span key={url}><a href={url} target="_blank" rel="noreferrer">{url.replace(/^https?:\/\//, '').slice(0, 42)} ↗</a><br /></span>
-          ))}
-        </div>
+    <g className={`${s.edge} ${s[`edge_${state}`]}`}>
+      <path d={path} className={s.edgeTrack} />
+      <path d={path} pathLength={1} className={s.edgeSignal} />
+      {state === "running" && (
+        <path d={path} pathLength={1} className={s.edgePacket} />
       )}
+    </g>
+  );
+}
+const nodeTypes = { agentTerminal: AgentTerminalCard };
+const edgeTypes = { telemetry: DataEdge };
+
+function RunDetails({ run }: { run: QuartetRun }) {
+  return (
+    <div className={s.runDetails}>
+      <div className={s.summary}>
+        <div>
+          <span className={s.kicker}>Consensus synthesis</span>
+          <h3>{run.synthesis.policy_state.replaceAll("_", " ")}</h3>
+          <p>{run.synthesis.reasoning_summary}</p>
+        </div>
+        <div className={s.bigScore}>
+          {run.synthesis.overall_score}
+          <small>/100 · composite score</small>
+        </div>
+      </div>
+      <div className={s.findings}>
+        {ids.map((id) => (
+          <section key={id}>
+            <h4>{definitions[id].name}</h4>
+            {id === "consensus" ? (
+              <>
+                <p>{run.synthesis.mapped.rationale}</p>
+                <small>
+                  {run.synthesis.mapped.confidence}% confidence ·{" "}
+                  {run.synthesis.mapped.validityDays}d validity
+                </small>
+              </>
+            ) : (
+              <>
+                <strong>
+                  {run.reports[id].status} · {run.reports[id].score}/100
+                </strong>
+                <ul>
+                  {run.reports[id].findings.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+                <div className={s.proofLinks}>
+                  {run.reports[id].evidence_urls
+                    .filter((u) => /^https?:\/\//i.test(u))
+                    .map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noreferrer">
+                        Source {i + 1}
+                        <ArrowUpRight size={13} />
+                      </a>
+                    ))}
+                </div>
+              </>
+            )}
+          </section>
+        ))}
+      </div>
+      <div className={s.proofLinks}>
+        <ShieldCheck size={16} />
+        <span>
+          {run.write.performed
+            ? "Onchain write recorded"
+            : "Inspect-only · no transaction emitted"}
+        </span>
+        {Object.entries(run.write.transactions ?? {}).map(([name, tx]) => (
+          <a
+            key={name}
+            href={`${ENS.explorer}/tx/${tx.hash}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {name} transaction ↗
+          </a>
+        ))}
+        <a
+          href={`${ENS.explorer}/address/${ENS.proxies.verdictRegistry}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          ENS registry ↗
+        </a>
+      </div>
+      <details className={s.records}>
+        <summary>
+          {run.write.performed
+            ? "ENS record output"
+            : "Proposed ENS records · not published"}
+        </summary>
+        <dl>
+          {Object.entries(run.synthesis.ensv2_records).map(([key, value]) => (
+            <div key={key}>
+              <dt>{key}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
     </div>
   );
 }
 
 export default function AgentQuartet() {
-  const [subject, setSubject] = useState(OPTIONS[1]?.value ?? OPTIONS[0].value);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [mode, setMode] = useState<'official' | 'custom'>('official');
-  const [customSubname, setCustomSubname] = useState('');
+  const [subject, setSubject] = useState<string>(options[0].value);
+  const [mode, setMode] = useState("official");
+  const [custom, setCustom] = useState("");
   const [running, setRunning] = useState(false);
-  const [lines, setLines] = useState<TermLine[]>([]);
+  const [states, setStates] = useState(idle);
+  const [completed, setCompleted] = useState<Partial<Record<AgentId, string>>>(
+    {},
+  );
   const [run, setRun] = useState<QuartetRun | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const termRef = useRef<HTMLDivElement>(null);
-  const pickerRef = useRef<HTMLDivElement>(null);
-  const sourceRef = useRef<EventSource | null>(null);
-
-  const selected = OPTIONS.find((o) => o.value === subject) ?? OPTIONS[0];
-
+  const [error, setError] = useState("");
+  const [history, setHistory] = useState<Entry[]>([]);
+  const [historyStatus, setHistoryStatus] = useState("loading");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [lastFrame, setLastFrame] = useState<Frame | null>(null);
+  const [narrow, setNarrow] = useState(false);
+  const source = useRef<EventSource | null>(null);
+  const reduce = useReducedMotion();
   const loadHistory = useCallback(async () => {
+    setHistoryStatus("loading");
     try {
-      const response = await fetch('/api/agents/runs', { cache: 'no-store' });
-      if (!response.ok) return;
-      const body = (await response.json()) as { runs?: HistoryEntry[] };
-      setHistory(body.runs ?? []);
-    } catch { /* History is optional. */ }
+      const response = await fetch("/api/agents/runs", { cache: "no-store" });
+      if (!response.ok) throw Error();
+      const body = await response.json();
+      setHistory((prev) =>
+        [
+          ...prev.filter(
+            (e) => !body.runs.some((n: Entry) => n.run.id === e.run.id),
+          ),
+          ...body.runs,
+        ].sort(
+          (a, b) => Date.parse(b.run.finishedAt) - Date.parse(a.run.finishedAt),
+        ),
+      );
+      setHistoryStatus("ready");
+    } catch {
+      setHistoryStatus("error");
+    }
   }, []);
-
-  useEffect(() => { void loadHistory(); }, [loadHistory]);
-
   useEffect(() => {
+    void loadHistory();
+    const media = matchMedia("(max-width: 850px)");
+    const resize = () => setNarrow(media.matches);
+    resize();
+    media.addEventListener("change", resize);
     try {
-      const remembered = localStorage.getItem('verdict-custom-agent');
-      if (remembered) {
-        setCustomSubname(remembered);
-        setMode('custom');
-      }
-    } catch { /* storage optional */ }
-    function onMinted(event: Event) {
-      const subname = (event as CustomEvent<string>).detail;
-      if (typeof subname === 'string' && subname) {
-        setCustomSubname(subname);
-        setMode('custom');
-      }
-    }
-    window.addEventListener('verdict:auditor-minted', onMinted);
-    return () => window.removeEventListener('verdict:auditor-minted', onMinted);
-  }, []);
-
-  useEffect(() => {
-    const term = termRef.current;
-    if (term) term.scrollTop = term.scrollHeight;
-  }, [lines, running]);
-
-  useEffect(() => {
-    if (!pickerOpen) return;
-    function onPointerDown(event: PointerEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) setPickerOpen(false);
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setPickerOpen(false);
-    }
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
+      setCustom(localStorage.getItem("verdict-custom-agent") ?? "");
+    } catch {}
+    const minted = (e: Event) => {
+      setCustom((e as CustomEvent<string>).detail);
+      setMode("custom");
     };
-  }, [pickerOpen]);
-
-  useEffect(() => () => { sourceRef.current?.close(); }, []);
-
-  function appendLine(entry: { t?: string; kind: string; label: string; detail?: string; ms?: number }) {
-    setLines((prev) => [...prev, { ts: clock(entry.t ?? new Date().toISOString()), kind: entry.kind, label: entry.label, detail: entry.detail, ms: entry.ms }]);
-  }
-
+    window.addEventListener("verdict:auditor-minted", minted);
+    return () => {
+      media.removeEventListener("change", resize);
+      window.removeEventListener("verdict:auditor-minted", minted);
+      source.current?.close();
+    };
+  }, [loadHistory]);
+  const nodes = useMemo<AgentFlowNode[]>(
+    () =>
+      ids.map((id, i) => ({
+        id,
+        type: "agentTerminal",
+        position: narrow
+          ? { x: 20, y: i * 390 + 30 }
+          : {
+              x: id === "consensus" ? 405 : 25 + i * 380,
+              y: id === "consensus" ? 435 : 35,
+            },
+        data: {
+          ...definitions[id],
+          agentId: id,
+          eyebrow: i === 3 ? "04 / SYNTHESIS CORE" : `0${i + 1} / INSPECTOR`,
+          state: states[id],
+          score: run
+            ? id === "consensus"
+              ? run.synthesis.overall_score
+              : run.reports[id].score
+            : undefined,
+          steps: definitions[id].labels.map((label, step) => ({
+            label,
+            status:
+              states[id] === "running"
+                ? step === 1
+                  ? "running"
+                  : step === 0
+                    ? "completed"
+                    : "idle"
+                : states[id] === "flagged"
+                  ? step === 0
+                    ? "completed"
+                    : "flagged"
+                  : states[id],
+            time: completed[id] ? time(completed[id]!) : undefined,
+          })),
+        },
+      })),
+    [states, completed, run, narrow],
+  );
+  const edges = ids
+    .slice(0, 3)
+    .map((id, index) => ({
+      id,
+      source: id,
+      target: "consensus",
+      type: "telemetry",
+      data: { state: states[id], narrow, lane: index },
+    }));
   function start() {
-    const custom = customSubname.trim().toLowerCase();
-    if (mode === 'custom' && !/^(?=.{1,255}$)[a-z0-9-]+(?:\.[a-z0-9-]+)*\.eth$/.test(custom)) {
-      setError('Enter your auditor subname (e.g. zero-risk.verdict.eth) for custom mode.');
+    if (running) return;
+    if (
+      mode === "custom" &&
+      !/^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.eth$/.test(custom.trim())
+    ) {
+      setError("Enter a valid custom auditor ENS name.");
       return;
     }
-    sourceRef.current?.close();
-    setRunning(true);
-    setError(null);
+    setError("");
     setRun(null);
-    setLines([]);
-    appendLine({ kind: 'run-start', label: `$ inspect ${subject}${mode === 'custom' ? ` through ${custom}` : ''}` });
+    setStates(idle());
+    setCompleted({});
+    setRunning(true);
+    setLastFrame({
+      kind: "preparing",
+      label: "Collecting evidence for the inspector fleet",
+    });
     const params = new URLSearchParams({ subject, mode });
-    if (mode === 'custom') params.set('agentSubname', custom);
-    const source = new EventSource(`/api/agents/stream?${params.toString()}`);
-    sourceRef.current = source;
-    source.onmessage = (event) => {
+    if (mode === "custom") params.set("agentSubname", custom.trim());
+    source.current?.close();
+    const stream = new EventSource(`/api/agents/stream?${params}`);
+    source.current = stream;
+    const fail = (message: string) => {
+      stream.close();
+      setRunning(false);
+      setError(message);
+      setStates(
+        (prev) =>
+          Object.fromEntries(
+            ids.map((id) => [id, prev[id] === "running" ? "error" : prev[id]]),
+          ) as Record<AgentId, AgentVisualState>,
+      );
+    };
+    stream.onmessage = (event) => {
+      if (source.current !== stream) return;
       try {
-        const data = JSON.parse(event.data as string) as {
-          kind: string; label?: string; detail?: string; ms?: number; t?: string; run?: QuartetRun;
-        };
-        if (data.kind === 'result' && data.run) {
-          setRun(data.run);
-          setRunning(false);
-          source.close();
-          void loadHistory();
+        const frame: Frame = JSON.parse(event.data);
+        setLastFrame(frame);
+        if (frame.kind === "error") {
+          fail(
+            "Inspection could not finish. Please retry; if it persists, check the service connection.",
+          );
           return;
         }
-        if (data.kind === 'error') {
-          setError(data.detail ?? data.label ?? 'Inspection failed');
-          setRunning(false);
-          source.close();
-          return;
+        const id = ids.find((id) => frame.label?.includes(id));
+        if (frame.kind === "inspector-start" && id)
+          setStates((prev) => ({ ...prev, [id]: "running" }));
+        if (frame.kind === "inspector-ok" && id) {
+          setStates((prev) => ({
+            ...prev,
+            [id]: resultState(frame.detail?.split(" ")[0] ?? "WARN"),
+          }));
+          setCompleted((prev) => ({ ...prev, [id]: frame.t }));
         }
-        appendLine({ t: data.t, kind: data.kind, label: data.label ?? data.kind, detail: data.detail, ms: data.ms });
+        if (frame.kind === "synthesis-start")
+          setStates((prev) => ({ ...prev, consensus: "running" }));
+        if (frame.kind === "synthesis-ok") {
+          setStates((prev) => ({
+            ...prev,
+            consensus: frame.label?.includes("PASS") ? "completed" : "flagged",
+          }));
+          setCompleted((prev) => ({ ...prev, consensus: frame.t }));
+        }
+        if (frame.kind === "result" && frame.run) {
+          const result = frame.run;
+          setLastFrame({
+            kind: "done",
+            label: `Inspection complete · ${result.synthesis.policy_state.replaceAll("_", " ")}`,
+            t: result.finishedAt,
+          });
+          stream.close();
+          setRunning(false);
+          setRun(result);
+          setCompleted((previous) => Object.fromEntries(ids.map((id) => [id, previous[id] ?? result.finishedAt])));
+          setStates({
+            legal: resultState(result.reports.legal.status),
+            custody: resultState(result.reports.custody.status),
+            technical: resultState(result.reports.technical.status),
+            consensus: resultState(result.synthesis.verdict),
+          });
+          setHistory((prev) => [
+            { file: result.id, recordedAt: result.finishedAt, run: result },
+            ...prev.filter((e) => e.run.id !== result.id),
+          ]);
+          setExpanded(result.id);
+        }
       } catch {
-        setError('Unreadable stream frame.');
-        setRunning(false);
-        source.close();
+        fail("Unreadable telemetry. Retry the inspection.");
       }
     };
-    source.onerror = () => {
-      if (sourceRef.current === source) {
-        setError('Stream interrupted. Retry when connectivity returns.');
-        setRunning(false);
-      }
-      source.close();
-    };
+    stream.onerror = () =>
+      fail(
+        "Connection interrupted. Retry the inspection when connectivity returns.",
+      );
   }
-
   return (
-    <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
-      <div className="v-card-header">
+    <section className={s.inspectionSection} aria-labelledby="inspection-title">
+      <div className={s.sectionHeading}>
         <div>
-          <div className="v-card-tag">03 / 4-AGENT INSPECTION</div>
-          <h3 className="v-section-title">Legal · Custody · Technical → Consensus</h3>
-          <p className="v-muted">
-            Three inspectors assess live evidence in parallel on one shared key, then the synthesizer maps
-            consensus onto the deterministic policy. Inspect-only: nothing writes to chain.
+          <span className={s.kicker}>03 / 4-AGENT INSPECTION</span>
+          <h2 id="inspection-title">
+            Independent minds.
+            <br />
+            <em>One clear verdict.</em>
+          </h2>
+          <p>
+            Legal, custody, and code. Three parallel investigations converge
+            into a single evidence-backed decision.
           </p>
         </div>
-      </div>
-
-      <div className="v-table-toolbar">
-        <div style={{ display: 'flex', gap: 8 }} role="group" aria-label="Inspection mode">
-          <button
-            type="button"
-            className={`v-btn ${mode === 'official' ? '' : 'v-btn-secondary'}`.trim()}
-            aria-pressed={mode === 'official'}
-            disabled={running}
-            onClick={() => setMode('official')}
-          >
-            Mode A · Official Quartet
-          </button>
-          <button
-            type="button"
-            className={`v-btn ${mode === 'custom' ? '' : 'v-btn-secondary'}`.trim()}
-            aria-pressed={mode === 'custom'}
-            disabled={running}
-            onClick={() => setMode('custom')}
-            title={customSubname || 'Mint an auditor below, then run through its lens'}
-          >
-            Mode B · Custom{customSubname ? ` (${customSubname.split('.')[0]})` : ''}
-          </button>
+        <div className={s.headingStamp}>
+          <Radio size={19} />
+          <span>
+            INSPECTION NETWORK<strong>3 inspectors + 1 synthesizer</strong>
+          </span>
         </div>
       </div>
-      {mode === 'custom' && (
-        <div className="v-table-search-box" style={{ marginTop: 10 }}>
-          <label className="v-visually-hidden" htmlFor="quartet-custom-subname">Custom auditor subname</label>
-          <input
-            id="quartet-custom-subname"
-            className="v-search-input"
-            style={{ fontFamily: 'var(--font-mono)' }}
-            type="text"
-            autoComplete="off"
-            spellCheck={false}
-            placeholder="zero-risk.verdict.eth"
-            value={customSubname}
-            onChange={(event) => setCustomSubname(event.target.value.toLowerCase())}
-            disabled={running}
-          />
+      <div className={s.controlDeck}>
+        <div className={s.modeSwitch} role="group" aria-label="Inspection mode">
+          {["official", "custom"].map((value) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={mode === value}
+              onClick={() => setMode(value)}
+              disabled={running}
+            >
+              {value === "official" ? "Official quartet" : "Custom lens"}
+            </button>
+          ))}
         </div>
-      )}
-
-      <div className="v-table-toolbar" style={{ marginTop: mode === 'custom' ? 10 : 0 }}>
-        <div className="v-asset-picker" ref={pickerRef}>
-          <button
-            type="button"
-            className="v-asset-picker-btn"
-            aria-haspopup="listbox"
-            aria-expanded={pickerOpen}
-            aria-label="Inspection subject"
+        <label className={s.targetSelect}>
+          <span>Inspection target</span>
+          <select
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
             disabled={running}
-            onClick={() => setPickerOpen((open) => !open)}
           >
-            <img src={selected.logo} alt="" width={22} height={22} loading="lazy" referrerPolicy="no-referrer" />
-            <span className="v-asset-picker-label"><strong>{selected.ticker}</strong> · {selected.label}</span>
-            <ChevronDown size={15} className="v-asset-picker-chev" aria-hidden="true" />
-          </button>
-          {pickerOpen && (
-            <ul className="v-asset-picker-list" role="listbox" aria-label="Inspection subject">
-              {OPTIONS.map((option) => (
-                <li key={option.value} role="option" aria-selected={option.value === subject}>
-                  <button
-                    type="button"
-                    className="v-asset-picker-opt"
-                    aria-selected={option.value === subject}
-                    onClick={() => { setSubject(option.value); setPickerOpen(false); }}
-                  >
-                    <img src={option.logo} alt="" width={22} height={22} loading="lazy" referrerPolicy="no-referrer" />
-                    <span className="v-asset-picker-ticker">{option.ticker}</span>
-                    <span className="v-asset-picker-name">{option.label}</span>
-                    {option.value === subject && <Check size={14} aria-hidden="true" style={{ marginLeft: 'auto' }} />}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className={s.runButton} onClick={start} disabled={running}>
+          {run ? (
+            <RotateCcw size={16} />
+          ) : (
+            <Play size={16} fill="currentColor" />
           )}
-        </div>
-        <button type="button" className="v-btn" onClick={start} disabled={running} aria-busy={running}>
-          {running ? 'Inspecting…' : 'Run inspection'}
+          {running ? "Inspecting…" : "Run inspection"}
         </button>
       </div>
-
-      {(running || lines.length > 0) && (
-        <div ref={termRef} className="v-cli v-term" style={{ marginTop: 12 }} role="log" aria-live="polite" aria-label="Live inspection log">
-          {lines.map((line, i) => (
-            <div key={`${line.ts}-${i}`}>
-              <span className="v-term-ts">{line.ts}</span>
-              <span className={line.kind === 'error' ? 'v-block-t' : line.kind === 'done' || line.kind === 'inspector-ok' || line.kind === 'synthesis-ok' ? 'v-pass-t' : undefined}>
-                {line.label}
-              </span>
-              {line.detail && <span className="v-dim"> · {line.detail}</span>}
-              {typeof line.ms === 'number' && <span className="v-dim"> · {line.ms >= 1000 ? `${(line.ms / 1000).toFixed(1)}s` : `${line.ms}ms`}</span>}
-            </div>
-          ))}
-          {running && <div><span className="v-term-ts">{clock(new Date().toISOString())}</span><span className="v-term-cursor" aria-hidden="true" /></div>}
+      {mode === "custom" && (
+        <label className={s.customLens}>
+          Auditor ENS identity
+          <input
+            value={custom}
+            onChange={(e) => setCustom(e.target.value.toLowerCase())}
+            placeholder="zero-risk.verdict.eth"
+            disabled={running}
+            autoComplete="off"
+          />
+        </label>
+      )}
+      <div className={`${s.flowShell} ${narrow ? s.flowNarrow : ""}`}>
+        <div className={s.flowLegend}>
+          <span>
+            <i />
+            {running ? "LIVE TELEMETRY" : run ? "INSPECTION COMPLETE" : "FLEET STANDBY"}
+          </span>
+          <span>LEGAL 30% / CUSTODY 40% / TECH 30%</span>
+        </div>
+        {!reduce && (
+          <ParticlesProvider init={loadSlim}>
+            <Particles
+              className={s.particles}
+              id="fleet-stars"
+              options={{
+                fullScreen: { enable: false },
+                fpsLimit: 24,
+                particles: {
+                  number: { value: 38 },
+                  color: { value: "#a3d1ff" },
+                  size: { value: { min: 0.5, max: 1.5 } },
+                  opacity: { value: 0.25 },
+                  move: { enable: true, speed: 0.12 },
+                },
+              }}
+            />
+          </ParticlesProvider>
+        )}
+        <ReactFlow
+          key={narrow ? "mobile" : "desktop"}
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.03 }}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          panOnDrag={false}
+          zoomOnScroll={false}
+          zoomOnDoubleClick={false}
+          zoomOnPinch={false}
+          preventScrolling={false}
+          minZoom={0.1}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background gap={28} size={1} color="#284058" />
+        </ReactFlow>
+        <div className={s.canvasFooter}>
+          <ShieldCheck size={14} />
+          Inspect-only session<span>No chain write requested</span>
+        </div>
+      </div>
+      <div className={s.telemetryStrip} role="status">
+        <span className={s.kicker}>MISSION LOG</span>
+        <span>
+          {lastFrame?.label ??
+            "Fleet ready. Select an asset to begin inspection."}
+        </span>
+        {lastFrame?.t && <time>{time(lastFrame.t)}</time>}
+      </div>
+      {error && (
+        <div className={s.errorBanner} role="alert">
+          <span>{error}</span>
+          <button onClick={start}>Retry inspection</button>
         </div>
       )}
-      {error && <p className="v-block-t" role="alert">{error}</p>}
-
-      {run && (
-        <>
-          <div className="v-split" style={{ marginTop: 12 }}>
-            {INSPECTORS.map(({ id, label }) => <InspectorCard key={id} id={id} label={label} run={run} />)}
+      <div className={s.historySection}>
+        <div className={s.historyHeader}>
+          <div>
+            <span className={s.kicker}>VERIFIABLE OUTPUT</span>
+            <h3>
+              Run history
+              <span>{history.length.toString().padStart(2, "0")}</span>
+            </h3>
           </div>
-          <div className="v-card" style={{ marginTop: 12 }}>
-            <div className="v-label">
-              Consensus · {(run.mode ?? 'official') === 'custom' ? `custom lens ${run.customPolicy?.subname ?? ''}` : 'official quartet'} · {run.model} · {Math.round(run.durationMs / 1000)}s · {new Date(run.finishedAt).toLocaleString()}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
-              <StatusChip state={run.synthesis.policy_state} />
-              <span className="v-mono" style={{ fontSize: 12 }}>{run.synthesis.verdict} · {run.synthesis.overall_score}/100</span>
-            </div>
-            <p style={{ fontSize: 14 }}>{run.synthesis.reasoning_summary}</p>
-            <dl className="v-kv" style={{ marginTop: 10 }}>
-              <dt>Mapped severity</dt><dd className="v-mono">{run.synthesis.mapped.severity} · {run.synthesis.mapped.reasonCode}</dd>
-              <dt>Confidence</dt><dd>{run.synthesis.mapped.confidence}% · valid {run.synthesis.mapped.validityDays}d</dd>
-              <dt>Engines</dt>
-              <dd className="v-mono">
-                {(Object.entries(run.engines ?? {}) as [string, { provider: string; model: string }][]).map(([call, engine]) => `${call}:${engine.provider}`).join(' · ') || run.model}
-              </dd>
-              <dt>Tokens</dt>
-              <dd className="v-mono">
-                {(run.usage ?? []).reduce((sum, u) => sum + (u.inputTokens ?? 0), 0).toLocaleString()} in ·{' '}
-                {(run.usage ?? []).reduce((sum, u) => sum + (u.outputTokens ?? 0), 0).toLocaleString()} out
-              </dd>
-              <dt>Contract</dt>
-              <dd className="v-mono">
-                {run.evidenceSummary.contractAddress ?? 'no EVM contract in evidence'}
-                {run.evidenceSummary.contractVerified !== null && ` · verified ${String(run.evidenceSummary.contractVerified)}`}
-                {' '}<Grounding value={run.evidenceSummary.contractAddress ? 'live' : 'unknown'} />
-              </dd>
-              <dt>Market</dt>
-              <dd className="v-mono">
-                {run.evidenceSummary.marketUsd !== null ? `$${run.evidenceSummary.marketUsd}` : 'unavailable'}
-                {' '}<Grounding value={run.evidenceSummary.marketUsd !== null ? 'live' : 'unknown'} />
-              </dd>
-              <dt>Issuer page</dt>
-              <dd className="v-mono">
-                {run.evidenceSummary.issuerReachable === true ? 'reachable' : run.evidenceSummary.issuerReachable === false ? 'unreachable' : 'n/a'}
-                {' '}<Grounding value={run.evidenceSummary.issuerReachable === true ? 'live' : 'unknown'} />
-              </dd>
-              <dt>Chain write</dt><dd>{run.write.performed ? 'written' : 'none — inspect-only'}</dd>
-            </dl>
+          <button onClick={loadHistory} aria-label="Refresh run history">
+            <RotateCcw size={16} />
+          </button>
+        </div>
+        {historyStatus === "loading" && !history.length ? (
+          <div className={s.emptyHistory}>Loading recorded inspections…</div>
+        ) : historyStatus === "error" ? (
+          <div className={s.errorBanner}>
+            History could not load.<button onClick={loadHistory}>Retry</button>
           </div>
-        </>
-      )}
-
-      {history.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <div className="v-label">Run history · {history.length}</div>
-          <div className="v-activity-list" style={{ marginTop: 8 }}>
-            {history.slice(0, 6).map(({ file, recordedAt, run: h }) => (
+        ) : !history.length ? (
+          <div className={s.emptyHistory}>
+            <ShieldCheck size={28} />
+            <strong>Your first verdict starts here.</strong>
+            <span>Run an inspection to build your decision archive.</span>
+          </div>
+        ) : (
+          history.slice(0, 20).map((entry) => (
+            <motion.article
+              key={entry.run.id}
+              initial={reduce ? false : { opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={s.historyItem}
+            >
               <button
-                key={file}
-                type="button"
-                className="v-activity-item"
-                style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: 'transparent', border: 0 }}
-                onClick={() => { setRun(h); setError(null); }}
+                className={s.historyTrigger}
+                aria-expanded={expanded === entry.run.id}
+                onClick={() =>
+                  setExpanded(expanded === entry.run.id ? null : entry.run.id)
+                }
               >
-                <div className="v-activity-left">
-                  <span className="v-activity-badge">{h.synthesis.verdict} · {h.synthesis.overall_score}</span>
-                  <div className="v-activity-desc">{h.subject}</div>
-                </div>
-                <div className="v-activity-meta">
-                  <span>{new Date(recordedAt).toLocaleString()}</span>
-                  <span className="v-mono">{h.model}</span>
-                </div>
+                <span
+                  className={`${s.verdictBadge} ${entry.run.synthesis.verdict === "PASS" ? s.pass : s.flag}`}
+                >
+                  {entry.run.synthesis.verdict}
+                </span>
+                <span className={s.historySubject}>
+                  <strong>{entry.run.subject}</strong>
+                  <small>
+                    {entry.run.mode === "custom"
+                      ? entry.run.customPolicy?.subname
+                      : "Official quartet"}{" "}
+                    · {Math.round(entry.run.durationMs / 1000)}s
+                  </small>
+                </span>
+                <span className={s.historyScore}>
+                  {entry.run.synthesis.overall_score}
+                  <small>/100</small>
+                </span>
+                <time>{new Date(entry.recordedAt).toLocaleString()}</time>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    transform:
+                      expanded === entry.run.id ? "rotate(180deg)" : undefined,
+                  }}
+                />
               </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+              <AnimatePresence initial={false}>
+                {expanded === entry.run.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: reduce ? 0 : 0.22 }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <RunDetails run={entry.run} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.article>
+          ))
+        )}
+      </div>
+    </section>
   );
 }

@@ -151,7 +151,7 @@ export default function LifecyclePage() {
             <dt>Asset resolver</dt><dd className="v-mono"><a href={`${explorer}/address/${assetResolver}`} target="_blank" rel="noreferrer">{shortHash(assetResolver)} ↗</a></dd>
             <dt>Audit branch</dt><dd className="v-mono">{auditSource?.name} · <a href={`${explorer}/address/${auditSource?.resolver}`} target="_blank" rel="noreferrer">{shortHash(auditSource?.resolver)} ↗</a></dd>
             <dt>Risk branch</dt><dd className="v-mono">{observationSource?.name} · <a href={`${explorer}/address/${observationSource?.resolver}`} target="_blank" rel="noreferrer">{shortHash(observationSource?.resolver)} ↗</a></dd>
-            <dt>AI confidence</dt><dd>{live.audit?.ai.confidence ?? '—'}% · {live.audit?.ai.model ?? '—'}</dd>
+            <dt>AI confidence</dt><dd>{live.audit?.ai.confidence ?? '—'}%</dd>
           </dl>
         </div>
       )}
