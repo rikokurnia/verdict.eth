@@ -618,6 +618,90 @@
 .flag {
   color: var(--fleet-risk);
 }
+
+/* Unified Institutional Status Badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 5px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.statusBadge_sm {
+  font-size: 9px;
+  padding: 3.5px 7px;
+}
+
+.statusBadge_md {
+  font-size: 10px;
+  padding: 6px 10px;
+}
+
+.statusBadge_lg {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  letter-spacing: 0.09em;
+}
+
+/* VERIFIED: Green / Emerald (bg-emerald-500/10 text-emerald-400 border border-emerald-500/30) */
+.statusBadge_verified {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.08);
+}
+
+/* REVIEW: Amber / Yellow (bg-amber-500/10 text-amber-400 border border-amber-500/30) */
+.statusBadge_review {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.08);
+}
+
+/* BLOCKED: Red / Crimson (bg-red-500/10 text-red-400 border border-red-500/30) */
+.statusBadge_blocked {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.08);
+}
+
+/* UNAUDITED: Neutral Gray (bg-neutral-800/40 text-neutral-400 border border-neutral-700/30) */
+.statusBadge_unaudited {
+  background: rgba(38, 38, 38, 0.4);
+  color: #a3a3a3;
+  border: 1px solid rgba(82, 82, 82, 0.3);
+  box-shadow: none;
+}
+
+.synthesisBadgeWrap {
+  margin: 10px 0 14px;
+  display: flex;
+  align-items: center;
+}
+
+.inspectorScoreRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 10px;
+}
+
+.inspectorScoreText {
+  font: 12px var(--font-mono);
+  color: var(--fleet-accent);
+  font-weight: 500;
+}
 .runDetails {
   padding: 0 24px 24px;
 }

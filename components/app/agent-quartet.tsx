@@ -99,8 +99,57 @@ const idle = (): Record<AgentId, AgentVisualState> => ({
 });
 const time = (value: string) =>
   new Date(value).toLocaleTimeString([], { hour12: false });
+export type UnifiedVerdict = "VERIFIED" | "REVIEW" | "BLOCKED" | "UNAUDITED";
+
+export function getUnifiedVerdict(value?: string | null): UnifiedVerdict {
+  if (!value) return "UNAUDITED";
+  const norm = value.toUpperCase().trim();
+  if (
+    norm === "PASS" ||
+    norm === "POLICY_PASS" ||
+    norm === "VERIFIED" ||
+    norm === "ACTIVE"
+  ) {
+    return "VERIFIED";
+  }
+  if (norm === "WARN" || norm === "REVIEW") {
+    return "REVIEW";
+  }
+  if (
+    norm === "FAIL" ||
+    norm === "BLOCKED" ||
+    norm === "REVOKED" ||
+    norm === "CRITICAL"
+  ) {
+    return "BLOCKED";
+  }
+  return "UNAUDITED";
+}
+
 const resultState = (value: string): AgentVisualState =>
-  value === "PASS" ? "completed" : "flagged";
+  getUnifiedVerdict(value) === "VERIFIED" ? "completed" : "flagged";
+
+export function StatusBadge({
+  status,
+  size = "md",
+  className = "",
+}: {
+  status?: string | null;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}) {
+  const unified = getUnifiedVerdict(status);
+  const colorClass = s[`statusBadge_${unified.toLowerCase()}`];
+  const sizeClass = s[`statusBadge_${size}`];
+  return (
+    <span
+      className={`${s.statusBadge} ${colorClass} ${sizeClass} ${className}`.trim()}
+      aria-label={`Status: ${unified}`}
+    >
+      {unified}
+    </span>
+  );
+}
 
 function DataEdge(props: EdgeProps) {
   const [curve] = getBezierPath(props);
@@ -128,7 +177,9 @@ function RunDetails({ run }: { run: QuartetRun }) {
       <div className={s.summary}>
         <div>
           <span className={s.kicker}>Consensus synthesis</span>
-          <h3>{run.synthesis.policy_state.replaceAll("_", " ")}</h3>
+          <h3 className={s.synthesisBadgeWrap}>
+            <StatusBadge status={run.synthesis.policy_state} size="lg" />
+          </h3>
           <p>{run.synthesis.reasoning_summary}</p>
         </div>
         <div className={s.bigScore}>
@@ -142,17 +193,23 @@ function RunDetails({ run }: { run: QuartetRun }) {
             <h4>{definitions[id].name}</h4>
             {id === "consensus" ? (
               <>
+                <div className={s.inspectorScoreRow}>
+                  <StatusBadge status={run.synthesis.verdict} size="sm" />
+                  <span className={s.inspectorScoreText}>
+                    · {run.synthesis.mapped.confidence}% confidence ·{" "}
+                    {run.synthesis.mapped.validityDays}d validity
+                  </span>
+                </div>
                 <p>{run.synthesis.mapped.rationale}</p>
-                <small>
-                  {run.synthesis.mapped.confidence}% confidence ·{" "}
-                  {run.synthesis.mapped.validityDays}d validity
-                </small>
               </>
             ) : (
               <>
-                <strong>
-                  {run.reports[id].status} · {run.reports[id].score}/100
-                </strong>
+                <div className={s.inspectorScoreRow}>
+                  <StatusBadge status={run.reports[id].status} size="sm" />
+                  <span className={s.inspectorScoreText}>
+                    · {run.reports[id].score}/100
+                  </span>
+                </div>
                 <ul>
                   {run.reports[id].findings.map((f, i) => (
                     <li key={i}>{f}</li>
@@ -394,7 +451,7 @@ export default function AgentQuartet() {
           const result = frame.run;
           setLastFrame({
             kind: "done",
-            label: `Inspection complete · ${result.synthesis.policy_state.replaceAll("_", " ")}`,
+            label: `Inspection complete · ${getUnifiedVerdict(result.synthesis.policy_state)}`,
             t: result.finishedAt,
           });
           stream.close();
@@ -600,11 +657,7 @@ export default function AgentQuartet() {
                   setExpanded(expanded === entry.run.id ? null : entry.run.id)
                 }
               >
-                <span
-                  className={`${s.verdictBadge} ${entry.run.synthesis.verdict === "PASS" ? s.pass : s.flag}`}
-                >
-                  {entry.run.synthesis.verdict}
-                </span>
+                <StatusBadge status={entry.run.synthesis.verdict} size="md" />
                 <span className={s.historySubject}>
                   <strong>{entry.run.subject}</strong>
                   <small>
