@@ -1,11 +1,11 @@
 'use client';
 
 import { use, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Unplug, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ExternalLink, Unplug, XCircle } from 'lucide-react';
 import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
-import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import type { EnsProfile } from '@/lib/ens-profile';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
@@ -142,6 +142,20 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
           <div className="v-ensline">
             <span>{decodedName}</span>
             <button className="v-copy-btn" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
+            {decodedName.endsWith('.eth') && (
+              <a
+                className="v-copy-btn"
+                href={ENS_EXPLORER_NAME_URL(decodedName)}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Open ${decodedName} on app.ens.domains`}
+                title={`Open ${decodedName} on app.ens.domains`}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
+              >
+                <span>ENS</span>
+                <ExternalLink size={11} aria-hidden="true" />
+              </a>
+            )}
             <span>Ticker {display.ticker}</span>
             {live?.aliasedFrom && <span>Alias → {live.resolvedName}</span>}
           </div>

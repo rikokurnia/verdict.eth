@@ -53,3 +53,15 @@ export const VERDICT_POLICY = {
   reviewWindowDays: 14,
   observationFreshnessSeconds: 86_400,
 } as const;
+
+/** Official ENS App name deep link (https://app.ens.domains/<name>). */
+export function ENS_EXPLORER_NAME_URL(name: string) {
+  return `https://app.ens.domains/${encodeURIComponent(name)}`;
+}
+
+export const ENS_APP_NAME_URL = ENS_EXPLORER_NAME_URL;
+
+/** Hackathon ENS explorer (Sepolia ENSv2 deployment) portal deep link. */
+export function ENS_PORTAL_NAME_URL(name: string) {
+  return `https://hackathon-deployment-portal-app.ens-cf.workers.dev/names/${encodeURIComponent(name)}`;
+}

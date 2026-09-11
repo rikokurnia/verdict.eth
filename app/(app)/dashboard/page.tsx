@@ -20,6 +20,7 @@ import {
 import { PageHead } from '@/components/app/app-shell';
 import { AssetLogo, CoverageBadge, NetworkBadges } from '@/components/app/asset-identity';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type CoverageTier, type DemoAsset } from '@/components/app/demo-data';
+import { ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import StatusChip from '@/components/app/status-chip';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
@@ -91,7 +92,23 @@ function AssetDialog({ asset, quote, live, onClose }: { asset: DemoAsset; quote?
                 <dt>Issuer</dt><dd>{asset.issuer}</dd>
                 <dt>Category</dt><dd>{asset.assetClass}</dd>
                 <dt>Networks</dt><dd><NetworkBadges networks={asset.networks} /></dd>
-                <dt>Identifier</dt><dd className="v-mono">{asset.name}</dd>
+                <dt>Identifier</dt>
+                <dd className="v-mono">
+                  {asset.name}
+                  {asset.name.endsWith('.eth') && (
+                    <a
+                      className="v-inline-copy-btn"
+                      href={ENS_EXPLORER_NAME_URL(asset.name)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Open ${asset.name} on app.ens.domains`}
+                      title="Open on app.ens.domains"
+                      style={{ marginLeft: 6, display: 'inline-flex', verticalAlign: 'middle' }}
+                    >
+                      <ExternalLink size={12} aria-hidden="true" />
+                    </a>
+                  )}
+                </dd>
               </dl>
             </section>
 
@@ -251,7 +268,7 @@ export default function DashboardPage() {
               {filtered.map((asset) => {
                 const quote = asset.marketId ? quotes[asset.marketId] : undefined;
                 return <tr key={asset.id} className="v-asset-row">
-                  <td className="v-catalog-cell-asset"><div className="v-catalog-asset-cell"><AssetLogo asset={asset} /><div><div className="v-asset-name-group"><span className="v-asset-name">{asset.title}</span><span className="v-asset-badge">{asset.ticker}</span></div><div className="v-asset-sub-row"><span className="v-asset-sub">{asset.name}</span><button type="button" className="v-inline-copy-btn" onClick={() => void copyIdentifier(asset.name)} aria-label={`Copy ${asset.name}`}>{copied === asset.name ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}</button></div></div></div></td>
+                  <td className="v-catalog-cell-asset"><div className="v-catalog-asset-cell"><AssetLogo asset={asset} /><div><div className="v-asset-name-group"><span className="v-asset-name">{asset.title}</span><span className="v-asset-badge">{asset.ticker}</span></div><div className="v-asset-sub-row"><span className="v-asset-sub">{asset.name}</span><button type="button" className="v-inline-copy-btn" onClick={() => void copyIdentifier(asset.name)} aria-label={`Copy ${asset.name}`}>{copied === asset.name ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}</button>{asset.name.endsWith('.eth') && <a className="v-inline-copy-btn" href={ENS_EXPLORER_NAME_URL(asset.name)} target="_blank" rel="noreferrer" aria-label={`Open ${asset.name} on app.ens.domains`} title={`Open ${asset.name} on app.ens.domains`}><ExternalLink size={12} aria-hidden="true" /></a>}</div></div></div></td>
                   <td className="v-catalog-cell-coverage"><CoverageBadge coverage={asset.coverage} />{asset.coverage === 'VERIFIED_ONCHAIN' && <div className="v-verdict-inline"><StatusChip state={asset.state} /></div>}</td>
                   <td className="v-catalog-cell-market"><MarketQuote quote={quote} loading={loadState === 'loading' && Boolean(asset.marketId)} /></td>
                   <td className="v-catalog-cell-category"><div className="v-cell-main">{asset.assetClass}</div><div className="v-cell-sub">{asset.issuer}</div></td>
