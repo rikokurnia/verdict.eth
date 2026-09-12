@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import StatusChip from '@/components/app/status-chip';
+import { ColoredScore } from '@/components/app/status-badge';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
-import type { LifecycleProofs } from '@/lib/lifecycle-proofs';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -17,28 +16,12 @@ function formatDate(timestamp: number) {
   return new Date(timestamp * 1000).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatAgo(timestamp: number, now: number) {
-  const elapsed = Math.max(0, now - timestamp);
-  if (elapsed < 90) return `${elapsed}s ago`;
-  if (elapsed < 3600) return `${Math.floor(elapsed / 60)}m ago`;
-  if (elapsed < 86_400) return `${Math.floor(elapsed / 3600)}h ago`;
-  return `${Math.floor(elapsed / 86_400)}d ago`;
-}
-
 function shortHash(value: string | undefined) {
   return value && value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value || '—';
 }
 
-function scoreColor(score?: number | null) {
-  if (typeof score !== 'number') return 'var(--muted)';
-  if (score >= 75) return 'var(--pass)';
-  if (score >= 50) return 'var(--review)';
-  return 'var(--blocked)';
-}
-
 export default function LifecyclePage() {
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
-  const [proofs, setProofs] = useState<LifecycleProofs | null>(null);
   const [radar, setRadar] = useState<{ marketId: string; ticker: string; title: string; score: ScoreRow }[]>([]);
   const [activity, setActivity] = useState<ActivityTx[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
@@ -46,15 +29,13 @@ export default function LifecyclePage() {
   const refresh = useCallback(async () => {
     setLoadState('loading');
     try {
-      const [verdictResponse, proofsResponse, scoresResponse, activityResponse] = await Promise.all([
+      const [verdictResponse, scoresResponse, activityResponse] = await Promise.all([
         fetch('/api/verdict', { cache: 'no-store' }),
-        fetch('/api/lifecycle-proofs', { cache: 'no-store' }),
         fetch('/api/rwa-scores', { cache: 'no-store' }),
         fetch('/api/activity', { cache: 'no-store' }),
       ]);
       if (!verdictResponse.ok) throw new Error('resolver unavailable');
       setLive((await verdictResponse.json()) as VerdictApiResponse);
-      if (proofsResponse.ok) setProofs((await proofsResponse.json()) as LifecycleProofs);
       if (scoresResponse.ok) {
         const body = (await scoresResponse.json()) as { ok: boolean; scores: Record<string, ScoreRow> };
         if (body.ok) {
@@ -82,27 +63,7 @@ export default function LifecyclePage() {
   useEffect(() => { void refresh(); }, [refresh]);
 
   const explorer = ENSV2_SEPOLIA.explorer;
-  const days = live?.evidence.daysRemaining ?? null;
-  const auditStatus = live?.audit?.status ?? null;
-  const revoked = live ? live.evidence.revoked : null;
   const now = live?.evaluatedAt ?? Math.floor(Date.now() / 1000);
-
-  const auditChip = !live || loadState !== 'ready'
-    ? 'UNAVAILABLE' as const
-    : live.state === 'POLICY_PASS' ? 'POLICY_PASS' as const
-    : live.state === 'REVIEW' ? 'REVIEW' as const : 'BLOCKED' as const;
-
-  const auditLine = days === null
-    ? 'Resolving…'
-    : days < 0 ? `Expired ${Math.abs(days)}d ago` : days === 0 ? 'Expires today' : `${days} days remaining`;
-
-  const revocationLine = revoked === null
-    ? 'Resolving…'
-    : revoked ? `Revoked · ${auditStatus}` : `Active · ${auditStatus} · revocation available`;
-
-  const heartbeatLine = !live || loadState !== 'ready'
-    ? 'Resolving…'
-    : `${formatAgo(live.observation?.observedAt ?? now, now)} · ${live.evidence.fresh ? 'fresh' : 'STALE'}`;
 
   const issuedAt = live?.audit?.issuedAt ?? null;
   const observedAt = live?.observation?.observedAt ?? null;
@@ -126,44 +87,6 @@ export default function LifecyclePage() {
           {loadState === 'error' && 'ENS resolver unavailable. Lifecycle cannot be inferred from missing evidence.'}
         </span>
         {loadState === 'error' && <button type="button" onClick={() => void refresh()}><RefreshCw size={14} aria-hidden="true" />Retry</button>}
-      </div>
-
-      <div className="v-life-grid">
-        <div className="v-card">
-          <div className="v-label">Expiring audit · live</div>
-          <div style={{ margin: '8px 0' }}><StatusChip state={auditChip} /></div>
-          <div style={{ fontSize: 14 }}>{auditLine}</div>
-          <div className="v-muted">
-            {issuedAt && expiresAt ? `${formatDate(issuedAt)} → ${formatDate(expiresAt)}` : 'Issued → expiry unavailable'}
-            {live?.audit?.auditor ? ` · ${live.audit.auditor}` : ''}
-          </div>
-        </div>
-        <div className="v-card">
-          <div className="v-label">Revocable tranche · live</div>
-          <div style={{ margin: '8px 0' }}><StatusChip state={revoked ? 'BLOCKED' : revoked === false ? 'POLICY_PASS' : 'UNAVAILABLE'} /></div>
-          <div style={{ fontSize: 14 }}>{revocationLine}</div>
-          <div className="v-muted">Auditor or issuer can revoke · doc {shortHash(live?.audit?.documentHash)}</div>
-        </div>
-        <div className="v-card">
-          <div className="v-label">Risk heartbeat · live</div>
-          <div style={{ margin: '8px 0' }}><StatusChip state={live?.evidence.fresh ? 'POLICY_PASS' : loadState === 'ready' ? 'BLOCKED' : 'UNAVAILABLE'} /></div>
-          <div style={{ fontSize: 14 }}>{heartbeatLine}</div>
-          <div className="v-muted">{live?.observation ? `${live.observation.severity} · ${live.observation.reasonCode}` : 'Monitor observation unavailable'}</div>
-        </div>
-        <div className="v-card">
-          <div className="v-label">Soulbound + forever · live</div>
-          <div style={{ margin: '8px 0' }}>
-            <StatusChip state={!proofs ? 'UNAVAILABLE' : proofs.soulbound?.blocked && proofs.forever?.isMax ? 'POLICY_PASS' : 'BLOCKED'} />
-          </div>
-          <div style={{ fontSize: 14 }}>
-            {!proofs ? 'Resolving registry proofs…'
-              : `Transfer ${proofs.soulbound?.blocked ? 'blocked' : 'NOT blocked'} · expiry ${proofs.forever?.isMax ? 'uint64 max' : proofs.forever?.expiry ?? 'unknown'}`}
-          </div>
-          <div className="v-muted">
-            {proofs?.soulbound ? `${proofs.soulbound.name} · owner ${shortHash(proofs.soulbound.owner)} · no transfer admin` : 'Soulbound proof unavailable'}
-            {proofs?.emancipation ? ` · acme ${proofs.emancipation.emancipated ? 'emancipated ✓' : 'NOT emancipated'}` : ''}
-          </div>
-        </div>
       </div>
 
       <div className="v-card" style={{ marginTop: 16 }}>
@@ -206,7 +129,7 @@ export default function LifecyclePage() {
                 return (
                   <tr key={row.marketId}>
                     <td><span className="v-asset-name">{row.title}</span> <span className="v-asset-badge">{row.ticker}</span></td>
-                    <td><StatusChip state={row.score.status === 'PASS' ? 'POLICY_PASS' : row.score.status === 'WARN' ? 'REVIEW' : row.score.status === 'FAIL' ? 'BLOCKED' : 'UNAVAILABLE'} /> <span className="v-cell-sub" style={{ color: scoreColor(row.score.score), fontWeight: 700 }}>{row.score.score ?? '—'}/100</span></td>
+                    <td><ColoredScore score={row.score.score} /></td>
                     <td>{left === null ? '—' : left < 0 ? <span className="v-block-t">expired {Math.abs(left)}d ago</span> : left === 0 ? 'today' : `${left}d`}</td>
                     <td><a className="v-btn-detail" href={`/agents/inspect/${encodeURIComponent(row.marketId)}`}>Inspect<ArrowUpRight size={13} aria-hidden="true" /></a></td>
                   </tr>
@@ -242,11 +165,6 @@ export default function LifecyclePage() {
           {!activity.length && <p className="v-muted">No recent writes indexed — activity appears here as the loop runs.</p>}
         </div>
       </div>
-
-      <p className="v-muted" style={{ marginTop: 16 }}>
-        All four states resolve live from ENSv2 at a pinned source block: expiring audit, revocable
-        attestation, and now soulbound transfer-blocking plus forever expiry with an emancipated registry.
-      </p>
     </>
   );
 }
