@@ -13,7 +13,7 @@ import type { QuartetRun } from '@/lib/agents/types';
 
 type HistoryEntry = { file: string; recordedAt: string; run: QuartetRun };
 type SeedTx = { hash: string; blockNumber: number };
-type SeedReceipt = { receipt: { results: { marketId?: string; transaction?: SeedTx }[] } };
+type SeedReceipts = { receipts?: { receipt: { results: { marketId?: string; transaction?: SeedTx }[] } }[] };
 
 function shortHash(value: string) {
   return value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
@@ -44,13 +44,16 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
           if (match) setRun(match.run);
         }
         if (seedRes.ok) {
-          const body = (await seedRes.json()) as SeedReceipt;
-          const match = body.receipt.results.find((r) => r.marketId === marketId);
-          if (match?.transaction) {
-            setTx({
-              hash: match.transaction.hash,
-              blockNumber: match.transaction.blockNumber,
-            });
+          const body = (await seedRes.json()) as SeedReceipts;
+          for (const entry of body.receipts ?? []) {
+            const hit = entry.receipt.results.find((r) => r.marketId === marketId && r.transaction);
+            if (hit?.transaction) {
+              setTx({
+                hash: hit.transaction.hash,
+                blockNumber: hit.transaction.blockNumber,
+              });
+              break;
+            }
           }
         }
         if (profileRes && profileRes.ok) {
