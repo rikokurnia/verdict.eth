@@ -19,7 +19,7 @@ import { AssetLogo, NetworkBadges, OfficialDeployments } from '@/components/app/
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
-import { StatusBadge, getAssetVerdict, type UnifiedVerdict } from '@/components/app/status-badge';
+import { StatusBadge, getAssetVerdict, getScoreColorClass, type UnifiedVerdict } from '@/components/app/status-badge';
 import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
@@ -67,18 +67,6 @@ function MarketQuote({ quote, loading }: { quote?: Quote; loading: boolean }) {
       </div>
     </>
   );
-}
-
-function getScoreColorClass(score?: number | null, verdict?: UnifiedVerdict): string {
-  if (typeof score === 'number') {
-    if (score >= 75) return 'v-score-green';
-    if (score >= 50) return 'v-score-yellow';
-    return 'v-score-red';
-  }
-  if (verdict === 'VERIFIED') return 'v-score-green';
-  if (verdict === 'REVIEW') return 'v-score-yellow';
-  if (verdict === 'BLOCKED') return 'v-score-red';
-  return 'v-score-gray';
 }
 
 function VerdictCell({ asset, score, live }: { asset: DemoAsset; score?: RwaScore | null; live: VerdictApiResponse | null }) {

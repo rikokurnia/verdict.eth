@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
-import { StatusBadge, InspectorRiskBadge } from "@/components/app/status-badge";
+import { ColoredScore } from "@/components/app/status-badge";
 import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
 import type { QuartetRun } from "@/lib/agents/types";
 import s from "./agent-orchestra.module.css";
@@ -21,6 +21,13 @@ function ageOf(finishedAt: string) {
   return `scored ${Math.floor(ageSec / 86_400)}d ago`;
 }
 
+function bigScoreClass(score?: number | null) {
+  if (typeof score !== "number" || !Number.isFinite(score)) return s.bigScoreGray;
+  if (score >= 75) return s.bigScoreGreen;
+  if (score >= 50) return s.bigScoreYellow;
+  return s.bigScoreRed;
+}
+
 /** Full 4-agent conclusion: inspectors, synthesis, and onchain write proofs. */
 export default function RunDetails({ run }: { run: QuartetRun }) {
   return (
@@ -28,12 +35,9 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
       <div className={s.summary}>
         <div>
           <span className={s.kicker}>Consensus synthesis · {ageOf(run.finishedAt)}</span>
-          <h3 className={s.synthesisBadgeWrap}>
-            <InspectorRiskBadge status={run.synthesis.verdict} score={run.synthesis.overall_score} size="lg" />
-          </h3>
-          <p>{run.synthesis.reasoning_summary}</p>
+          <p style={{ marginTop: 12 }}>{run.synthesis.reasoning_summary}</p>
         </div>
-        <div className={s.bigScore}>
+        <div className={`${s.bigScore} ${bigScoreClass(run.synthesis.overall_score)}`}>
           {run.synthesis.overall_score}
           <small>/100 · composite score</small>
         </div>
@@ -45,7 +49,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
             {id === "consensus" ? (
               <>
                 <div className={s.inspectorScoreRow}>
-                  <InspectorRiskBadge status={run.synthesis.verdict} score={run.synthesis.overall_score} size="sm" />
+                  <ColoredScore score={run.synthesis.overall_score} />
                   <span className={s.inspectorScoreText}>
                     · {run.synthesis.mapped.confidence}% confidence ·{" "}
                     {run.synthesis.mapped.validityDays}d validity
@@ -56,10 +60,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
             ) : (
               <>
                 <div className={s.inspectorScoreRow}>
-                  <InspectorRiskBadge status={run.reports[id].status} score={run.reports[id].score} size="sm" />
-                  <span className={s.inspectorScoreText}>
-                    · {run.reports[id].score}/100
-                  </span>
+                  <ColoredScore score={run.reports[id].score} />
                 </div>
                 <ul>
                   {run.reports[id].findings.map((f, i) => (

@@ -4,9 +4,8 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, ExternalLink } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo } from '@/components/app/asset-identity';
-import { CoverageBadge } from '@/components/app/asset-identity';
-import { StatusBadge, InspectorRiskBadge } from '@/components/app/status-badge';
+import { AssetLogo, CoverageBadge } from '@/components/app/asset-identity';
+import { ColoredScore } from '@/components/app/status-badge';
 import RunDetails from '@/components/app/run-details';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
@@ -136,9 +135,11 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
           ) : snapshot && snapshot.score !== null ? (
             <div className="v-card" style={{ marginTop: 16 }}>
               <div className="v-label">Onchain conclusion · transcript archived</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
-                <InspectorRiskBadge status={snapshot.status} score={snapshot.score} size="md" />
-                <span className="v-mono" style={{ fontSize: 12 }}>{snapshot.score}/100 · {snapshot.reason}</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, margin: '8px 0' }}>
+                <ColoredScore score={snapshot.score} style={{ fontSize: 18 }} />
+                {snapshot.reason && (
+                  <span className="v-muted" style={{ fontSize: 13 }}>· {snapshot.reason}</span>
+                )}
               </div>
               <p style={{ fontSize: 14 }}>{snapshot.summary}</p>
               <p className="v-muted">Full agent transcript is not in the recent local window — re-run from the radar to inspect it live.</p>

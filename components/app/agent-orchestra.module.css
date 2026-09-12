@@ -731,10 +731,23 @@
   color: var(--fleet-accent);
   padding-top: 8px;
 }
+.bigScoreGreen {
+  color: #34d399;
+}
+.bigScoreYellow {
+  color: #fbbf24;
+}
+.bigScoreRed {
+  color: #f87171;
+}
+.bigScoreGray {
+  color: #a3a3a3;
+}
 .bigScore small {
   display: block;
   font-size: 10px;
   margin-top: 8px;
+  color: #7d9cb6;
 }
 .findings {
   display: grid;

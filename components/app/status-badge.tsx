@@ -93,6 +93,67 @@ export function getInspectorRisk(
   return { level: 'UNAUDITED', className: 'v-verdict-badge-unaudited' };
 }
 
+export function getScoreColorClass(
+  score?: number | null,
+  fallbackStatus?: string | null,
+): string {
+  if (typeof score === 'number' && Number.isFinite(score)) {
+    if (score >= 75) return 'v-score-green';
+    if (score >= 50) return 'v-score-yellow';
+    return 'v-score-red';
+  }
+  const norm = (fallbackStatus || '').toUpperCase().trim();
+  if (
+    norm === 'PASS' ||
+    norm === 'POLICY_PASS' ||
+    norm === 'VERIFIED' ||
+    norm === 'ACTIVE'
+  ) {
+    return 'v-score-green';
+  }
+  if (norm === 'WARN' || norm === 'REVIEW') {
+    return 'v-score-yellow';
+  }
+  if (
+    norm === 'FAIL' ||
+    norm === 'BLOCKED' ||
+    norm === 'REVOKED' ||
+    norm === 'CRITICAL'
+  ) {
+    return 'v-score-red';
+  }
+  return 'v-score-gray';
+}
+
+export function ColoredScore({
+  score,
+  max = 100,
+  fallbackStatus,
+  className = '',
+  style,
+}: {
+  score?: number | null;
+  max?: number | null;
+  fallbackStatus?: string | null;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const colorClass = getScoreColorClass(score, fallbackStatus);
+  if (score === null || score === undefined || !Number.isFinite(score)) {
+    return (
+      <span className={`v-trust-score-num v-score-gray ${className}`.trim()} style={style}>
+        —
+      </span>
+    );
+  }
+  return (
+    <span className={`v-trust-score-num ${colorClass} ${className}`.trim()} style={style}>
+      {score}
+      {max ? <span className="v-trust-score-max">/{max}</span> : null}
+    </span>
+  );
+}
+
 export function InspectorRiskBadge({
   status,
   score,
