@@ -28,6 +28,83 @@ function bigScoreClass(score?: number | null) {
   return s.bigScoreRed;
 }
 
+function parseProofSource(raw: string): { href: string; label: string; domain: string } | null {
+  const match = raw.match(/https?:\/\/[^\s)\],]+/i);
+  if (!match) return null;
+  const cleanUrl = match[0].replace(/[.,;:)]+$/, '');
+
+  try {
+    const parsed = new URL(cleanUrl);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    const path = parsed.pathname;
+
+    // 1. Blockscout (API or Web Explorer)
+    if (host.includes('blockscout.com')) {
+      const isApi = path.includes('/api/v2/smart-contracts/');
+      const addr = isApi ? path.split('/').pop() : path.match(/0x[a-fA-F0-9]{40}/)?.[0];
+      const href = addr ? `https://${parsed.hostname}/address/${addr}` : cleanUrl;
+      const addrShort = addr ? ` (${addr.slice(0, 6)}…${addr.slice(-4)})` : '';
+      return {
+        href,
+        label: `Blockscout Verified${addrShort}`,
+        domain: 'blockscout.com',
+      };
+    }
+
+    // 2. Etherscan
+    if (host.includes('etherscan.io')) {
+      const addrMatch = path.match(/0x[a-fA-F0-9]{40}/);
+      const addrShort = addrMatch ? ` (${addrMatch[0].slice(0, 6)}…${addrMatch[0].slice(-4)})` : '';
+      return {
+        href: cleanUrl,
+        label: `Etherscan Contract${addrShort}`,
+        domain: 'etherscan.io',
+      };
+    }
+
+    // 3. CoinGecko
+    if (host.includes('coingecko.com')) {
+      return {
+        href: cleanUrl,
+        label: 'CoinGecko Market Feed',
+        domain: 'coingecko.com',
+      };
+    }
+
+    // 4. Recognized Issuer Platforms
+    if (host.includes('securitize.io')) return { href: cleanUrl, label: 'Securitize Issuer Portal', domain: 'securitize.io' };
+    if (host.includes('hashnote.com')) return { href: cleanUrl, label: 'Hashnote Disclosures', domain: 'hashnote.com' };
+    if (host.includes('ondo.finance')) return { href: cleanUrl, label: 'Ondo Finance Disclosures', domain: 'ondo.finance' };
+    if (host.includes('franklintempleton.com')) return { href: cleanUrl, label: 'Franklin Templeton Portal', domain: 'franklintempleton.com' };
+    if (host.includes('superstate.co')) return { href: cleanUrl, label: 'Superstate Issuer Platform', domain: 'superstate.co' };
+    if (host.includes('centrifuge.io')) return { href: cleanUrl, label: 'Centrifuge Protocol', domain: 'centrifuge.io' };
+    if (host.includes('blockchain.capital')) return { href: cleanUrl, label: 'Blockchain Capital Portal', domain: 'blockchain.capital' };
+    if (host.includes('figure.com')) return { href: cleanUrl, label: 'Figure Issuer Platform', domain: 'figure.com' };
+    if (host.includes('tether.to')) return { href: cleanUrl, label: 'Tether Gold Disclosures', domain: 'tether.to' };
+    if (host.includes('paxos.com')) return { href: cleanUrl, label: 'Paxos Official Source', domain: 'paxos.com' };
+    if (host.includes('kinesis.money')) return { href: cleanUrl, label: 'Kinesis Money Platform', domain: 'kinesis.money' };
+    if (host.includes('maple.finance')) return { href: cleanUrl, label: 'Maple Protocol', domain: 'maple.finance' };
+    if (host.includes('xstocks.fi')) return { href: cleanUrl, label: 'xStocks Catalog', domain: 'xstocks.fi' };
+    if (host.includes('ens.domains')) return { href: cleanUrl, label: 'ENS Registry Record', domain: 'ens.domains' };
+
+    // General fallback: formatted brand name
+    const parts = host.split('.');
+    const brand = parts.length >= 2 ? parts[parts.length - 2] : host;
+    const capitalized = brand.charAt(0).toUpperCase() + brand.slice(1);
+    return {
+      href: cleanUrl,
+      label: `${capitalized} Source`,
+      domain: host,
+    };
+  } catch {
+    return {
+      href: cleanUrl,
+      label: 'Evidence Link',
+      domain: 'ethereum.org',
+    };
+  }
+}
+
 /** Full 4-agent conclusion: inspectors, synthesis, and onchain write proofs. */
 export default function RunDetails({ run }: { run: QuartetRun }) {
   return (
@@ -67,16 +144,46 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
                     <li key={i}>{f}</li>
                   ))}
                 </ul>
-                <div className={s.proofLinks}>
-                  {run.reports[id].evidence_urls
-                    .filter((u) => /^https?:\/\//i.test(u))
-                    .map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer">
-                        Source {i + 1}
-                        <ArrowUpRight size={13} />
-                      </a>
-                    ))}
-                </div>
+                {(() => {
+                  const seen = new Set<string>();
+                  const sources = run.reports[id].evidence_urls
+                    .map(parseProofSource)
+                    .filter((item): item is NonNullable<typeof item> => {
+                      if (!item || seen.has(item.href)) return false;
+                      seen.add(item.href);
+                      return true;
+                    });
+                  if (!sources.length) return null;
+                  return (
+                    <div className={s.proofLinks}>
+                      {sources.map((src, i) => (
+                        <a
+                          key={i}
+                          href={src.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={s.sourceLink}
+                          title={`Open proof source: ${src.href}`}
+                        >
+                          <img
+                            src={`https://www.google.com/s2/favicons?domain=${src.domain}&sz=32`}
+                            alt=""
+                            width={14}
+                            height={14}
+                            className={s.sourceFavicon}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <span className={s.sourceLabel}>{src.label}</span>
+                          <ArrowUpRight size={12} className={s.sourceArrow} aria-hidden="true" />
+                        </a>
+                      ))}
+                    </div>
+                  );
+                })()}
               </>
             )}
           </section>
