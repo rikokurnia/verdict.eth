@@ -5,7 +5,7 @@ import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { PageHead } from "@/components/app/app-shell";
 import AgentFactory from "@/components/app/agent-factory";
 import AgentQuartet from "@/components/app/agent-quartet";
-import { ENSV2_SEPOLIA, ENS_RESOLVER_URL } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA, ENS_RESOLVER_URL, ENS_NAME_HISTORY_URL } from "@/lib/ensv2-config";
 
 const STEPS = [
   "Agent",
@@ -144,9 +144,10 @@ export default function AgentsPage() {
           {loop?.available && loop.transactions?.audit?.hash && (
             <div className="v-mono" style={{ fontSize: 12, marginTop: 8 }}>
               <a
-                href={`${explorer}/tx/${loop.transactions.audit.hash}`}
+                href={ENS_NAME_HISTORY_URL(ENSV2_SEPOLIA.names.audit)}
                 target="_blank"
                 rel="noreferrer"
+                title={`Onchain log · ${loop.transactions.audit.hash}`}
               >
                 Auditor write ↗
               </a>
@@ -154,9 +155,10 @@ export default function AgentsPage() {
                 <>
                   {" · "}
                   <a
-                    href={`${explorer}/tx/${loop.transactions.risk.hash}`}
+                    href={ENS_NAME_HISTORY_URL(ENSV2_SEPOLIA.names.observation)}
                     target="_blank"
                     rel="noreferrer"
+                    title={`Onchain log · ${loop.transactions.risk.hash}`}
                   >
                     Monitor write ↗
                   </a>

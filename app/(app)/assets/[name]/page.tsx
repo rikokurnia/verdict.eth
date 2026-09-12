@@ -6,7 +6,7 @@ import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { EnsLogo, OfficialDeployments } from '@/components/app/asset-identity';
-import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL, ENS_RESOLVER_URL } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL, ENS_PORTAL_NAME_URL, ENS_RESOLVER_URL } from '@/lib/ensv2-config';
 import type { EnsProfile } from '@/lib/ens-profile';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
@@ -191,7 +191,8 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
             {profile.records['verdict.profile.authority'] ?? ''} — every row below resolved live from Sepolia at block {profile.sourceBlock}.
           </p>
           <p className="v-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
-            View official records on <a href={ENS_EXPLORER_NAME_URL(profile.name)} target="_blank" rel="noreferrer">app.ens.domains ↗</a>.
+            Name page on <a href={ENS_EXPLORER_NAME_URL(profile.name)} target="_blank" rel="noreferrer">app.ens.domains ↗</a>
+            {' '}· live records on the <a href={ENS_PORTAL_NAME_URL(profile.name)} target="_blank" rel="noreferrer">hackathon explorer ↗</a>.
           </p>
           <dl className="v-kv" style={{ marginTop: 10 }}>
             {Object.entries(profile.records).filter(([, v]) => v).map(([key, value]) => (

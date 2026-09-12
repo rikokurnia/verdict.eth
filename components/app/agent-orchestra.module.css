@@ -317,17 +317,18 @@
   margin: 7px 0 2px;
 }
 .ensLink {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 34px;
-  font: 10px var(--font-mono);
+  gap: 5px;
+  min-height: 28px;
+  font: 11px var(--font-mono);
   color: #a9c4da;
   text-decoration: none;
   overflow-wrap: anywhere;
+  transition: color 0.15s ease;
 }
 .ensLink:hover {
-  color: #e1f2ff;
+  color: #5298ff;
 }
 .nodeScore {
   position: absolute;

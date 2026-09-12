@@ -1,6 +1,6 @@
 import { PageHead } from '@/components/app/app-shell';
 import StatusChip from '@/components/app/status-chip';
-import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_NAME_HISTORY_URL } from '@/lib/ensv2-config';
 import { readLifecycleProofs } from '@/lib/lifecycle-proofs';
 import { resolveVerdict, unavailableVerdict } from '@/lib/verdict-service';
 
@@ -14,10 +14,10 @@ export default async function DebugPage() {
   const verdict = await resolveVerdict().catch(() => unavailableVerdict(ENSV2_SEPOLIA.names.asset, 'Sepolia read failed.'));
   const proofs = await readLifecycleProofs().catch(() => null);
   const txs = [
-    ['Asset records', ENSV2_SEPOLIA.transactions.assetRecords],
-    ['Audit records', ENSV2_SEPOLIA.transactions.auditRecords],
-    ['Risk records', ENSV2_SEPOLIA.transactions.observationRecords],
-    ['Agent records', ENSV2_SEPOLIA.transactions.agentRecords],
+    ['Asset records', ENSV2_SEPOLIA.transactions.assetRecords, ENSV2_SEPOLIA.names.asset],
+    ['Audit records', ENSV2_SEPOLIA.transactions.auditRecords, ENSV2_SEPOLIA.names.audit],
+    ['Risk records', ENSV2_SEPOLIA.transactions.observationRecords, ENSV2_SEPOLIA.names.observation],
+    ['Agent records', ENSV2_SEPOLIA.transactions.agentRecords, ENSV2_SEPOLIA.names.agent],
   ] as const;
 
   return (
@@ -68,10 +68,10 @@ export default async function DebugPage() {
       <div className="v-card" style={{ marginTop: 16 }}>
         <div className="v-label">Sepolia transaction proofs</div>
         <dl className="v-kv" style={{ marginTop: 10 }}>
-          {txs.map(([label, hash]) => (
+          {txs.map(([label, hash, name]) => (
             <div key={hash} style={{ display: 'contents' }}>
               <dt>{label}</dt>
-              <dd><a className="v-mono" href={`${ENSV2_SEPOLIA.explorer}/tx/${hash}`} target="_blank" rel="noreferrer">{short(hash)}</a></dd>
+              <dd><a className="v-mono" href={ENS_NAME_HISTORY_URL(name)} target="_blank" rel="noreferrer" title={`Onchain log · ${hash}`}>{short(hash)} ↗</a></dd>
             </div>
           ))}
         </dl>

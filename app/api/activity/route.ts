@@ -30,6 +30,7 @@ export type ActivityTx = {
   from: string;
   method: string;
   contract: string;
+  address: string;
 };
 
 let cache: { at: number; payload: unknown } | null = null;
@@ -54,6 +55,7 @@ async function fetchTxs(label: string, address: string): Promise<ActivityTx[]> {
       from: String(tx.from?.hash ?? ''),
       method: prettyMethod(String(tx.method ?? 'call')),
       contract: label,
+      address,
     })).filter((tx) => tx.hash);
   } catch {
     return [];

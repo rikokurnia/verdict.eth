@@ -5,6 +5,8 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { Check, CircleDashed, ExternalLink, Minus, X } from "lucide-react";
+import { EnsLogo } from "@/components/app/asset-identity";
+import { ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
 import styles from "@/components/app/agent-orchestra.module.css";
 
 export type AgentId = "legal" | "custody" | "technical" | "consensus";
@@ -87,13 +89,14 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
           <span className={styles.nodeEyebrow}>{data.eyebrow}</span>
           <h3>{data.name}</h3>
           <a
-            href={`https://eth-sepolia.blockscout.com/address/${data.address}`}
+            href={ENS_EXPLORER_NAME_URL(data.ensName)}
             target="_blank"
             rel="noreferrer"
             className={styles.ensLink}
-            title={data.address}
+            title={`View ${data.ensName} on app.ens.domains`}
           >
-            {data.ensName}
+            <EnsLogo size={13} />
+            <span>{data.ensName}</span>
             <ExternalLink size={11} aria-hidden="true" />
           </a>
         </div>

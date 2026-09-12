@@ -6,7 +6,7 @@ import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
-import { ENSV2_SEPOLIA, ENS_REGISTRY_URL } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA, ENS_REGISTRY_URL, ENS_NAME_HISTORY_URL } from "@/lib/ensv2-config";
 
 const PRESETS = [
   {
@@ -18,8 +18,6 @@ const PRESETS = [
     text: "Approve only assets backed by allocated physical collateral (e.g. vaulted gold) or short-term government securities with a named custodian. Cap custody score at 50 when the custodian, attestation auditor, or SPV structure is unknown. Synthetic or algorithmic backing must FAIL.",
   },
 ];
-
-const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
 type MintConfirmation = {
   subname: string;
@@ -406,9 +404,10 @@ export default function AgentFactory({
                 <dt>Register tx</dt>
                 <dd className="v-mono">
                   <a
-                    href={`${ETHERSCAN_TX}/${confirmation.transactions.register.hash}`}
+                    href={ENS_NAME_HISTORY_URL(confirmation.subname)}
                     target="_blank"
                     rel="noreferrer"
+                    title={`Onchain log · ${confirmation.transactions.register.hash}`}
                   >
                     {shortHash(confirmation.transactions.register.hash)} ↗
                   </a>{" "}
@@ -417,9 +416,10 @@ export default function AgentFactory({
                 <dt>Records tx</dt>
                 <dd className="v-mono">
                   <a
-                    href={`${ETHERSCAN_TX}/${confirmation.transactions.records.hash}`}
+                    href={ENS_NAME_HISTORY_URL(confirmation.subname)}
                     target="_blank"
                     rel="noreferrer"
+                    title={`Onchain log · ${confirmation.transactions.records.hash}`}
                   >
                     {shortHash(confirmation.transactions.records.hash)} ↗
                   </a>{" "}

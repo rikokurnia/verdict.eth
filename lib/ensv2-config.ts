@@ -17,12 +17,21 @@ export const ENSV2_SEPOLIA = {
     auditorRegistry: '0xc41926ea9855A291F8EdA917B064550f13F9dF08',
     monitorRegistry: '0x97BBD31Ee3B140f601eA7852B647255BCA6048C5',
     rwaRegistry: '0xFD32461986A0914d272d0EA14d008F67EC18f65e',
+    agentRegistry: '0xf247E51be1BedcB0782273392e3e99e4C713De69',
   },
   names: {
     asset: 'usd-yield-001.acme.verdict.eth',
-    audit: 'audit-001.verdict-auditor.eth',
-    observation: 'risk-001.verdict-monitor.eth',
-    agent: 'treasury-agent.verdict.eth',
+    audit: 'legal.agent.verdict.eth',
+    observation: 'custody.agent.verdict.eth',
+    technical: 'technical.agent.verdict.eth',
+    consensus: 'consensus.agent.verdict.eth',
+    agent: 'consensus.agent.verdict.eth',
+    agents: {
+      legal: 'legal.agent.verdict.eth',
+      custody: 'custody.agent.verdict.eth',
+      technical: 'technical.agent.verdict.eth',
+      consensus: 'consensus.agent.verdict.eth',
+    },
     aliasParents: ['arb.verdict.eth', 'base.verdict.eth'],
     soulbound: 'kyc-001.acme.verdict.eth',
     forever: 'genesis.acme.verdict.eth',
@@ -59,17 +68,34 @@ export function ENS_EXPLORER_NAME_URL(name: string) {
   return `https://app.ens.domains/${encodeURIComponent(name)}`;
 }
 
-/** Official ENSv2 explorer — resolver contract deep link. */
+/** Hackathon deployment explorer — resolver contract deep link. */
 export function ENS_RESOLVER_URL(address: string) {
-  return `https://explorer.ens.dev/resolver/${address}`;
+  return `https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/${address}`;
 }
 
-/** Official ENSv2 explorer — registry contract deep link. */
+/** Hackathon deployment explorer — registry contract deep link. */
 export function ENS_REGISTRY_URL(address: string) {
-  return `https://explorer.ens.dev/registry/${address}`;
+  return `https://hackathon-deployment-portal-app.ens-cf.workers.dev/registry/${address}`;
+}
+
+const ENS_PORTAL = 'https://hackathon-deployment-portal-app.ens-cf.workers.dev';
+
+/** Onchain activity for a name, as logged by the ENS explorer. */
+export function ENS_NAME_HISTORY_URL(name: string) {
+  return `${ENS_PORTAL}/names/${encodeURIComponent(name)}/history`;
+}
+
+/** Onchain activity for a contract, as logged by the ENS explorer. */
+export function ENS_ADDRESS_HISTORY_URL(address: string) {
+  return `${ENS_PORTAL}/addr/${address}/history`;
 }
 
 export const ENS_APP_NAME_URL = ENS_EXPLORER_NAME_URL;
+
+/** ENS explorer (beta deployment reader) name deep link — for record/contract proof. */
+export function ENS_EXPLORER_BETA_NAME_URL(name: string) {
+  return `https://explorer.ens.dev/names/${encodeURIComponent(name)}`;
+}
 
 /** Hackathon ENS explorer (Sepolia ENSv2 deployment) portal deep link. */
 export function ENS_PORTAL_NAME_URL(name: string) {

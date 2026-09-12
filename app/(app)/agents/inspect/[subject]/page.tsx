@@ -8,7 +8,7 @@ import { AssetLogo, CoverageBadge, EnsLogo } from '@/components/app/asset-identi
 import { ColoredScore } from '@/components/app/status-badge';
 import RunDetails from '@/components/app/run-details';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
-import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL, ENS_NAME_HISTORY_URL } from '@/lib/ensv2-config';
 import type { QuartetRun } from '@/lib/agents/types';
 
 type HistoryEntry = { file: string; recordedAt: string; run: QuartetRun };
@@ -179,7 +179,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
               <dl className="v-kv" style={{ marginTop: 10 }}>
                 <dt>Snapshot tx</dt>
                 <dd className="v-mono">
-                  <a href={`${ENSV2_SEPOLIA.explorer}/tx/${tx.hash}`} target="_blank" rel="noreferrer">
+                  <a href={ENS_NAME_HISTORY_URL(asset.name)} target="_blank" rel="noreferrer" title={`Onchain log · ${tx.hash}`}>
                     {shortHash(tx.hash)} ↗
                   </a>{' '}· block {tx.blockNumber}
                 </dd>

@@ -33,8 +33,8 @@ const ids: AgentId[] = ["legal", "custody", "technical", "consensus"];
 const definitions = {
   legal: {
     name: "Legal & Compliance",
-    ensName: ENS.names.audit,
-    address: ENS.proxies.auditorResolver,
+    ensName: ENS.names.agents.legal,
+    address: ENS.proxies.namespaceResolver,
     avatarUrl: "/assets/agent-assets/satelit1.png",
     labels: [
       "Resolve authority & registry",
@@ -44,8 +44,8 @@ const definitions = {
   },
   custody: {
     name: "Custody & Backing",
-    ensName: ENS.names.observation,
-    address: ENS.proxies.monitorResolver,
+    ensName: ENS.names.agents.custody,
+    address: ENS.proxies.namespaceResolver,
     avatarUrl: "/assets/agent-assets/plane2.png",
     labels: [
       "Receive shared evidence",
@@ -55,7 +55,7 @@ const definitions = {
   },
   technical: {
     name: "Smart Contract Tech",
-    ensName: "Token contract ↗",
+    ensName: ENS.names.agents.technical,
     address: ENS.proxies.namespaceResolver,
     avatarUrl: "/assets/agent-assets/drone.png",
     labels: [
@@ -66,8 +66,8 @@ const definitions = {
   },
   consensus: {
     name: "Consensus Synthesizer",
-    ensName: "Verdict registry ↗",
-    address: ENS.proxies.verdictRegistry,
+    ensName: ENS.names.agents.consensus,
+    address: ENS.proxies.namespaceResolver,
     avatarUrl: "/assets/agent-assets/satelit2.png",
     labels: [
       "Ingest three inspector reports",

@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { ColoredScore } from "@/components/app/status-badge";
-import { ENSV2_SEPOLIA as ENS, ENS_REGISTRY_URL, ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA as ENS, ENS_REGISTRY_URL, ENS_PORTAL_NAME_URL, ENS_NAME_HISTORY_URL } from "@/lib/ensv2-config";
 import { DEMO_ASSETS } from "@/components/app/demo-data";
 import type { QuartetRun } from "@/lib/agents/types";
 import s from "./agent-orchestra.module.css";
@@ -48,9 +48,9 @@ function parseProofSource(raw: string, ensName?: string | null): { href: string;
       const addrShort = /^0x[a-fA-F0-9]{40}$/.test(addr) ? ` (${addr.slice(0, 6)}…${addr.slice(-4)})` : '';
       if (!ensName) return null;
       return {
-        href: ENS_EXPLORER_NAME_URL(ensName),
+        href: ENS_PORTAL_NAME_URL(ensName),
         label: `ENS Profile Contract${addrShort}`,
-        domain: 'app.ens.domains',
+        domain: 'hackathon-deployment-portal-app.ens-cf.workers.dev',
       };
     }
 
@@ -193,11 +193,12 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
         {Object.entries(run.write.transactions ?? {}).map(([name, tx]) => (
           <a
             key={name}
-            href={`${ENS.explorer}/tx/${tx.hash}`}
+            href={ensName ? ENS_NAME_HISTORY_URL(ensName) : ENS_REGISTRY_URL(ENS.proxies.verdictRegistry)}
             target="_blank"
             rel="noreferrer"
+            title={`Onchain log · ${tx.hash}`}
           >
-            {name} transaction ↗
+            {name} · {tx.hash.slice(0, 10)}…{tx.hash.slice(-6)} ↗
           </a>
         ))}
         <a
