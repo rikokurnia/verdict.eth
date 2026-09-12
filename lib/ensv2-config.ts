@@ -54,9 +54,9 @@ export const VERDICT_POLICY = {
   observationFreshnessSeconds: 86_400,
 } as const;
 
-/** Official ENSv2 explorer (explorer.ens.dev) — name deep link. */
+/** Official ENS App name deep link (https://app.ens.domains/<name>). */
 export function ENS_EXPLORER_NAME_URL(name: string) {
-  return `https://explorer.ens.dev/names/${encodeURIComponent(name)}`;
+  return `https://app.ens.domains/${encodeURIComponent(name)}`;
 }
 
 /** Official ENSv2 explorer — resolver contract deep link. */

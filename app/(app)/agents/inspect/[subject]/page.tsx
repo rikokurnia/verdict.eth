@@ -107,7 +107,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
             target="_blank"
             rel="noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}
-            title={`View ${asset.name} on the Sepolia ENSv2 explorer (app.ens.domains targets mainnet and cannot see hackathon names)`}
+            title={`View ${asset.name} on app.ens.domains`}
           >
             <EnsLogo size={14} />
             <span>ENS: {asset.name}</span>

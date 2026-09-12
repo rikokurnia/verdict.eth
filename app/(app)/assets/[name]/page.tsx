@@ -191,8 +191,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
             {profile.records['verdict.profile.authority'] ?? ''} — every row below resolved live from Sepolia at block {profile.sourceBlock}.
           </p>
           <p className="v-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
-            app.ens.domains targets mainnet and will show 0 records for hackathon names — cross-check on the{' '}
-            <a href={ENS_EXPLORER_NAME_URL(profile.name)} target="_blank" rel="noreferrer">Sepolia ENSv2 explorer ↗</a>.
+            View official records on <a href={ENS_EXPLORER_NAME_URL(profile.name)} target="_blank" rel="noreferrer">app.ens.domains ↗</a>.
           </p>
           <dl className="v-kv" style={{ marginTop: 10 }}>
             {Object.entries(profile.records).filter(([, v]) => v).map(([key, value]) => (

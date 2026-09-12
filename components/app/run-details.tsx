@@ -2,7 +2,8 @@
 
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { ColoredScore } from "@/components/app/status-badge";
-import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA as ENS, ENS_REGISTRY_URL, ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
+import { DEMO_ASSETS } from "@/components/app/demo-data";
 import type { QuartetRun } from "@/lib/agents/types";
 import s from "./agent-orchestra.module.css";
 
@@ -28,7 +29,7 @@ function bigScoreClass(score?: number | null) {
   return s.bigScoreRed;
 }
 
-function parseProofSource(raw: string): { href: string; label: string; domain: string } | null {
+function parseProofSource(raw: string, ensName?: string | null): { href: string; label: string; domain: string } | null {
   const match = raw.match(/https?:\/\/[^\s)\],]+/i);
   if (!match) return null;
   const cleanUrl = match[0].replace(/[.,;:)]+$/, '');
@@ -38,27 +39,18 @@ function parseProofSource(raw: string): { href: string; label: string; domain: s
     const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
     const path = parsed.pathname;
 
-    // 1. Blockscout (API or Web Explorer)
-    if (host.includes('blockscout.com')) {
-      const isApi = path.includes('/api/v2/smart-contracts/');
-      const addr = isApi ? path.split('/').pop() : path.match(/0x[a-fA-F0-9]{40}/)?.[0];
-      const href = addr ? `https://${parsed.hostname}/address/${addr}` : cleanUrl;
-      const addrShort = addr ? ` (${addr.slice(0, 6)}…${addr.slice(-4)})` : '';
+    // Contract verifications live on chain explorers — but every proof in this
+    // product must resolve inside the ENS explorer. The verified contract
+    // address is stored onchain in the asset's own ENS profile, so link there.
+    // Without a profile to point at, the chip is dropped entirely.
+    if (host.includes('blockscout.com') || host.includes('etherscan.io')) {
+      const addr = path.match(/0x[a-fA-F0-9]{40}/)?.[0] ?? path.split('/').pop() ?? '';
+      const addrShort = /^0x[a-fA-F0-9]{40}$/.test(addr) ? ` (${addr.slice(0, 6)}…${addr.slice(-4)})` : '';
+      if (!ensName) return null;
       return {
-        href,
-        label: `Blockscout Verified${addrShort}`,
-        domain: 'blockscout.com',
-      };
-    }
-
-    // 2. Etherscan
-    if (host.includes('etherscan.io')) {
-      const addrMatch = path.match(/0x[a-fA-F0-9]{40}/);
-      const addrShort = addrMatch ? ` (${addrMatch[0].slice(0, 6)}…${addrMatch[0].slice(-4)})` : '';
-      return {
-        href: cleanUrl,
-        label: `Etherscan Contract${addrShort}`,
-        domain: 'etherscan.io',
+        href: ENS_EXPLORER_NAME_URL(ensName),
+        label: `ENS Profile Contract${addrShort}`,
+        domain: 'app.ens.domains',
       };
     }
 
@@ -107,6 +99,8 @@ function parseProofSource(raw: string): { href: string; label: string; domain: s
 
 /** Full 4-agent conclusion: inspectors, synthesis, and onchain write proofs. */
 export default function RunDetails({ run }: { run: QuartetRun }) {
+  const catalog = DEMO_ASSETS.find((a) => a.marketId === run.subject);
+  const ensName = catalog?.name ?? (run.subject.endsWith(".eth") ? run.subject : null);
   return (
     <div className={s.runDetails}>
       <div className={s.summary}>
@@ -147,7 +141,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
                 {(() => {
                   const seen = new Set<string>();
                   const sources = run.reports[id].evidence_urls
-                    .map(parseProofSource)
+                    .map((url) => parseProofSource(url, ensName))
                     .filter((item): item is NonNullable<typeof item> => {
                       if (!item || seen.has(item.href)) return false;
                       seen.add(item.href);
@@ -207,7 +201,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
           </a>
         ))}
         <a
-          href={`${ENS.explorer}/address/${ENS.proxies.verdictRegistry}`}
+          href={ENS_REGISTRY_URL(ENS.proxies.verdictRegistry)}
           target="_blank"
           rel="noreferrer"
         >
