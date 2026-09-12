@@ -29,6 +29,8 @@ import {
 } from '@/components/app/status-badge';
 import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
+import type { QuartetRun } from '@/lib/agents/types';
+import { SESSION_RUN_EVENT, loadSessionRuns } from '@/lib/session-runs';
 
 type Quote = { usd: number; change24h: number | null; updatedAt: number | null; image?: string };
 type MarketResponse = { ok: boolean; source: string; stale?: boolean; savedAt?: string; quotes: Record<string, Quote> };
@@ -76,7 +78,7 @@ function MarketQuote({ quote, loading }: { quote?: Quote; loading: boolean }) {
   );
 }
 
-function VerdictCell({ asset, score, live }: { asset: DemoAsset; score?: RwaScore | null; live: VerdictApiResponse | null }) {
+function VerdictCell({ asset, score, live, isSession }: { asset: DemoAsset; score?: RwaScore | null; live: VerdictApiResponse | null; isSession?: boolean }) {
   const verdict = getAssetVerdict(asset, score);
   const age = score ? formatAge(score.runAt) : null;
 
@@ -102,7 +104,7 @@ function VerdictCell({ asset, score, live }: { asset: DemoAsset; score?: RwaScor
             {score.score}<span className="v-trust-score-max">/100</span>
           </div>
           <div className="v-trust-audit-age">
-            {age ?? 'scored recently'}
+            {isSession ? `your session · ${age ?? 'scored just now'}` : (age ?? 'scored recently')}
           </div>
         </div>
       );
@@ -128,6 +130,7 @@ function AssetDialog({
   quote,
   live,
   score,
+  isSession,
   onClose,
   onToast,
 }: {
@@ -135,6 +138,7 @@ function AssetDialog({
   quote?: Quote;
   live: VerdictApiResponse | null;
   score?: RwaScore | null;
+  isSession?: boolean;
   onClose: () => void;
   onToast?: (kind: 'pass' | 'review' | 'blocked' | 'info', title: string, body: string) => void;
 }) {
@@ -236,7 +240,7 @@ function AssetDialog({
               ) : scored && score ? (
                 <>
                   <h3>{score.policy.replace('_', ' ')} · {score.score}/100</h3>
-                  <p>{score.summary || score.reason} · {formatAge(score.runAt) ?? 'recently'} · onchain ✓</p>
+                  <p>{score.summary || score.reason} · {formatAge(score.runAt) ?? 'recently'} · {isSession ? 'your session' : 'onchain ✓'}</p>
                 </>
               ) : (
                 <>
@@ -279,7 +283,8 @@ export default function DashboardPage() {
   const { toasts, push: pushToast } = useToasts();
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
-  const [scores, setScores] = useState<Record<string, RwaScore>>({});
+  const [serverScores, setServerScores] = useState<Record<string, RwaScore>>({});
+  const [sessionRuns, setSessionRuns] = useState<QuartetRun[]>([]);
   const [receipts, setReceipts] = useState<SeedReceipt[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [loadMessage, setLoadMessage] = useState('Resolving ENS and market sources…');
@@ -295,7 +300,7 @@ export default function DashboardPage() {
       const response = await fetch('/api/rwa-scores', { cache: 'no-store' });
       if (!response.ok) return;
       const body = (await response.json()) as ScoresResponse;
-      if (body.ok) setScores(body.scores);
+      if (body.ok) setServerScores(body.scores);
     } catch { /* Scores are progressive enhancement. */ }
   }, []);
 
@@ -327,7 +332,7 @@ export default function DashboardPage() {
     ]);
     if (verdictResult.status === 'fulfilled') setLive(verdictResult.value);
     if (marketResult.status === 'fulfilled') setQuotes(marketResult.value.quotes);
-    if (scoresResult.status === 'fulfilled' && scoresResult.value.ok) setScores(scoresResult.value.scores);
+    if (scoresResult.status === 'fulfilled' && scoresResult.value.ok) setServerScores(scoresResult.value.scores);
     const marketStale = marketResult.status === 'fulfilled' && marketResult.value.stale === true;
     const failures = [verdictResult, marketResult].filter((result) => result.status === 'rejected').length;
     setLoadState(failures ? 'partial' : marketStale ? 'partial' : 'ready');
@@ -340,6 +345,49 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => { void refresh(); void loadReceipts(); }, [refresh, loadReceipts]);
+
+  // This browser's own fresh runs override that asset's row only — local
+  // session preview, never shared with other users.
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setSessionRuns(loadSessionRuns());
+      } catch {
+        // Session store unavailable — onchain scores stand.
+      }
+    };
+    sync();
+    window.addEventListener(SESSION_RUN_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(SESSION_RUN_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
+  const { scores, sessionSubjects } = useMemo(() => {
+    const merged: Record<string, RwaScore> = { ...serverScores };
+    const subjects = new Set<string>();
+    for (const run of sessionRuns) {
+      if (!run?.subject || !run?.synthesis) continue;
+      const runAt = Math.floor(Date.parse(run.finishedAt) / 1000);
+      const candidate: RwaScore = {
+        score: run.synthesis.overall_score,
+        status: run.synthesis.verdict,
+        policy: run.synthesis.policy_state,
+        reason: run.synthesis.mapped.reasonCode,
+        summary: run.synthesis.reasoning_summary,
+        runAt: Number.isFinite(runAt) ? runAt : null,
+        sourceHash: '',
+      };
+      const prev = merged[run.subject];
+      if (!prev?.runAt || (candidate.runAt ?? 0) >= (prev.runAt ?? 0)) {
+        merged[run.subject] = candidate;
+        subjects.add(run.subject);
+      }
+    }
+    return { scores: merged, sessionSubjects: subjects };
+  }, [serverScores, sessionRuns]);
 
   async function refreshScores() {
     if (seeding.active) return;
@@ -481,7 +529,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="v-catalog-cell-verdict"><VerdictCell asset={asset} score={score} live={live} /></td>
+                  <td className="v-catalog-cell-verdict"><VerdictCell asset={asset} score={score} live={live} isSession={asset.marketId ? sessionSubjects.has(asset.marketId) : false} /></td>
                   <td className="v-catalog-cell-market"><MarketQuote quote={quote} loading={loadState === 'loading' && Boolean(asset.marketId)} /></td>
                   <td className="v-catalog-cell-category"><div className="v-cell-main">{asset.assetClass}</div><div className="v-cell-sub">{asset.issuer}</div></td>
                   <td className="v-catalog-cell-networks"><NetworkBadges networks={asset.networks} /></td>
@@ -496,7 +544,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {selected && <AssetDialog asset={selected} quote={selected.marketId ? quotes[selected.marketId] : undefined} score={selected.marketId ? scores[selected.marketId] : undefined} live={live} onClose={() => setSelected(null)} onToast={pushToast} />}
+      {selected && <AssetDialog asset={selected} quote={selected.marketId ? quotes[selected.marketId] : undefined} score={selected.marketId ? scores[selected.marketId] : undefined} isSession={selected.marketId ? sessionSubjects.has(selected.marketId) : false} live={live} onClose={() => setSelected(null)} onToast={pushToast} />}
       <ToastStack toasts={toasts} />
     </>
   );

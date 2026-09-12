@@ -10,6 +10,10 @@ import RunDetails from '@/components/app/run-details';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import type { QuartetRun } from '@/lib/agents/types';
+import {
+  SESSION_RUN_EVENT,
+  findSessionRun,
+} from '@/lib/session-runs';
 
 type HistoryEntry = { file: string; recordedAt: string; run: QuartetRun };
 type SeedTx = { hash: string; blockNumber: number };
@@ -24,6 +28,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
   const marketId = decodeURIComponent(subject);
   const asset = DEMO_ASSETS.find((a) => a.marketId === marketId);
   const [run, setRun] = useState<QuartetRun | null>(null);
+  const [isSessionRun, setIsSessionRun] = useState(false);
   const [tx, setTx] = useState<SeedTx | null>(null);
   const [snapshot, setSnapshot] = useState<{ status: string; score: number | null; reason: string; summary: string; runAt: number | null; underlying: string; standard: string; eligibility: string; custodian: string; docs: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +36,22 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
 
   useEffect(() => {
     const controller = new AbortController();
+    const applySession = () => {
+      // This browser's own latest run wins for this user only — other
+      // users keep seeing the shared record.
+      try {
+        const session = findSessionRun(marketId);
+        if (!session) return;
+        setRun((prev) => {
+          if (prev && prev.id === session.id) return prev;
+          if (prev && prev.finishedAt > session.finishedAt) return prev;
+          setIsSessionRun(true);
+          return session;
+        });
+      } catch {
+        // Session store unavailable — shared record stands.
+      }
+    };
     (async () => {
       try {
         const [runsRes, seedRes, profileRes] = await Promise.all([
@@ -41,7 +62,27 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
         if (runsRes.ok) {
           const body = (await runsRes.json()) as { runs?: HistoryEntry[] };
           const match = body.runs?.find((r) => r.run.subject === marketId);
-          if (match) setRun(match.run);
+          if (match) {
+            setRun((prev) => {
+              const session = (() => {
+                try {
+                  return findSessionRun(marketId);
+                } catch {
+                  return null;
+                }
+              })();
+              if (session && session.finishedAt >= match.run.finishedAt && (!prev || prev.id !== session.id)) {
+                setIsSessionRun(true);
+                return session;
+              }
+              setIsSessionRun(false);
+              return match.run;
+            });
+          } else {
+            applySession();
+          }
+        } else {
+          applySession();
         }
         if (seedRes.ok) {
           const body = (await seedRes.json()) as SeedReceipts;
@@ -82,7 +123,13 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
-    return () => controller.abort();
+    window.addEventListener(SESSION_RUN_EVENT, applySession);
+    window.addEventListener('storage', applySession);
+    return () => {
+      controller.abort();
+      window.removeEventListener(SESSION_RUN_EVENT, applySession);
+      window.removeEventListener('storage', applySession);
+    };
   }, [marketId, asset]);
 
   return (
@@ -149,6 +196,11 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
 
           {run ? (
             <div style={{ marginTop: 16 }}>
+              {isSessionRun && (
+                <p className="v-muted" style={{ fontSize: 13, marginBottom: 8 }}>
+                  Your session result — visible only in this browser until the conclusion is published onchain.
+                </p>
+              )}
               <RunDetails run={run} />
             </div>
           ) : snapshot && snapshot.score !== null ? (

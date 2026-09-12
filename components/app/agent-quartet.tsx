@@ -27,6 +27,11 @@ import AgentTerminalCard, {
 import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
 import { DEMO_ASSETS } from "./demo-data";
 import type { QuartetRun } from "@/lib/agents/types";
+import {
+  SESSION_RUN_EVENT,
+  loadSessionRuns,
+  saveSessionRun,
+} from "@/lib/session-runs";
 import s from "./agent-orchestra.module.css";
 
 const ids: AgentId[] = ["legal", "custody", "technical", "consensus"];
@@ -155,19 +160,40 @@ export default function AgentQuartet() {
       const response = await fetch("/api/agents/runs", { cache: "no-store" });
       if (!response.ok) throw Error();
       const body = await response.json();
+      // Merge this browser's session runs (localStorage) so a fresh
+      // inspection survives reloads for this user only.
+      const session: Entry[] = loadSessionRuns().map((run) => ({
+        file: `session:${run.id}`,
+        recordedAt: run.finishedAt,
+        run,
+      }));
       setHistory((prev) =>
-        [
-          ...prev.filter(
-            (e) => !body.runs.some((n: Entry) => n.run.id === e.run.id),
-          ),
-          ...body.runs,
-        ].sort(
+        [...prev, ...session, ...body.runs].filter(
+          (e, i, all) => all.findIndex((n) => n.run.id === e.run.id) === i,
+        ).sort(
           (a, b) => Date.parse(b.run.finishedAt) - Date.parse(a.run.finishedAt),
         ),
       );
       setHistoryStatus("ready");
     } catch {
-      setHistoryStatus("error");
+      // Server unreachable — still show this browser's session runs.
+      const session: Entry[] = loadSessionRuns().map((run) => ({
+        file: `session:${run.id}`,
+        recordedAt: run.finishedAt,
+        run,
+      }));
+      if (session.length) {
+        setHistory((prev) =>
+          [...prev, ...session].filter(
+            (e, i, all) => all.findIndex((n) => n.run.id === e.run.id) === i,
+          ).sort(
+            (a, b) => Date.parse(b.run.finishedAt) - Date.parse(a.run.finishedAt),
+          ),
+        );
+        setHistoryStatus("ready");
+      } else {
+        setHistoryStatus("error");
+      }
     }
   }, []);
   useEffect(() => {
@@ -191,9 +217,30 @@ export default function AgentQuartet() {
       setMode("custom");
     };
     window.addEventListener("verdict:auditor-minted", minted);
+    // A run finished in another tab shares this browser's session store —
+    // pick it up without overwriting in-memory state.
+    const sessionRun = (e: Event) => {
+      const run = (e as CustomEvent<QuartetRun>).detail;
+      if (!run?.id) {
+        void loadHistory();
+        return;
+      }
+      setHistory((prev) =>
+        [
+          { file: `session:${run.id}`, recordedAt: run.finishedAt, run },
+          ...prev.filter((entry) => entry.run.id !== run.id),
+        ].sort(
+          (a, b) => Date.parse(b.run.finishedAt) - Date.parse(a.run.finishedAt),
+        ),
+      );
+    };
+    window.addEventListener(SESSION_RUN_EVENT, sessionRun);
+    window.addEventListener("storage", sessionRun);
     return () => {
       media.removeEventListener("change", resize);
       window.removeEventListener("verdict:auditor-minted", minted);
+      window.removeEventListener(SESSION_RUN_EVENT, sessionRun);
+      window.removeEventListener("storage", sessionRun);
       source.current?.close();
     };
   }, [loadHistory]);
@@ -238,18 +285,18 @@ export default function AgentQuartet() {
             : undefined,
           steps: definitions[id].labels.map((label, step) => ({
             label,
-            status:
-              states[id] === "running"
+            // Execution progress, not risk: once the agent finished
+            // (completed[id] set), every step ran — checks all the way.
+            // Risk stays on the node header ("Risk flagged") + score.
+            status: completed[id]
+              ? "completed"
+              : states[id] === "running"
                 ? step === 1
                   ? "running"
                   : step === 0
                     ? "completed"
                     : "idle"
-                : states[id] === "flagged"
-                  ? step === 0
-                    ? "completed"
-                    : "flagged"
-                  : states[id],
+                : states[id],
             time: completed[id] ? time(completed[id]!) : undefined,
           })),
         },
@@ -339,6 +386,10 @@ export default function AgentQuartet() {
           stream.close();
           setRunning(false);
           setRun(result);
+          // Keep this user's run in their own browser only — it updates
+          // their history, inspect page, and score list without affecting
+          // anyone else.
+          saveSessionRun(result);
           setCompleted((previous) => Object.fromEntries(ids.map((id) => [id, previous[id] ?? result.finishedAt])));
           setStates({
             legal: resultState(result.reports.legal.status),
