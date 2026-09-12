@@ -6,7 +6,7 @@ import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
-import { ENSV2_SEPOLIA } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA, ENS_REGISTRY_URL } from "@/lib/ensv2-config";
 
 const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
@@ -431,7 +431,7 @@ export default function AgentFactory({
               <div className="v-dialog-actions" style={{ marginTop: 10 }}>
                 <a
                   className="v-btn v-btn-secondary"
-                  href={`${ENSV2_SEPOLIA.explorer}/address/${ENSV2_SEPOLIA.proxies.verdictRegistry}`}
+                  href={ENS_REGISTRY_URL(ENSV2_SEPOLIA.proxies.verdictRegistry)}
                   target="_blank"
                   rel="noreferrer"
                 >

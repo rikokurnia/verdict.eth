@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { ColoredScore } from "@/components/app/status-badge";
-import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA as ENS, ENS_REGISTRY_URL } from "@/lib/ensv2-config";
 import type { QuartetRun } from "@/lib/agents/types";
 import s from "./agent-orchestra.module.css";
 
@@ -207,7 +207,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
           </a>
         ))}
         <a
-          href={`${ENS.explorer}/address/${ENS.proxies.verdictRegistry}`}
+          href={ENS_REGISTRY_URL(ENS.proxies.verdictRegistry)}
           target="_blank"
           rel="noreferrer"
         >

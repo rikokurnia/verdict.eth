@@ -84,6 +84,23 @@ npm run typecheck
 npm run verify:ens
 ```
 
+### ENSv2 Explorer proof
+
+Verdict uses the dedicated ETHOnline ENSv2 deployment on Ethereum Sepolia. The
+hackathon ENS Explorer shows ENS semantics such as the hierarchy, records,
+resolver, ownership, EAC roles, and name history. Blockscout shows the underlying
+Sepolia transactions and contracts.
+
+- [Canonical asset](https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth)
+- [Asset records](https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth/records)
+- [Asset registry hierarchy](https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth/registry)
+- [Auditor resolver EAC roles](https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/0x1C6e26A8f56C8B6C9286Fe217851c1FC9e7dA6e6/roles)
+- [Verdict resolution debug page](http://localhost:3000/debug)
+
+The app and CLI resolve through the hackathon Universal Resolver proxy at
+`0xd26f2040d083af1cd2962ba303f4bea0c4faf142`, not the resolver bundled into
+standard ethers or viem Sepolia configuration.
+
 ### AI audit worker
 
 Set `SEPOLIA_RPC_URL` and `GEMINI_API_KEY` in `.env.local`. Signing keys are

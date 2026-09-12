@@ -915,6 +915,32 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.v-ens-explorer-proof {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.v-ens-explorer-proof img {
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.v-ens-explorer-proof:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.v-ens-explorer-proof-asset {
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
 .v-copied-icon {
   color: var(--pass);
 }

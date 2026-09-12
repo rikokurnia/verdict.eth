@@ -6,7 +6,7 @@ import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { EnsLogo, OfficialDeployments } from '@/components/app/asset-identity';
-import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL, ENS_NAME_RECORDS_URL, ENS_NAME_ROLES_URL, ENS_RESOLVER_URL } from '@/lib/ensv2-config';
 import type { EnsProfile } from '@/lib/ens-profile';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
@@ -152,12 +152,12 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
                 href={ENS_EXPLORER_NAME_URL(decodedName)}
                 target="_blank"
                 rel="noreferrer"
-                aria-label={`Open ${decodedName} on app.ens.domains`}
-                title={`Open ${decodedName} on app.ens.domains`}
+                aria-label={`Open ${decodedName} in the hackathon ENSv2 Explorer`}
+                title={`Open ${decodedName} in the hackathon ENSv2 Explorer`}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
               >
                 <EnsLogo size={12} />
-                <span>ENS</span>
+                <span>ENS Explorer</span>
                 <ExternalLink size={11} aria-hidden="true" />
               </a>
             )}
@@ -191,8 +191,10 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
             {profile.records['verdict.profile.authority'] ?? ''} — every row below resolved live from Sepolia at block {profile.sourceBlock}.
           </p>
           <p className="v-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
-            Name page on <a href={ENS_EXPLORER_NAME_URL(profile.name)} target="_blank" rel="noreferrer">app.ens.domains ↗</a>
-            {' '}· resolver contract on <a href={`${ENSV2_SEPOLIA.explorer}/address/${profile.resolver}`} target="_blank" rel="noreferrer">Sepolia ↗</a>.
+            <a href={ENS_NAME_RECORDS_URL(profile.name)} target="_blank" rel="noreferrer">ENS records ↗</a>
+            {' '}· <a href={ENS_NAME_ROLES_URL(profile.name)} target="_blank" rel="noreferrer">EAC roles ↗</a>
+            {' '}· <a href={ENS_RESOLVER_URL(profile.resolver)} target="_blank" rel="noreferrer">ENS resolver ↗</a>
+            {' '}· <a href={`${ENSV2_SEPOLIA.explorer}/address/${profile.resolver}`} target="_blank" rel="noreferrer">Sepolia contract ↗</a>.
           </p>
           <dl className="v-kv" style={{ marginTop: 10 }}>
             {Object.entries(profile.records).filter(([, v]) => v).map(([key, value]) => (
@@ -200,7 +202,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
                 <dt>{key}</dt><dd className="v-mono" style={{ overflowWrap: 'anywhere' }}>{value}</dd>
               </div>
             ))}
-            <dt>Resolver</dt><dd className="v-mono"><a href={`${ENSV2_SEPOLIA.explorer}/address/${profile.resolver}`} target="_blank" rel="noreferrer">{shortHash(profile.resolver)} ↗</a></dd>
+            <dt>Resolver</dt><dd className="v-mono"><a href={ENS_RESOLVER_URL(profile.resolver)} target="_blank" rel="noreferrer">{shortHash(profile.resolver)} ↗</a></dd>
             {profile.registration && (
               <>
                 <dt>Registration</dt><dd>{profile.registration.statusLabel} · owner <span className="v-mono">{shortHash(profile.registration.owner)}</span></dd>

@@ -1,6 +1,16 @@
 import { PageHead } from '@/components/app/app-shell';
 import StatusChip from '@/components/app/status-chip';
-import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import {
+  ENSV2_SEPOLIA,
+  ENS_EXPLORER_NAME_URL,
+  ENS_NAME_HISTORY_URL,
+  ENS_NAME_RECORDS_URL,
+  ENS_NAME_REGISTRY_URL,
+  ENS_NAME_RESOLVER_URL,
+  ENS_REGISTRY_URL,
+  ENS_RESOLVER_ROLES_URL,
+  ENS_RESOLVER_URL,
+} from '@/lib/ensv2-config';
 import { readLifecycleProofs } from '@/lib/lifecycle-proofs';
 import { resolveVerdict, unavailableVerdict } from '@/lib/verdict-service';
 
@@ -28,11 +38,11 @@ export default async function DebugPage() {
           <div className="v-label">Pinned resolution</div>
           <div style={{ margin: '12px 0' }}><StatusChip state={verdict.state} /></div>
           <dl className="v-kv">
-            <dt>Name</dt><dd className="v-mono">{verdict.name}</dd>
+            <dt>Name</dt><dd className="v-mono"><a href={ENS_EXPLORER_NAME_URL(verdict.name)} target="_blank" rel="noreferrer">{verdict.name} ↗</a></dd>
             <dt>Block</dt><dd className="v-mono">{verdict.sourceBlock ?? 'unavailable'}</dd>
             <dt>Chain</dt><dd className="v-mono">{verdict.chainId}</dd>
             <dt>Policy</dt><dd className="v-mono">{verdict.policyId}</dd>
-            <dt>Universal resolver</dt><dd className="v-mono">{short(verdict.infrastructure.universalResolver)}</dd>
+            <dt>Universal resolver</dt><dd className="v-mono"><a href={ENS_RESOLVER_URL(verdict.infrastructure.universalResolver)} target="_blank" rel="noreferrer">{short(verdict.infrastructure.universalResolver)} ↗</a></dd>
           </dl>
         </div>
         <div className="v-card">
@@ -51,18 +61,38 @@ export default async function DebugPage() {
         <div className="v-label">Resolved authority sources</div>
         <div className="v-table-wrap" style={{ marginTop: 10 }}>
           <table className="v-table">
-            <thead><tr><th>ENS name</th><th>Resolver proxy</th><th>Records read</th></tr></thead>
+            <thead><tr><th>ENS name</th><th>Resolver proxy</th><th>Records read</th><th>Explorer proof</th></tr></thead>
             <tbody>
               {verdict.sources.map((source) => (
                 <tr key={source.name}>
-                  <td className="v-mono">{source.name}</td>
-                  <td className="v-mono">{short(source.resolver)}</td>
+                  <td className="v-mono"><a href={ENS_EXPLORER_NAME_URL(source.name)} target="_blank" rel="noreferrer">{source.name} ↗</a></td>
+                  <td className="v-mono"><a href={ENS_RESOLVER_URL(source.resolver)} target="_blank" rel="noreferrer">{short(source.resolver)} ↗</a></td>
                   <td>{Object.keys(source.records).length}</td>
+                  <td>
+                    <a href={ENS_NAME_RECORDS_URL(source.name)} target="_blank" rel="noreferrer">Records ↗</a>
+                    {' · '}<a href={ENS_RESOLVER_ROLES_URL(source.resolver)} target="_blank" rel="noreferrer">Roles ↗</a>
+                    {' · '}<a href={ENS_NAME_HISTORY_URL(source.name)} target="_blank" rel="noreferrer">History ↗</a>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="v-card" style={{ marginTop: 16 }}>
+        <div className="v-label">ENSv2 deployment proof</div>
+        <p className="v-muted" style={{ marginTop: 10 }}>
+          These links use the dedicated ETHOnline ENSv2 Explorer. Blockscout links below prove the raw Sepolia transactions.
+        </p>
+        <dl className="v-kv" style={{ marginTop: 10 }}>
+          <dt>Asset records</dt><dd><a href={ENS_NAME_RECORDS_URL(ENSV2_SEPOLIA.names.asset)} target="_blank" rel="noreferrer">Open records ↗</a></dd>
+          <dt>Asset resolver</dt><dd><a href={ENS_NAME_RESOLVER_URL(ENSV2_SEPOLIA.names.asset)} target="_blank" rel="noreferrer">Open resolver ↗</a></dd>
+          <dt>Asset registry</dt><dd><a href={ENS_NAME_REGISTRY_URL(ENSV2_SEPOLIA.names.asset)} target="_blank" rel="noreferrer">Open hierarchy ↗</a></dd>
+          <dt>Auditor EAC roles</dt><dd><a href={ENS_RESOLVER_ROLES_URL(ENSV2_SEPOLIA.proxies.auditorResolver)} target="_blank" rel="noreferrer">Open resolver roles ↗</a></dd>
+          <dt>Monitor EAC roles</dt><dd><a href={ENS_RESOLVER_ROLES_URL(ENSV2_SEPOLIA.proxies.monitorResolver)} target="_blank" rel="noreferrer">Open resolver roles ↗</a></dd>
+          <dt>Verdict registry</dt><dd><a href={ENS_REGISTRY_URL(ENSV2_SEPOLIA.proxies.verdictRegistry)} target="_blank" rel="noreferrer">Open registry contract ↗</a></dd>
+        </dl>
       </div>
 
       <div className="v-card" style={{ marginTop: 16 }}>

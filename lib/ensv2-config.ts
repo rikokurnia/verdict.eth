@@ -1,5 +1,7 @@
 export const ENSV2_SEPOLIA = {
   chainId: 11155111,
+  ensExplorer: 'https://hackathon-deployment-portal-app.ens-cf.workers.dev',
+  ensManager: 'https://hackathon-deployment-manager-app-v4.ens-cf.workers.dev',
   explorer: 'https://eth-sepolia.blockscout.com',
   contracts: {
     universalResolver: '0xd26f2040d083af1cd2962ba303f4bea0c4faf142',
@@ -63,9 +65,31 @@ export const VERDICT_POLICY = {
   observationFreshnessSeconds: 86_400,
 } as const;
 
-/** Official ENS App name deep link (https://app.ens.domains/<name>). */
+const ENS_PORTAL = ENSV2_SEPOLIA.ensExplorer;
+
+/** Hackathon ENSv2 Explorer name page. */
 export function ENS_EXPLORER_NAME_URL(name: string) {
-  return `https://app.ens.domains/${encodeURIComponent(name)}`;
+  return `${ENS_PORTAL}/${encodeURIComponent(name)}`;
+}
+
+/** Hackathon ENSv2 Explorer record view for a name. */
+export function ENS_NAME_RECORDS_URL(name: string) {
+  return `${ENS_EXPLORER_NAME_URL(name)}/records`;
+}
+
+/** Hackathon ENSv2 Explorer EAC role view for a name. */
+export function ENS_NAME_ROLES_URL(name: string) {
+  return `${ENS_EXPLORER_NAME_URL(name)}/roles`;
+}
+
+/** Hackathon ENSv2 Explorer registry hierarchy view for a name. */
+export function ENS_NAME_REGISTRY_URL(name: string) {
+  return `${ENS_EXPLORER_NAME_URL(name)}/registry`;
+}
+
+/** Hackathon ENSv2 Explorer resolver view for a name. */
+export function ENS_NAME_RESOLVER_URL(name: string) {
+  return `${ENS_EXPLORER_NAME_URL(name)}/resolver`;
 }
 
 /** Hackathon deployment explorer — resolver contract deep link. */
@@ -73,16 +97,19 @@ export function ENS_RESOLVER_URL(address: string) {
   return `https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/${address}`;
 }
 
+/** Hackathon ENSv2 Explorer role holders for a Permissioned Resolver. */
+export function ENS_RESOLVER_ROLES_URL(address: string) {
+  return `${ENS_RESOLVER_URL(address)}/roles`;
+}
+
 /** Hackathon deployment explorer — registry contract deep link. */
 export function ENS_REGISTRY_URL(address: string) {
   return `https://hackathon-deployment-portal-app.ens-cf.workers.dev/registry/${address}`;
 }
 
-const ENS_PORTAL = 'https://hackathon-deployment-portal-app.ens-cf.workers.dev';
-
 /** Onchain activity for a name, as logged by the ENS explorer. */
 export function ENS_NAME_HISTORY_URL(name: string) {
-  return `${ENS_PORTAL}/names/${encodeURIComponent(name)}/history`;
+  return `${ENS_EXPLORER_NAME_URL(name)}/history`;
 }
 
 /** Onchain activity for a contract, as logged by the ENS explorer. */
@@ -94,10 +121,10 @@ export const ENS_APP_NAME_URL = ENS_EXPLORER_NAME_URL;
 
 /** ENS explorer (beta deployment reader) name deep link — for record/contract proof. */
 export function ENS_EXPLORER_BETA_NAME_URL(name: string) {
-  return `https://explorer.ens.dev/names/${encodeURIComponent(name)}`;
+  return ENS_EXPLORER_NAME_URL(name);
 }
 
 /** Hackathon ENS explorer (Sepolia ENSv2 deployment) portal deep link. */
 export function ENS_PORTAL_NAME_URL(name: string) {
-  return `https://hackathon-deployment-portal-app.ens-cf.workers.dev/names/${encodeURIComponent(name)}`;
+  return ENS_EXPLORER_NAME_URL(name);
 }

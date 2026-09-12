@@ -96,7 +96,7 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            title={data.ensName.endsWith(".eth") ? `View ${data.ensName} on app.ens.domains` : data.address}
+            title={data.ensName.endsWith(".eth") ? `View ${data.ensName} in the hackathon ENSv2 Explorer` : data.address}
           >
             <EnsLogo size={13} />
             <span>{data.ensName}</span>

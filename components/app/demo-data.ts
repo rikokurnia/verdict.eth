@@ -48,7 +48,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
     description: 'Fictional Sepolia asset used to prove independent issuer, AI auditor, and risk-monitor permissions end to end.',
     logo: '/icon.svg', networks: ['sepolia'], network: 'Ethereum Sepolia',
     contracts: { sepolia: '0xcbfd80f74375c54e545af34788ff465f96f66f05' },
-    sourceLabel: 'ENSv2 evidence graph', sourceUrl: 'https://eth-sepolia.blockscout.com/address/0xB18cCDb9fFE2A3CB50Dd00c3Ece15e55c98410cE',
+    sourceLabel: 'ENSv2 evidence graph', sourceUrl: 'https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth',
     snapshot: 'AI evidence verified', snapshotAsOf: 'Live Sepolia state', auditNote: 'Active', riskNote: 'Fresh', heartbeat: 'Resolving…',
   },
   {

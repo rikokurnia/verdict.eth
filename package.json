@@ -11,7 +11,7 @@
     "configure:ens-permissions": "node scripts/configure-ensv2-permissions.mjs",
     "verify:ens": "node scripts/read-verdict.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test lib/policy.test.ts"
+    "test": "node --experimental-strip-types --test lib/*.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "latest",
