@@ -49,7 +49,7 @@ function persistReceipt(receipt: unknown) {
   } catch { /* receipts are best-effort */ }
 }
 
-export function readSeedReceipts(limit = 5) {
+export function readSeedReceipts(limit = 30) {
   try {
     return readdirSync(SEED_DIR)
       .filter((f) => f.endsWith('.json'))
