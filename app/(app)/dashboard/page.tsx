@@ -21,7 +21,14 @@ import {
   ENSV2_SEPOLIA,
   ENS_EXPLORER_NAME_URL,
 } from '@/lib/ensv2-config';
-import { StatusBadge, getAssetVerdict, getScoreColorClass, type UnifiedVerdict } from '@/components/app/status-badge';
+import {
+  StatusBadge,
+  getAssetVerdict,
+  getScoreColorClass,
+  getUnifiedVerdict,
+  VERDICT_DISPLAY_NAMES,
+  type UnifiedVerdict,
+} from '@/components/app/status-badge';
 import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
@@ -432,16 +439,16 @@ export default function DashboardPage() {
 
       <div className="v-metric-grid" role="region" aria-label="Catalog coverage summary">
         <button className={`v-metric-card v-metric-total ${verdictFilter === 'ALL' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'ALL'} onClick={() => setVerdictFilter('ALL')}><div className="v-metric-top"><span className="v-label">Catalog</span><Layers size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{assets.length}</div><div className="v-muted">Across {classes.length} asset classes</div><div className="v-metric-line"><span style={{ width: '100%' }} /></div></button>
-        <button className={`v-metric-card v-metric-pass ${verdictFilter === 'VERIFIED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'VERIFIED'} onClick={() => setVerdictFilter(verdictFilter === 'VERIFIED' ? 'ALL' : 'VERIFIED')}><div className="v-metric-top"><span className="v-label">Verified</span><BadgeCheck size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.verified}</div><div className="v-muted">Passing evidence</div><div className="v-metric-line"><span style={{ width: `${counts.verified / assets.length * 100}%` }} /></div></button>
-        <button className={`v-metric-card v-metric-source ${verdictFilter === 'REVIEW' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'REVIEW'} onClick={() => setVerdictFilter(verdictFilter === 'REVIEW' ? 'ALL' : 'REVIEW')}><div className="v-metric-top"><span className="v-label">Review</span><Search size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.review}</div><div className="v-muted">Needs attention</div><div className="v-metric-line"><span style={{ width: `${counts.review / assets.length * 100}%` }} /></div></button>
-        <button className={`v-metric-card v-metric-market ${verdictFilter === 'BLOCKED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'BLOCKED'} onClick={() => setVerdictFilter(verdictFilter === 'BLOCKED' ? 'ALL' : 'BLOCKED')}><div className="v-metric-top"><span className="v-label">Blocked</span><X size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.blocked}</div><div className="v-muted">Do not proceed</div><div className="v-metric-line"><span style={{ width: `${counts.blocked / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-pass ${verdictFilter === 'VERIFIED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'VERIFIED'} onClick={() => setVerdictFilter(verdictFilter === 'VERIFIED' ? 'ALL' : 'VERIFIED')}><div className="v-metric-top"><span className="v-label">Low Risk</span><BadgeCheck size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.verified}</div><div className="v-muted">Passing evidence</div><div className="v-metric-line"><span style={{ width: `${counts.verified / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-review ${verdictFilter === 'REVIEW' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'REVIEW'} onClick={() => setVerdictFilter(verdictFilter === 'REVIEW' ? 'ALL' : 'REVIEW')}><div className="v-metric-top"><span className="v-label">Moderate Risk</span><Search size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.review}</div><div className="v-muted">Needs attention</div><div className="v-metric-line"><span style={{ width: `${counts.review / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-blocked ${verdictFilter === 'BLOCKED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'BLOCKED'} onClick={() => setVerdictFilter(verdictFilter === 'BLOCKED' ? 'ALL' : 'BLOCKED')}><div className="v-metric-top"><span className="v-label">High Risk</span><X size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.blocked}</div><div className="v-muted">Do not proceed</div><div className="v-metric-line"><span style={{ width: `${counts.blocked / assets.length * 100}%` }} /></div></button>
       </div>
 
       <div className="v-card v-glass-card v-fullwidth-card">
         <div className="v-card-header"><div><div className="v-card-tag">01 / TRUST STATUS MAP</div><h3 className="v-section-title">Assets and conclusions</h3><p className="v-muted">One badge per asset: tier · verdict · score · age. Full evidence lives one click away.</p></div><div className="v-card-header-badge">{filtered.length} OF {assets.length} SHOWN</div></div>
         <div className="v-table-toolbar">
           <div className="v-table-search-box"><Search size={15} className="v-search-icon" aria-hidden="true" /><label className="v-visually-hidden" htmlFor="asset-catalog-search">Search assets</label><input id="asset-catalog-search" className="v-search-input" type="search" placeholder="Search asset, issuer, ticker, or class…" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" className="v-search-clear" onClick={() => setQuery('')} aria-label="Clear search">×</button>}</div>
-          <div className="v-table-filter-group"><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by verdict" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value as 'ALL' | UnifiedVerdict)}><option value="ALL">All verdicts</option><option value="VERIFIED">Verified</option><option value="REVIEW">Review</option><option value="BLOCKED">Blocked</option><option value="UNAUDITED">Unaudited</option></select></div><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by asset class" value={assetClass} onChange={(event) => setAssetClass(event.target.value)}><option value="ALL">All classes</option>{classes.map((value) => <option value={value} key={value}>{value}</option>)}</select></div></div>
+          <div className="v-table-filter-group"><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by verdict" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value as 'ALL' | UnifiedVerdict)}><option value="ALL">All verdicts</option><option value="VERIFIED">Low Risk</option><option value="REVIEW">Moderate Risk</option><option value="BLOCKED">High Risk</option><option value="UNAUDITED">Unaudited</option></select></div><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by asset class" value={assetClass} onChange={(event) => setAssetClass(event.target.value)}><option value="ALL">All classes</option>{classes.map((value) => <option value={value} key={value}>{value}</option>)}</select></div></div>
         </div>
 
         <div className="v-table-wrap v-catalog-table-wrap">
@@ -502,7 +509,11 @@ export default function DashboardPage() {
             {latestReceipt.results.map((result, i) => (
               <div className="v-activity-item" key={`${result.marketId ?? result.name ?? i}`}>
                 <div className="v-activity-left">
-                  <span className="v-activity-badge">{result.action === 'scored' ? `${result.verdict} · ${result.score}` : (result.action ?? 'skipped')}</span>
+                  <span className="v-activity-badge">
+                    {result.action === 'scored'
+                      ? `${VERDICT_DISPLAY_NAMES[getUnifiedVerdict(result.verdict)] ?? result.verdict} · ${result.score}`
+                      : (result.action ?? 'skipped')}
+                  </span>
                   <div className="v-activity-desc">{result.name}</div>
                 </div>
                 <div className="v-activity-meta">
@@ -519,7 +530,7 @@ export default function DashboardPage() {
       )}
 
       <div className="v-dash-bottom-grid">
-        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">VERDICTS</div><h3 className="v-section-title">What each label means</h3><p className="v-muted">One word per asset. Scores color the number.</p></div><ShieldCheck size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-coverage-guide"><div><StatusBadge status="VERIFIED" size="sm" /><p>{VERDICT_MEANINGS.VERIFIED}</p></div><div><StatusBadge status="REVIEW" size="sm" /><p>{VERDICT_MEANINGS.REVIEW}</p></div><div><StatusBadge status="BLOCKED" size="sm" /><p>{VERDICT_MEANINGS.BLOCKED}</p></div><div><StatusBadge status="UNAUDITED" size="sm" /><p>{VERDICT_MEANINGS.UNAUDITED}</p></div></div></div>
+        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">RISK TIERS</div><h3 className="v-section-title">What each label means</h3><p className="v-muted">Institutional risk tier per asset. Scores color the number.</p></div><ShieldCheck size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-coverage-guide"><div><StatusBadge status="VERIFIED" size="sm" /><p>{VERDICT_MEANINGS.VERIFIED}</p></div><div><StatusBadge status="REVIEW" size="sm" /><p>{VERDICT_MEANINGS.REVIEW}</p></div><div><StatusBadge status="BLOCKED" size="sm" /><p>{VERDICT_MEANINGS.BLOCKED}</p></div><div><StatusBadge status="UNAUDITED" size="sm" /><p>{VERDICT_MEANINGS.UNAUDITED}</p></div></div></div>
         <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">PROTOCOL HEARTBEAT</div><h3 className="v-section-title">Recent activity</h3><p className="v-muted">The verified asset remains anchored to Sepolia evidence.</p></div><CircleDollarSign size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-activity-list">{DEMO_ACTIVITY.map((event) => <div className="v-activity-item" key={event.tx}><div className="v-activity-left"><span className="v-activity-badge">{event.label}</span><div className="v-activity-desc">{event.text}</div></div><div className="v-activity-meta"><span>{event.time}</span><span className="v-mono">{event.tx}</span></div></div>)}</div></div>
       </div>
 

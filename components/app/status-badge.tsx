@@ -41,6 +41,13 @@ export function getAssetVerdict(
   return 'UNAUDITED';
 }
 
+export const VERDICT_DISPLAY_NAMES: Record<UnifiedVerdict, string> = {
+  VERIFIED: 'LOW RISK',
+  REVIEW: 'MODERATE RISK',
+  BLOCKED: 'HIGH RISK',
+  UNAUDITED: 'UNAUDITED',
+};
+
 export function StatusBadge({
   status,
   size = 'md',
@@ -51,12 +58,13 @@ export function StatusBadge({
   className?: string;
 }) {
   const verdict = getUnifiedVerdict(status);
+  const label = VERDICT_DISPLAY_NAMES[verdict] ?? verdict;
   return (
     <span
       className={`v-verdict-badge v-verdict-badge-${size} v-verdict-badge-${verdict.toLowerCase()} ${className}`.trim()}
-      aria-label={`Status: ${verdict}`}
+      aria-label={`Status: ${label}`}
     >
-      {verdict}
+      {label}
     </span>
   );
 }
