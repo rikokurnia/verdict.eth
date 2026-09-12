@@ -6,7 +6,9 @@ import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
-import { ENSV2_SEPOLIA, ENS_REGISTRY_URL, ENS_NAME_HISTORY_URL } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA } from "@/lib/ensv2-config";
+
+const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
 const PRESETS = [
   {
@@ -404,10 +406,9 @@ export default function AgentFactory({
                 <dt>Register tx</dt>
                 <dd className="v-mono">
                   <a
-                    href={ENS_NAME_HISTORY_URL(confirmation.subname)}
+                    href={`${ETHERSCAN_TX}/${confirmation.transactions.register.hash}`}
                     target="_blank"
                     rel="noreferrer"
-                    title={`Onchain log · ${confirmation.transactions.register.hash}`}
                   >
                     {shortHash(confirmation.transactions.register.hash)} ↗
                   </a>{" "}
@@ -416,10 +417,9 @@ export default function AgentFactory({
                 <dt>Records tx</dt>
                 <dd className="v-mono">
                   <a
-                    href={ENS_NAME_HISTORY_URL(confirmation.subname)}
+                    href={`${ETHERSCAN_TX}/${confirmation.transactions.records.hash}`}
                     target="_blank"
                     rel="noreferrer"
-                    title={`Onchain log · ${confirmation.transactions.records.hash}`}
                   >
                     {shortHash(confirmation.transactions.records.hash)} ↗
                   </a>{" "}
@@ -431,7 +431,7 @@ export default function AgentFactory({
               <div className="v-dialog-actions" style={{ marginTop: 10 }}>
                 <a
                   className="v-btn v-btn-secondary"
-                  href={ENS_REGISTRY_URL(ENSV2_SEPOLIA.proxies.verdictRegistry)}
+                  href={`${ENSV2_SEPOLIA.explorer}/address/${ENSV2_SEPOLIA.proxies.verdictRegistry}`}
                   target="_blank"
                   rel="noreferrer"
                 >

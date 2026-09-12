@@ -5,7 +5,7 @@ import { ArrowUpRight, RefreshCw } from "lucide-react";
 import { PageHead } from "@/components/app/app-shell";
 import AgentFactory from "@/components/app/agent-factory";
 import AgentQuartet from "@/components/app/agent-quartet";
-import { ENSV2_SEPOLIA, ENS_RESOLVER_URL, ENS_NAME_HISTORY_URL } from "@/lib/ensv2-config";
+import { ENSV2_SEPOLIA } from "@/lib/ensv2-config";
 
 const STEPS = [
   "Agent",
@@ -144,7 +144,7 @@ export default function AgentsPage() {
           {loop?.available && loop.transactions?.audit?.hash && (
             <div className="v-mono" style={{ fontSize: 12, marginTop: 8 }}>
               <a
-                href={ENS_NAME_HISTORY_URL(ENSV2_SEPOLIA.names.audit)}
+                href={`${explorer}/tx/${loop.transactions.audit.hash}`}
                 target="_blank"
                 rel="noreferrer"
                 title={`Onchain log · ${loop.transactions.audit.hash}`}
@@ -155,7 +155,7 @@ export default function AgentsPage() {
                 <>
                   {" · "}
                   <a
-                    href={ENS_NAME_HISTORY_URL(ENSV2_SEPOLIA.names.observation)}
+                    href={`${explorer}/tx/${loop.transactions.risk.hash}`}
                     target="_blank"
                     rel="noreferrer"
                     title={`Onchain log · ${loop.transactions.risk.hash}`}
@@ -195,7 +195,7 @@ export default function AgentsPage() {
               <dt>Resolver</dt>
               <dd className="v-mono">
                 <a
-                  href={ENS_RESOLVER_URL(agentApi.agent.resolver)}
+                  href={`${explorer}/address/${agentApi.agent.resolver}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -207,7 +207,7 @@ export default function AgentsPage() {
           <div style={{ marginTop: 10 }}>
             <a
               className="v-btn-detail"
-              href={ENS_RESOLVER_URL(agentApi?.agent.resolver ?? ENSV2_SEPOLIA.proxies.namespaceResolver)}
+              href={`${explorer}/address/${agentApi?.agent.resolver ?? ENSV2_SEPOLIA.proxies.namespaceResolver}`}
               target="_blank"
               rel="noreferrer"
             >

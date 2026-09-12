@@ -89,14 +89,14 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
           <span className={styles.nodeEyebrow}>{data.eyebrow}</span>
           <h3>{data.name}</h3>
           <a
-            href={ENS_EXPLORER_NAME_URL(data.ensName)}
+            href={data.ensName.endsWith(".eth") ? ENS_EXPLORER_NAME_URL(data.ensName) : `https://eth-sepolia.blockscout.com/address/${data.address}`}
             target="_blank"
             rel="noopener noreferrer"
             className={`${styles.ensLink} nodrag nopan`}
             onPointerDown={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            title={`View ${data.ensName} on app.ens.domains`}
+            title={data.ensName.endsWith(".eth") ? `View ${data.ensName} on app.ens.domains` : data.address}
           >
             <EnsLogo size={13} />
             <span>{data.ensName}</span>

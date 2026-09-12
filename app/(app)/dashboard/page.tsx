@@ -18,7 +18,7 @@ import { PageHead } from '@/components/app/app-shell';
 import { AssetLogo, EnsLogo, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
-import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL, ENS_NAME_HISTORY_URL } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import { StatusBadge, getAssetVerdict, getScoreColorClass, type UnifiedVerdict } from '@/components/app/status-badge';
 import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
@@ -490,7 +490,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="v-activity-meta">
                   {'transaction' in result && result.transaction && typeof result.transaction === 'object' && 'hash' in (result.transaction as object) && typeof result.name === 'string' ? (
-                    <a className="v-mono" href={ENS_NAME_HISTORY_URL(result.name as string)} target="_blank" rel="noreferrer" title={`Onchain log · ${(result.transaction as { hash: string }).hash}`}>
+                    <a className="v-mono" href={`${ENSV2_SEPOLIA.explorer}/tx/${(result.transaction as { hash: string }).hash}`} target="_blank" rel="noreferrer">
                       {(result.transaction as { hash: string }).hash.slice(0, 10)}…{(result.transaction as { hash: string }).hash.slice(-6)} ↗
                     </a>
                   ) : <span className="v-mono">—</span>}
