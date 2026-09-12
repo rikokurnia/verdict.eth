@@ -7,19 +7,17 @@ import {
   Check,
   CircleDollarSign,
   Copy,
-  Database,
   ExternalLink,
   Layers,
-  LineChart,
   RefreshCw,
   Search,
   ShieldCheck,
   X,
 } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo, CoverageBadge, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
+import { AssetLogo, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
 import { ToastStack, useToasts } from '@/components/app/toast';
-import { DEMO_ACTIVITY, DEMO_ASSETS, type CoverageTier, type DemoAsset } from '@/components/app/demo-data';
+import { DEMO_ACTIVITY, DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import { StatusBadge, getAssetVerdict, type UnifiedVerdict } from '@/components/app/status-badge';
 import type { EnsProfile } from '@/lib/ens-profile';
@@ -32,11 +30,11 @@ type ScoresResponse = { ok: boolean; sourceBlock?: number; scores: Record<string
 type SeedReceipt = { file: string; receipt: { startedAt: string; results: { marketId?: string; name?: string; action?: string; verdict?: string; score?: number; transaction?: { hash: string; blockNumber: number } }[]; remaining?: number; done?: boolean } };
 type LoadState = 'loading' | 'ready' | 'partial';
 
-const COVERAGE_COPY: Record<CoverageTier, string> = {
-  POLICY_VERIFIED: 'Deterministic onchain policy over independent ENSv2 authorities.',
-  CONSENSUS_SCORED: 'Latest agent consensus written to its ENS profile.',
-  REGISTERED: 'ENS identity records exist. No conclusion published yet.',
-  REFERENCE: 'Price context only. No trust conclusion is made.',
+const VERDICT_MEANINGS: Record<UnifiedVerdict, string> = {
+  VERIFIED: 'Passing evidence: audit active, heartbeat fresh, no conflicts.',
+  REVIEW: 'Needs attention: expiring soon, thin evidence, or warnings present.',
+  BLOCKED: 'Do not proceed: failed, expired, revoked, or conflicting evidence.',
+  UNAUDITED: 'No conclusion published yet. Price context only, never trust.',
 };
 
 function formatUsd(value: number) {
@@ -177,7 +175,7 @@ function AssetDialog({
             <div>
               <div className="v-modal-eyebrow"><span>{asset.assetClass}</span><span className="v-modal-dot" /><span>{asset.ticker}</span></div>
               <h2 id="asset-dialog-title" className="v-modal-title">{asset.title}</h2>
-              <CoverageBadge coverage={asset.coverage} />
+              <StatusBadge status={getAssetVerdict(asset, score)} size="md" />
             </div>
           </div>
           <button type="button" className="v-modal-close" onClick={() => dialogRef.current?.close()} aria-label="Close asset details"><X size={20} aria-hidden="true" /></button>
@@ -246,8 +244,8 @@ function AssetDialog({
                 </>
               ) : (
                 <>
-                  <h3>{asset.coverage === 'REFERENCE' ? 'Market reference' : 'Registered — awaiting consensus'}</h3>
-                  <p>{COVERAGE_COPY[asset.coverage]}</p>
+                  <h3><StatusBadge status={getAssetVerdict(asset, score)} size="md" /></h3>
+                  <p>{VERDICT_MEANINGS[getAssetVerdict(asset, score)]}</p>
                 </>
               )}
             </div>
@@ -293,7 +291,7 @@ export default function DashboardPage() {
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [loadMessage, setLoadMessage] = useState('Resolving ENS and market sources…');
   const [query, setQuery] = useState('');
-  const [coverage, setCoverage] = useState<'ALL' | CoverageTier>('ALL');
+  const [verdictFilter, setVerdictFilter] = useState<'ALL' | UnifiedVerdict>('ALL');
   const [assetClass, setAssetClass] = useState('ALL');
   const [selected, setSelected] = useState<DemoAsset | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -397,15 +395,17 @@ export default function DashboardPage() {
   }), [live, quotes]);
 
   const classes = useMemo(() => [...new Set(assets.map((asset) => asset.assetClass))].sort(), [assets]);
+  const verdictOf = (asset: DemoAsset): UnifiedVerdict =>
+    getAssetVerdict(asset, asset.marketId ? scores[asset.marketId] : undefined);
   const filtered = assets.filter((asset) => {
     const needle = query.trim().toLowerCase();
     const matchesQuery = !needle || [asset.title, asset.ticker, asset.name, asset.issuer, asset.assetClass].some((value) => value.toLowerCase().includes(needle));
-    return matchesQuery && (coverage === 'ALL' || asset.coverage === coverage) && (assetClass === 'ALL' || asset.assetClass === assetClass);
+    return matchesQuery && (verdictFilter === 'ALL' || verdictOf(asset) === verdictFilter) && (assetClass === 'ALL' || asset.assetClass === assetClass);
   });
   const counts = {
-    verified: assets.filter((asset) => asset.coverage === 'POLICY_VERIFIED').length,
-    scored: assets.filter((asset) => asset.coverage === 'CONSENSUS_SCORED').length,
-    reference: assets.filter((asset) => asset.coverage === 'REFERENCE').length,
+    verified: assets.filter((asset) => verdictOf(asset) === 'VERIFIED').length,
+    review: assets.filter((asset) => verdictOf(asset) === 'REVIEW').length,
+    blocked: assets.filter((asset) => verdictOf(asset) === 'BLOCKED').length,
   };
 
   async function copyIdentifier(value: string) {
@@ -440,17 +440,17 @@ export default function DashboardPage() {
       </div>
 
       <div className="v-metric-grid" role="region" aria-label="Catalog coverage summary">
-        <button className={`v-metric-card v-metric-total ${coverage === 'ALL' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'ALL'} onClick={() => setCoverage('ALL')}><div className="v-metric-top"><span className="v-label">Catalog</span><Layers size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{assets.length}</div><div className="v-muted">Across {classes.length} asset classes</div><div className="v-metric-line"><span style={{ width: '100%' }} /></div></button>
-        <button className={`v-metric-card v-metric-pass ${coverage === 'POLICY_VERIFIED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'POLICY_VERIFIED'} onClick={() => setCoverage(coverage === 'POLICY_VERIFIED' ? 'ALL' : 'POLICY_VERIFIED')}><div className="v-metric-top"><span className="v-label">Policy-Verified</span><BadgeCheck size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.verified}</div><div className="v-muted">Deterministic onchain policy</div><div className="v-metric-line"><span style={{ width: `${counts.verified / assets.length * 100}%` }} /></div></button>
-        <button className={`v-metric-card v-metric-source ${coverage === 'CONSENSUS_SCORED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'CONSENSUS_SCORED'} onClick={() => setCoverage(coverage === 'CONSENSUS_SCORED' ? 'ALL' : 'CONSENSUS_SCORED')}><div className="v-metric-top"><span className="v-label">Consensus-Scored</span><Database size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.scored}</div><div className="v-muted">Agent consensus onchain</div><div className="v-metric-line"><span style={{ width: `${counts.scored / assets.length * 100}%` }} /></div></button>
-        <button className={`v-metric-card v-metric-market ${coverage === 'REFERENCE' ? 'v-metric-active' : ''}`} type="button" aria-pressed={coverage === 'REFERENCE'} onClick={() => setCoverage(coverage === 'REFERENCE' ? 'ALL' : 'REFERENCE')}><div className="v-metric-top"><span className="v-label">Reference</span><LineChart size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.reference}</div><div className="v-muted">Context, not conclusions</div><div className="v-metric-line"><span style={{ width: `${counts.reference / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-total ${verdictFilter === 'ALL' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'ALL'} onClick={() => setVerdictFilter('ALL')}><div className="v-metric-top"><span className="v-label">Catalog</span><Layers size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{assets.length}</div><div className="v-muted">Across {classes.length} asset classes</div><div className="v-metric-line"><span style={{ width: '100%' }} /></div></button>
+        <button className={`v-metric-card v-metric-pass ${verdictFilter === 'VERIFIED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'VERIFIED'} onClick={() => setVerdictFilter(verdictFilter === 'VERIFIED' ? 'ALL' : 'VERIFIED')}><div className="v-metric-top"><span className="v-label">Verified</span><BadgeCheck size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.verified}</div><div className="v-muted">Passing evidence</div><div className="v-metric-line"><span style={{ width: `${counts.verified / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-source ${verdictFilter === 'REVIEW' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'REVIEW'} onClick={() => setVerdictFilter(verdictFilter === 'REVIEW' ? 'ALL' : 'REVIEW')}><div className="v-metric-top"><span className="v-label">Review</span><Search size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.review}</div><div className="v-muted">Needs attention</div><div className="v-metric-line"><span style={{ width: `${counts.review / assets.length * 100}%` }} /></div></button>
+        <button className={`v-metric-card v-metric-market ${verdictFilter === 'BLOCKED' ? 'v-metric-active' : ''}`} type="button" aria-pressed={verdictFilter === 'BLOCKED'} onClick={() => setVerdictFilter(verdictFilter === 'BLOCKED' ? 'ALL' : 'BLOCKED')}><div className="v-metric-top"><span className="v-label">Blocked</span><X size={18} className="v-metric-icon" aria-hidden="true" /></div><div className="v-metric">{counts.blocked}</div><div className="v-muted">Do not proceed</div><div className="v-metric-line"><span style={{ width: `${counts.blocked / assets.length * 100}%` }} /></div></button>
       </div>
 
       <div className="v-card v-glass-card v-fullwidth-card">
         <div className="v-card-header"><div><div className="v-card-tag">01 / TRUST STATUS MAP</div><h3 className="v-section-title">Assets and conclusions</h3><p className="v-muted">One badge per asset: tier · verdict · score · age. Full evidence lives one click away.</p></div><div className="v-card-header-badge">{filtered.length} OF {assets.length} SHOWN</div></div>
         <div className="v-table-toolbar">
           <div className="v-table-search-box"><Search size={15} className="v-search-icon" aria-hidden="true" /><label className="v-visually-hidden" htmlFor="asset-catalog-search">Search assets</label><input id="asset-catalog-search" className="v-search-input" type="search" placeholder="Search asset, issuer, ticker, or class…" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button type="button" className="v-search-clear" onClick={() => setQuery('')} aria-label="Clear search">×</button>}</div>
-          <div className="v-table-filter-group"><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by trust status" value={coverage} onChange={(event) => setCoverage(event.target.value as 'ALL' | CoverageTier)}><option value="ALL">All statuses</option><option value="POLICY_VERIFIED">Policy-Verified</option><option value="CONSENSUS_SCORED">Consensus-Scored</option><option value="REGISTERED">Registered</option><option value="REFERENCE">Reference</option></select></div><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by asset class" value={assetClass} onChange={(event) => setAssetClass(event.target.value)}><option value="ALL">All classes</option>{classes.map((value) => <option value={value} key={value}>{value}</option>)}</select></div></div>
+          <div className="v-table-filter-group"><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by verdict" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value as 'ALL' | UnifiedVerdict)}><option value="ALL">All verdicts</option><option value="VERIFIED">Verified</option><option value="REVIEW">Review</option><option value="BLOCKED">Blocked</option><option value="UNAUDITED">Unaudited</option></select></div><div className="v-select-wrapper"><select className="v-select-filter" aria-label="Filter by asset class" value={assetClass} onChange={(event) => setAssetClass(event.target.value)}><option value="ALL">All classes</option>{classes.map((value) => <option value={value} key={value}>{value}</option>)}</select></div></div>
         </div>
 
         <div className="v-table-wrap v-catalog-table-wrap">
@@ -483,7 +483,7 @@ export default function DashboardPage() {
                   </td>
                 </tr>;
               })}
-              {!filtered.length && <tr><td colSpan={6} className="v-table-empty"><div className="v-empty-box"><Search size={22} className="v-empty-icon" aria-hidden="true" /><p>No assets match those filters.</p><button type="button" className="v-btn v-btn-secondary" onClick={() => { setQuery(''); setCoverage('ALL'); setAssetClass('ALL'); }}>Reset filters</button></div></td></tr>}
+              {!filtered.length && <tr><td colSpan={6} className="v-table-empty"><div className="v-empty-box"><Search size={22} className="v-empty-icon" aria-hidden="true" /><p>No assets match those filters.</p><button type="button" className="v-btn v-btn-secondary" onClick={() => { setQuery(''); setVerdictFilter('ALL'); setAssetClass('ALL'); }}>Reset filters</button></div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
       )}
 
       <div className="v-dash-bottom-grid">
-        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">TRUST STATUS</div><h3 className="v-section-title">What each label means</h3><p className="v-muted">One label per asset: tier · verdict · score · age.</p></div><ShieldCheck size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-coverage-guide"><div><CoverageBadge coverage="POLICY_VERIFIED" /><p>{COVERAGE_COPY.POLICY_VERIFIED}</p></div><div><CoverageBadge coverage="CONSENSUS_SCORED" /><p>{COVERAGE_COPY.CONSENSUS_SCORED}</p></div><div><CoverageBadge coverage="REGISTERED" /><p>{COVERAGE_COPY.REGISTERED}</p></div><div><CoverageBadge coverage="REFERENCE" /><p>{COVERAGE_COPY.REFERENCE}</p></div></div></div>
+        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">VERDICTS</div><h3 className="v-section-title">What each label means</h3><p className="v-muted">One word per asset. Scores color the number.</p></div><ShieldCheck size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-coverage-guide"><div><StatusBadge status="VERIFIED" size="sm" /><p>{VERDICT_MEANINGS.VERIFIED}</p></div><div><StatusBadge status="REVIEW" size="sm" /><p>{VERDICT_MEANINGS.REVIEW}</p></div><div><StatusBadge status="BLOCKED" size="sm" /><p>{VERDICT_MEANINGS.BLOCKED}</p></div><div><StatusBadge status="UNAUDITED" size="sm" /><p>{VERDICT_MEANINGS.UNAUDITED}</p></div></div></div>
         <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">PROTOCOL HEARTBEAT</div><h3 className="v-section-title">Recent activity</h3><p className="v-muted">The verified asset remains anchored to Sepolia evidence.</p></div><CircleDollarSign size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-activity-list">{DEMO_ACTIVITY.map((event) => <div className="v-activity-item" key={event.tx}><div className="v-activity-left"><span className="v-activity-badge">{event.label}</span><div className="v-activity-desc">{event.text}</div></div><div className="v-activity-meta"><span>{event.time}</span><span className="v-mono">{event.tx}</span></div></div>)}</div></div>
       </div>
 

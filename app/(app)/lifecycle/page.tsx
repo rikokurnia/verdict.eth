@@ -29,6 +29,13 @@ function shortHash(value: string | undefined) {
   return value && value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value || '—';
 }
 
+function scoreColor(score?: number | null) {
+  if (typeof score !== 'number') return 'var(--muted)';
+  if (score >= 75) return 'var(--pass)';
+  if (score >= 50) return 'var(--review)';
+  return 'var(--blocked)';
+}
+
 export default function LifecyclePage() {
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
   const [proofs, setProofs] = useState<LifecycleProofs | null>(null);
@@ -199,7 +206,7 @@ export default function LifecyclePage() {
                 return (
                   <tr key={row.marketId}>
                     <td><span className="v-asset-name">{row.title}</span> <span className="v-asset-badge">{row.ticker}</span></td>
-                    <td><StatusChip state={row.score.status === 'PASS' ? 'POLICY_PASS' : row.score.status === 'WARN' ? 'REVIEW' : row.score.status === 'FAIL' ? 'BLOCKED' : 'UNAVAILABLE'} /> <span className="v-cell-sub">{row.score.score ?? '—'}/100</span></td>
+                    <td><StatusChip state={row.score.status === 'PASS' ? 'POLICY_PASS' : row.score.status === 'WARN' ? 'REVIEW' : row.score.status === 'FAIL' ? 'BLOCKED' : 'UNAVAILABLE'} /> <span className="v-cell-sub" style={{ color: scoreColor(row.score.score), fontWeight: 700 }}>{row.score.score ?? '—'}/100</span></td>
                     <td>{left === null ? '—' : left < 0 ? <span className="v-block-t">expired {Math.abs(left)}d ago</span> : left === 0 ? 'today' : `${left}d`}</td>
                     <td><a className="v-btn-detail" href={`/agents/inspect/${encodeURIComponent(row.marketId)}`}>Inspect<ArrowUpRight size={13} aria-hidden="true" /></a></td>
                   </tr>
