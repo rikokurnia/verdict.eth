@@ -412,7 +412,7 @@ export default function DashboardPage() {
       <div className="v-overview-heading">
         <div>
           <div className="v-overview-eyebrow"><span className="v-eyebrow-dot" aria-hidden="true" /><span>REAL ASSET INTELLIGENCE</span><span className="v-eyebrow-sep">·</span><span>ONE SHARED TRUTH</span></div>
-          <PageHead title="Radar: 20 assets, watched." sub="Every row carries its latest onchain conclusion. For full depth on anything — listed or not — investigate in Agents." />
+          <PageHead title="Institutional RWA Radar" sub="Continuous consensus verification and real-time trust scoring across monitored tokenized assets." />
         </div>
         <button type="button" className="v-btn" onClick={() => void refreshScores()} disabled={seeding.active} aria-busy={seeding.active}>
           <RefreshCw size={14} aria-hidden="true" />{seeding.active ? 'Refreshing…' : 'Refresh stale scores'}
@@ -423,7 +423,7 @@ export default function DashboardPage() {
       )}
 
       <div className={`v-source-state ${loadState}`} role="status" aria-live="polite">
-        <span>{loadMessage}{scoredCount > 0 ? ` · ${scoredCount}/20 conclusions onchain` : ''}</span>
+        <span>{loadMessage}{scoredCount > 0 ? ` · ${scoredCount} consensus conclusions onchain` : ''}</span>
         {loadState === 'partial' && <button type="button" onClick={() => void refresh()}><RefreshCw size={14} aria-hidden="true" />Retry sources</button>}
       </div>
 

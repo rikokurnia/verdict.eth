@@ -115,8 +115,8 @@ export default function LifecyclePage() {
         <div className="v-card-header">
           <div>
             <div className="v-card-tag">RENEWAL RADAR</div>
-            <h3 className="v-section-title">Conclusion horizons · all 20 assets</h3>
-            <p className="v-muted">Each onchain conclusion carries its validity window. Expiring soon? Re-score from the radar or inspect in depth.</p>
+            <h3 className="v-section-title">Conclusion Horizons</h3>
+            <p className="v-muted">Each onchain audit conclusion carries an enforced validity window. Track active coverage and renewal schedules across monitored assets.</p>
           </div>
         </div>
         <div className="v-table-wrap">
