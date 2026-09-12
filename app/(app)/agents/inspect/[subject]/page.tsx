@@ -26,6 +26,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
   const asset = DEMO_ASSETS.find((a) => a.marketId === marketId);
   const [run, setRun] = useState<QuartetRun | null>(null);
   const [tx, setTx] = useState<SeedTx | null>(null);
+  const [snapshot, setSnapshot] = useState<{ status: string; score: number | null; reason: string; summary: string; runAt: number | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,9 +34,10 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
     const controller = new AbortController();
     (async () => {
       try {
-        const [runsRes, seedRes] = await Promise.all([
+        const [runsRes, seedRes, profileRes] = await Promise.all([
           fetch('/api/agents/runs', { cache: 'no-store', signal: controller.signal }),
           fetch('/api/agents/seed', { cache: 'no-store', signal: controller.signal }),
+          asset ? fetch(`/api/profile?name=${encodeURIComponent(asset.name)}`, { cache: 'no-store', signal: controller.signal }) : Promise.resolve(null),
         ]);
         if (runsRes.ok) {
           const body = (await runsRes.json()) as { runs?: HistoryEntry[] };
@@ -50,6 +52,20 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
               setTx(hit.transaction);
               break;
             }
+          }
+        }
+        if (profileRes && profileRes.ok) {
+          const profile = (await profileRes.json()) as { ok: boolean; records: Record<string, string> };
+          if (profile.ok) {
+            const score = Number(profile.records['verdict.quartet.score']);
+            const runAt = Number(profile.records['verdict.quartet.runAt']);
+            setSnapshot({
+              status: profile.records['verdict.quartet.status'] || '—',
+              score: Number.isFinite(score) ? score : null,
+              reason: profile.records['verdict.quartet.reason'] || '',
+              summary: profile.records['verdict.quartet.summary'] || '',
+              runAt: Number.isFinite(runAt) && runAt > 0 ? runAt : null,
+            });
           }
         }
         if (!asset) setError('Unknown catalog asset.');
@@ -97,6 +113,16 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
           {run ? (
             <div style={{ marginTop: 16 }}>
               <RunDetails run={run} />
+            </div>
+          ) : snapshot && snapshot.score !== null ? (
+            <div className="v-card" style={{ marginTop: 16 }}>
+              <div className="v-label">Onchain conclusion · transcript archived</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
+                <StatusBadge status={snapshot.status} size="md" />
+                <span className="v-mono" style={{ fontSize: 12 }}>{snapshot.score}/100 · {snapshot.reason}</span>
+              </div>
+              <p style={{ fontSize: 14 }}>{snapshot.summary}</p>
+              <p className="v-muted">Full agent transcript is not in the recent local window — re-run from the radar to inspect it live.</p>
             </div>
           ) : (
             <div className="v-card" style={{ marginTop: 16 }}>
