@@ -5,18 +5,16 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Check,
-  CircleDollarSign,
   Copy,
   Layers,
   RefreshCw,
   Search,
-  ShieldCheck,
   X,
 } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
 import { AssetLogo, EnsLogo, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
 import { ToastStack, useToasts } from '@/components/app/toast';
-import { DEMO_ACTIVITY, DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
+import { DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
 import {
   ENSV2_SEPOLIA,
   ENS_EXPLORER_NAME_URL,
@@ -414,7 +412,6 @@ export default function DashboardPage() {
     } catch { /* Clipboard is optional. */ }
   }
 
-  const latestReceipt = receipts[0]?.receipt;
   const scoredCount = Object.values(scores).filter((s) => s.score !== null).length;
 
   return (
@@ -500,38 +497,6 @@ export default function DashboardPage() {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {latestReceipt && (
-        <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
-          <div className="v-card-header"><div><div className="v-card-tag">CURATOR RECEIPTS</div><h3 className="v-section-title">Latest refresh · {new Date(latestReceipt.startedAt).toLocaleString()}</h3><p className="v-muted">Every bulk refresh publishes its caller and transactions. No silent updates.</p></div></div>
-          <div className="v-activity-list">
-            {latestReceipt.results.map((result, i) => (
-              <div className="v-activity-item" key={`${result.marketId ?? result.name ?? i}`}>
-                <div className="v-activity-left">
-                  <span className="v-activity-badge">
-                    {result.action === 'scored'
-                      ? `${VERDICT_DISPLAY_NAMES[getUnifiedVerdict(result.verdict)] ?? result.verdict} · ${result.score}`
-                      : (result.action ?? 'skipped')}
-                  </span>
-                  <div className="v-activity-desc">{result.name}</div>
-                </div>
-                <div className="v-activity-meta">
-                  {'transaction' in result && result.transaction && typeof result.transaction === 'object' && 'hash' in (result.transaction as object) && typeof result.name === 'string' ? (
-                    <a className="v-mono" href={`${ENSV2_SEPOLIA.explorer}/tx/${(result.transaction as { hash: string }).hash}`} target="_blank" rel="noreferrer">
-                      {(result.transaction as { hash: string }).hash.slice(0, 10)}…{(result.transaction as { hash: string }).hash.slice(-6)} ↗
-                    </a>
-                  ) : <span className="v-mono">—</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="v-dash-bottom-grid">
-        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">RISK TIERS</div><h3 className="v-section-title">What each label means</h3><p className="v-muted">Institutional risk tier per asset. Scores color the number.</p></div><ShieldCheck size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-coverage-guide"><div><StatusBadge status="VERIFIED" size="sm" /><p>{VERDICT_MEANINGS.VERIFIED}</p></div><div><StatusBadge status="REVIEW" size="sm" /><p>{VERDICT_MEANINGS.REVIEW}</p></div><div><StatusBadge status="BLOCKED" size="sm" /><p>{VERDICT_MEANINGS.BLOCKED}</p></div><div><StatusBadge status="UNAUDITED" size="sm" /><p>{VERDICT_MEANINGS.UNAUDITED}</p></div></div></div>
-        <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">PROTOCOL HEARTBEAT</div><h3 className="v-section-title">Recent activity</h3><p className="v-muted">The verified asset remains anchored to Sepolia evidence.</p></div><CircleDollarSign size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-activity-list">{DEMO_ACTIVITY.map((event) => <div className="v-activity-item" key={event.tx}><div className="v-activity-left"><span className="v-activity-badge">{event.label}</span><div className="v-activity-desc">{event.text}</div></div><div className="v-activity-meta"><span>{event.time}</span><span className="v-mono">{event.tx}</span></div></div>)}</div></div>
       </div>
 
       {selected && <AssetDialog asset={selected} quote={selected.marketId ? quotes[selected.marketId] : undefined} score={selected.marketId ? scores[selected.marketId] : undefined} live={live} onClose={() => setSelected(null)} onToast={pushToast} />}
