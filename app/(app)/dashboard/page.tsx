@@ -17,10 +17,12 @@ import {
   X,
 } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo, CoverageBadge, NetworkBadges } from '@/components/app/asset-identity';
+import { AssetLogo, CoverageBadge, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
+import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type CoverageTier, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import { StatusBadge, getAssetVerdict } from '@/components/app/status-badge';
+import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type Quote = { usd: number; change24h: number | null; updatedAt: number | null; image?: string };
@@ -86,8 +88,23 @@ function VerdictCell({ asset, score, live }: { asset: DemoAsset; score?: RwaScor
   );
 }
 
-function AssetDialog({ asset, quote, live, score, onClose }: { asset: DemoAsset; quote?: Quote; live: VerdictApiResponse | null; score?: RwaScore | null; onClose: () => void }) {
+function AssetDialog({
+  asset,
+  quote,
+  live,
+  score,
+  onClose,
+  onToast,
+}: {
+  asset: DemoAsset;
+  quote?: Quote;
+  live: VerdictApiResponse | null;
+  score?: RwaScore | null;
+  onClose: () => void;
+  onToast?: (kind: 'pass' | 'review' | 'blocked' | 'info', title: string, body: string) => void;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [profile, setProfile] = useState<EnsProfile | null>(null);
   const verified = asset.coverage === 'POLICY_VERIFIED';
   const scored = asset.coverage === 'CONSENSUS_SCORED' && score?.score !== null && score?.score !== undefined;
 
@@ -96,6 +113,18 @@ function AssetDialog({ asset, quote, live, score, onClose }: { asset: DemoAsset;
     if (!dialog) return;
     if (!dialog.open) dialog.showModal();
   }, []);
+
+  useEffect(() => {
+    if (!asset.name.endsWith('.eth')) return;
+    let active = true;
+    fetch(`/api/profile?name=${encodeURIComponent(asset.name)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: EnsProfile | null) => {
+        if (active && data?.ok) setProfile(data);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [asset.name]);
 
   return (
     <dialog ref={dialogRef} className="v-native-dialog" onClose={onClose} onCancel={onClose} aria-labelledby="asset-dialog-title">
@@ -120,7 +149,17 @@ function AssetDialog({ asset, quote, live, score, onClose }: { asset: DemoAsset;
               <dl className="v-kv">
                 <dt>Issuer</dt><dd>{asset.issuer}</dd>
                 <dt>Category</dt><dd>{asset.assetClass}</dd>
-                <dt>Networks</dt><dd><NetworkBadges networks={asset.networks} /></dd>
+                <dt>Deployments</dt>
+                <dd>
+                  <OfficialDeployments
+                    asset={asset}
+                    profile={profile}
+                    liveDeployment={verified && live?.asset ? live.asset.deployment : undefined}
+                    onCopyToast={(netLabel) => {
+                      onToast?.('info', 'Address Copied', `${netLabel} contract address copied to clipboard.`);
+                    }}
+                  />
+                </dd>
                 <dt>Identifier</dt>
                 <dd className="v-mono">
                   {asset.name}
@@ -190,7 +229,7 @@ function AssetDialog({ asset, quote, live, score, onClose }: { asset: DemoAsset;
           <span className="v-modal-footnote">Market price is informational and never changes evidence verdicts.</span>
           <div className="v-dialog-actions">
             {asset.marketId && (
-              <a className="v-btn v-btn-secondary" href={`/agents?subject=${encodeURIComponent(asset.marketId)}`}>Full inspection<ArrowUpRight size={14} aria-hidden="true" /></a>
+              <a className="v-btn v-btn-secondary" href={`/agents/inspect/${encodeURIComponent(asset.marketId)}`}>Full inspection<ArrowUpRight size={14} aria-hidden="true" /></a>
             )}
             {asset.name.endsWith('.eth') && (
               <a className="v-btn v-btn-secondary" href={`/assets/${encodeURIComponent(asset.name)}`}>Onchain ENS proof<ArrowUpRight size={14} aria-hidden="true" /></a>
@@ -204,6 +243,7 @@ function AssetDialog({ asset, quote, live, score, onClose }: { asset: DemoAsset;
 }
 
 export default function DashboardPage() {
+  const { toasts, push: pushToast } = useToasts();
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [scores, setScores] = useState<Record<string, RwaScore>>({});
@@ -216,7 +256,6 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState<DemoAsset | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [seeding, setSeeding] = useState<{ active: boolean; log: string }>({ active: false, log: '' });
-  const [reauditing, setReauditing] = useState<string | null>(null);
 
   const loadScores = useCallback(async () => {
     try {
@@ -294,22 +333,6 @@ export default function DashboardPage() {
     } catch (error) {
       setSeeding({ active: false, log: error instanceof Error ? error.message : 'Refresh failed.' });
     }
-  }
-
-  async function reaudit(marketId: string) {
-    if (reauditing) return;
-    setReauditing(marketId);
-    try {
-      const response = await fetch('/api/agents/seed', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ limit: 1, onlyStale: false, marketIds: [marketId] }),
-      });
-      if (!response.ok) throw new Error('Re-audit failed');
-      await loadScores();
-      await loadReceipts();
-    } catch { /* Errors surface via unchanged scores. */ }
-    setReauditing(null);
   }
 
   const assets = useMemo(() => DEMO_ASSETS.map((asset) => {
@@ -411,14 +434,7 @@ export default function DashboardPage() {
                   <td className="v-catalog-cell-category"><div className="v-cell-main">{asset.assetClass}</div><div className="v-cell-sub">{asset.issuer}</div></td>
                   <td className="v-catalog-cell-networks"><NetworkBadges networks={asset.networks} /></td>
                   <td className="v-catalog-cell-action">
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button type="button" className="v-btn-detail" onClick={() => setSelected(asset)} aria-haspopup="dialog">Inspect<ArrowUpRight size={13} aria-hidden="true" /></button>
-                      {asset.marketId && asset.coverage === 'CONSENSUS_SCORED' && (
-                        <button type="button" className="v-btn-detail" onClick={() => void reaudit(asset.marketId as string)} disabled={reauditing !== null} aria-label={`Re-audit ${asset.ticker}`}>
-                          {reauditing === asset.marketId ? '…' : 'Re-audit'}
-                        </button>
-                      )}
-                    </div>
+                    <button type="button" className="v-btn-detail" onClick={() => setSelected(asset)} aria-haspopup="dialog">Inspect<ArrowUpRight size={13} aria-hidden="true" /></button>
                   </td>
                 </tr>;
               })}
@@ -456,7 +472,8 @@ export default function DashboardPage() {
         <div className="v-card v-glass-card"><div className="v-card-header"><div><div className="v-card-tag">PROTOCOL HEARTBEAT</div><h3 className="v-section-title">Recent activity</h3><p className="v-muted">The verified asset remains anchored to Sepolia evidence.</p></div><CircleDollarSign size={20} className="v-sparkle-icon" aria-hidden="true" /></div><div className="v-activity-list">{DEMO_ACTIVITY.map((event) => <div className="v-activity-item" key={event.tx}><div className="v-activity-left"><span className="v-activity-badge">{event.label}</span><div className="v-activity-desc">{event.text}</div></div><div className="v-activity-meta"><span>{event.time}</span><span className="v-mono">{event.tx}</span></div></div>)}</div></div>
       </div>
 
-      {selected && <AssetDialog asset={selected} quote={selected.marketId ? quotes[selected.marketId] : undefined} score={selected.marketId ? scores[selected.marketId] : undefined} live={live} onClose={() => setSelected(null)} />}
+      {selected && <AssetDialog asset={selected} quote={selected.marketId ? quotes[selected.marketId] : undefined} score={selected.marketId ? scores[selected.marketId] : undefined} live={live} onClose={() => setSelected(null)} onToast={pushToast} />}
+      <ToastStack toasts={toasts} />
     </>
   );
 }

@@ -2667,6 +2667,84 @@
 .v-chain-stellar { color: #e8edf3; }
 .v-chain-gnosis { color: #a6e5bd; }
 
+/* Official Multi-Chain Deployments in Inspect Modal */
+.v-deployments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.v-deployment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  background: rgba(163, 209, 255, 0.04);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  transition: all 0.16s ease;
+}
+
+.v-deployment-item:hover {
+  background: rgba(163, 209, 255, 0.07);
+  border-color: rgba(163, 209, 255, 0.22);
+}
+
+.v-deployment-network {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.v-deployment-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.v-deployment-addr {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.v-deployment-tbd {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+}
+
+.v-deployment-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.v-deployment-action-btn:hover {
+  background: rgba(163, 209, 255, 0.15);
+  border-color: rgba(163, 209, 255, 0.35);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
 .v-coverage-badge {
   display: inline-flex;
   align-items: center;

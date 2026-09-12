@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, ExternalLink, Unplug, XCircle } from 'luci
 import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
+import { OfficialDeployments } from '@/components/app/asset-identity';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import type { EnsProfile } from '@/lib/ens-profile';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
@@ -219,8 +220,17 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
             <dt>Ticker</dt><dd className="v-mono">{display.ticker}</dd>
             <dt>Class</dt><dd>{display.assetClass}</dd>
             <dt>Issuer</dt><dd>{display.issuer}</dd>
-            <dt>Network</dt><dd>{display.network}</dd>
-            <dt>Deployment</dt><dd className="v-mono">{shortHash(live?.asset?.deployment)}</dd>
+            <dt>Deployments</dt>
+            <dd>
+              <OfficialDeployments
+                asset={fallback}
+                profile={profile}
+                liveDeployment={live?.asset?.deployment}
+                onCopyToast={(netLabel) => {
+                  push('info', 'Address Copied', `${netLabel} contract address copied to clipboard.`);
+                }}
+              />
+            </dd>
           </dl>
         </div>
       </div>

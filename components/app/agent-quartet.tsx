@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -8,13 +9,12 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import Particles, { ParticlesProvider } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import {
   Play,
   ArrowUpRight,
-  ChevronDown,
   ShieldCheck,
   Radio,
   RotateCcw,
@@ -129,111 +129,6 @@ function DataEdge(props: EdgeProps) {
 const nodeTypes = { agentTerminal: AgentTerminalCard };
 const edgeTypes = { telemetry: DataEdge };
 
-function RunDetails({ run }: { run: QuartetRun }) {
-  const ageSec = Math.max(0, Math.floor(Date.now() / 1000 - Date.parse(run.finishedAt) / 1000));
-  const age = ageSec < 3600 ? "scored just now" : ageSec < 86_400 ? `scored ${Math.floor(ageSec / 3600)}h ago` : `scored ${Math.floor(ageSec / 86_400)}d ago`;
-  return (
-    <div className={s.runDetails}>
-      <div className={s.summary}>
-        <div>
-          <span className={s.kicker}>Consensus synthesis · {age}</span>
-          <h3 className={s.synthesisBadgeWrap}>
-            <StatusBadge status={run.synthesis.policy_state} size="lg" />
-          </h3>
-          <p>{run.synthesis.reasoning_summary}</p>
-        </div>
-        <div className={s.bigScore}>
-          {run.synthesis.overall_score}
-          <small>/100 · composite score</small>
-        </div>
-      </div>
-      <div className={s.findings}>
-        {ids.map((id) => (
-          <section key={id}>
-            <h4>{definitions[id].name}</h4>
-            {id === "consensus" ? (
-              <>
-                <div className={s.inspectorScoreRow}>
-                  <StatusBadge status={run.synthesis.verdict} size="sm" />
-                  <span className={s.inspectorScoreText}>
-                    · {run.synthesis.mapped.confidence}% confidence ·{" "}
-                    {run.synthesis.mapped.validityDays}d validity
-                  </span>
-                </div>
-                <p>{run.synthesis.mapped.rationale}</p>
-              </>
-            ) : (
-              <>
-                <div className={s.inspectorScoreRow}>
-                  <StatusBadge status={run.reports[id].status} size="sm" />
-                  <span className={s.inspectorScoreText}>
-                    · {run.reports[id].score}/100
-                  </span>
-                </div>
-                <ul>
-                  {run.reports[id].findings.map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                </ul>
-                <div className={s.proofLinks}>
-                  {run.reports[id].evidence_urls
-                    .filter((u) => /^https?:\/\//i.test(u))
-                    .map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer">
-                        Source {i + 1}
-                        <ArrowUpRight size={13} />
-                      </a>
-                    ))}
-                </div>
-              </>
-            )}
-          </section>
-        ))}
-      </div>
-      <div className={s.proofLinks}>
-        <ShieldCheck size={16} />
-        <span>
-          {run.write.performed
-            ? "Onchain write recorded"
-            : "Inspect-only · no transaction emitted"}
-        </span>
-        {Object.entries(run.write.transactions ?? {}).map(([name, tx]) => (
-          <a
-            key={name}
-            href={`${ENS.explorer}/tx/${tx.hash}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {name} transaction ↗
-          </a>
-        ))}
-        <a
-          href={`${ENS.explorer}/address/${ENS.proxies.verdictRegistry}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          ENS registry ↗
-        </a>
-      </div>
-      <details className={s.records}>
-        <summary>
-          {run.write.performed
-            ? "ENS record output"
-            : "Proposed ENS records · not published"}
-        </summary>
-        <dl>
-          {Object.entries(run.synthesis.ensv2_records).map(([key, value]) => (
-            <div key={key}>
-              <dt>{key}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </details>
-    </div>
-  );
-}
-
 export default function AgentQuartet() {
   const [subject, setSubject] = useState<string>(options[0].value);
   const [mode, setMode] = useState("official");
@@ -247,7 +142,6 @@ export default function AgentQuartet() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState<Entry[]>([]);
   const [historyStatus, setHistoryStatus] = useState("loading");
-  const [expanded, setExpanded] = useState<string | null>(null);
   const [lastFrame, setLastFrame] = useState<Frame | null>(null);
   const [narrow, setNarrow] = useState(false);
   const source = useRef<EventSource | null>(null);
@@ -435,7 +329,6 @@ export default function AgentQuartet() {
             { file: result.id, recordedAt: result.finishedAt, run: result },
             ...prev.filter((e) => e.run.id !== result.id),
           ]);
-          setExpanded(result.id);
         }
       } catch {
         fail("Unreadable telemetry. Retry the inspection.");
@@ -610,58 +503,49 @@ export default function AgentQuartet() {
             <span>Run an inspection to build your decision archive.</span>
           </div>
         ) : (
-          history.slice(0, 20).map((entry) => (
-            <motion.article
-              key={entry.run.id}
-              initial={reduce ? false : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={s.historyItem}
-            >
-              <button
-                className={s.historyTrigger}
-                aria-expanded={expanded === entry.run.id}
-                onClick={() =>
-                  setExpanded(expanded === entry.run.id ? null : entry.run.id)
-                }
-              >
-                <StatusBadge status={entry.run.synthesis.verdict} size="md" />
-                <span className={s.historySubject}>
-                  <strong>{entry.run.subject}</strong>
-                  <small>
-                    {entry.run.mode === "custom"
-                      ? entry.run.customPolicy?.subname
-                      : "Official consensus"}{" "}
-                    · {Math.round(entry.run.durationMs / 1000)}s
-                  </small>
-                </span>
-                <span className={s.historyScore}>
-                  {entry.run.synthesis.overall_score}
-                  <small>/100</small>
-                </span>
-                <time>{new Date(entry.recordedAt).toLocaleString()}</time>
-                <ChevronDown
-                  size={16}
-                  style={{
-                    transform:
-                      expanded === entry.run.id ? "rotate(180deg)" : undefined,
-                  }}
-                />
-              </button>
-              <AnimatePresence initial={false}>
-                {expanded === entry.run.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: reduce ? 0 : 0.22 }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <RunDetails run={entry.run} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.article>
-          ))
+          history.slice(0, 20).map((entry) => {
+            const catalog = DEMO_ASSETS.find((a) => a.marketId === entry.run.subject);
+            const profileName =
+              catalog?.name ??
+              (entry.run.subject.endsWith(".eth") ? entry.run.subject : null);
+            return (
+              <article key={entry.run.id} className={s.historyItem}>
+                <div className={s.historyTrigger} style={{ cursor: "default" }}>
+                  <StatusBadge status={entry.run.synthesis.verdict} size="md" />
+                  <span className={s.historySubject}>
+                    <strong>{entry.run.subject}</strong>
+                    <small>
+                      {entry.run.mode === "custom"
+                        ? entry.run.customPolicy?.subname
+                        : "Official consensus"}{" "}
+                      · {Math.round(entry.run.durationMs / 1000)}s
+                    </small>
+                  </span>
+                  <span className={s.historyScore}>
+                    {entry.run.synthesis.overall_score}
+                    <small>/100</small>
+                  </span>
+                  <time>{new Date(entry.recordedAt).toLocaleString()}</time>
+                  {catalog?.marketId && (
+                    <Link
+                      href={`/agents/inspect/${encodeURIComponent(catalog.marketId)}`}
+                      aria-label={`Open full inspection for ${entry.run.subject}`}
+                    >
+                      <ArrowUpRight size={16} />
+                    </Link>
+                  )}
+                  {profileName && (
+                    <Link
+                      href={`/assets/${encodeURIComponent(profileName)}`}
+                      aria-label={`Open onchain proof for ${entry.run.subject}`}
+                    >
+                      <ShieldCheck size={16} />
+                    </Link>
+                  )}
+                </div>
+              </article>
+            );
+          })
         )}
       </div>
     </section>
