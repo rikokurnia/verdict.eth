@@ -3,50 +3,147 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
+import { AssetLogo } from '@/components/app/asset-identity';
 import { ColoredScore } from '@/components/app/status-badge';
-import { DEMO_ASSETS } from '@/components/app/demo-data';
+import { DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
-import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type LoadState = 'loading' | 'ready' | 'error';
-type ScoreRow = { score: number | null; status: string; reason: string; runAt: number | null; validityDays: number | null };
-type ActivityTx = { hash: string; blockNumber: number; timestamp: string; from: string; method: string; contract: string };
+type ScoreRow = {
+  score: number | null;
+  status: string;
+  reason: string;
+  runAt: number | null;
+  validityDays: number | null;
+};
+type ActivityTx = {
+  hash: string;
+  blockNumber: number;
+  timestamp: string;
+  from: string;
+  method: string;
+  contract: string;
+};
 
-function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-}
+type RadarRow = {
+  asset: DemoAsset;
+  marketId: string;
+  ticker: string;
+  title: string;
+  score: ScoreRow;
+};
 
 function shortHash(value: string | undefined) {
   return value && value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value || '—';
 }
 
+function ExpiryCountdownBar({
+  runAt,
+  validityDays,
+  now,
+}: {
+  runAt: number | null;
+  validityDays: number | null;
+  now: number;
+}) {
+  if (!runAt || !validityDays) {
+    return <span className="v-muted">—</span>;
+  }
+
+  const totalDurationSec = validityDays * 86_400;
+  const expiresAt = runAt + totalDurationSec;
+  const remainingSec = expiresAt - now;
+
+  if (remainingSec <= 0) {
+    const expiredAgoSec = Math.abs(remainingSec);
+    const expiredDays = Math.floor(expiredAgoSec / 86_400);
+    const expiredHours = Math.floor((expiredAgoSec % 86_400) / 3600);
+    const label = expiredDays > 0 ? `Expired ${expiredDays}d ago` : `Expired ${expiredHours}h ago`;
+    return (
+      <div className="v-expiry-cell">
+        <div className="v-expiry-header">
+          <span className="v-expiry-countdown v-score-red">{label}</span>
+          <span className="v-expiry-pct">0.0%</span>
+        </div>
+        <div className="v-expiry-track" role="progressbar" aria-valuenow={0} aria-valuemin={0} aria-valuemax={100}>
+          <div className="v-expiry-fill v-expiry-fill-red" style={{ width: '0%' }} />
+        </div>
+      </div>
+    );
+  }
+
+  const pct = Math.max(0, Math.min(100, (remainingSec / totalDurationSec) * 100));
+  const days = Math.floor(remainingSec / 86_400);
+  const hours = Math.floor((remainingSec % 86_400) / 3600);
+  const minutes = Math.floor((remainingSec % 3600) / 60);
+  const seconds = Math.floor(remainingSec % 60);
+
+  let countdownText = '';
+  if (days > 0) {
+    countdownText = `${days}d ${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+  } else if (hours > 0) {
+    countdownText = `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+  } else {
+    countdownText = `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+  }
+
+  let tone = 'green';
+  if (pct <= 20) {
+    tone = 'red';
+  } else if (pct <= 50) {
+    tone = 'yellow';
+  }
+
+  return (
+    <div className="v-expiry-cell">
+      <div className="v-expiry-header">
+        <span className={`v-expiry-countdown v-score-${tone}`}>
+          {countdownText}
+        </span>
+        <span className="v-expiry-pct">{pct.toFixed(1)}%</span>
+      </div>
+      <div className="v-expiry-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+        <div
+          className={`v-expiry-fill v-expiry-fill-${tone}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function LifecyclePage() {
-  const [live, setLive] = useState<VerdictApiResponse | null>(null);
-  const [radar, setRadar] = useState<{ marketId: string; ticker: string; title: string; score: ScoreRow }[]>([]);
+  const [radar, setRadar] = useState<RadarRow[]>([]);
   const [activity, setActivity] = useState<ActivityTx[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Math.floor(Date.now() / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoadState('loading');
     try {
-      const [verdictResponse, scoresResponse, activityResponse] = await Promise.all([
-        fetch('/api/verdict', { cache: 'no-store' }),
+      const [scoresResponse, activityResponse] = await Promise.all([
         fetch('/api/rwa-scores', { cache: 'no-store' }),
         fetch('/api/activity', { cache: 'no-store' }),
       ]);
-      if (!verdictResponse.ok) throw new Error('resolver unavailable');
-      setLive((await verdictResponse.json()) as VerdictApiResponse);
       if (scoresResponse.ok) {
         const body = (await scoresResponse.json()) as { ok: boolean; scores: Record<string, ScoreRow> };
         if (body.ok) {
-          const rows = DEMO_ASSETS.filter((a) => a.marketId && body.scores[a.marketId]).map((a) => ({
+          const rows: RadarRow[] = DEMO_ASSETS.filter((a) => a.marketId && body.scores[a.marketId]).map((a) => ({
+            asset: a,
             marketId: a.marketId as string,
             ticker: a.ticker,
             title: a.title,
             score: body.scores[a.marketId as string],
           }));
-          const horizon = (r: ScoreRow) => (r.runAt && r.validityDays ? r.runAt + r.validityDays * 86_400 : Number.MAX_SAFE_INTEGER);
-          rows.sort((x, y) => horizon(x.score) - horizon(y.score));
+          const horizon = (r: RadarRow) => (r.score.runAt && r.score.validityDays ? r.score.runAt + r.score.validityDays * 86_400 : Number.MAX_SAFE_INTEGER);
+          rows.sort((x, y) => horizon(x) - horizon(y));
           setRadar(rows);
         }
       }
@@ -63,53 +160,13 @@ export default function LifecyclePage() {
   useEffect(() => { void refresh(); }, [refresh]);
 
   const explorer = ENSV2_SEPOLIA.explorer;
-  const now = live?.evaluatedAt ?? Math.floor(Date.now() / 1000);
-
-  const issuedAt = live?.audit?.issuedAt ?? null;
-  const observedAt = live?.observation?.observedAt ?? null;
-  const expiresAt = live?.audit?.expiresAt ?? null;
-  const reviewAt = expiresAt !== null ? expiresAt - 14 * 86_400 : null;
-  const inReviewWindow = reviewAt !== null && now >= reviewAt && expiresAt !== null && now < expiresAt;
-  const expired = expiresAt !== null && now >= expiresAt;
-
-  const assetResolver = live?.sources[0]?.resolver;
-  const auditSource = live?.sources[1];
-  const observationSource = live?.sources[2];
 
   return (
     <>
-      <PageHead title="Lifecycle" sub="Expiry, revocation and permanent states — derived live from Sepolia evidence, not mockups." />
-
-      <div className={`v-source-state ${loadState === 'ready' ? 'ready' : loadState}`} role="status" aria-live="polite">
-        <span>
-          {loadState === 'loading' && 'Resolving live lifecycle state from ENSv2…'}
-          {loadState === 'ready' && `Live at source block ${live?.sourceBlock} · policy ${live?.policyId}`}
-          {loadState === 'error' && 'ENS resolver unavailable. Lifecycle cannot be inferred from missing evidence.'}
-        </span>
-        {loadState === 'error' && <button type="button" onClick={() => void refresh()}><RefreshCw size={14} aria-hidden="true" />Retry</button>}
-      </div>
-
-      <div className="v-card" style={{ marginTop: 16 }}>
-        <div className="v-label">Timeline · live timestamps</div>
-        <div className="v-timeline">
-          <div className={`v-tick ${issuedAt ? 'done' : ''}`}>Issued {issuedAt ? `✓ ${formatDate(issuedAt)}` : '· pending'}</div>
-          <div className={`v-tick ${observedAt && live?.evidence.fresh ? 'done' : observedAt ? 'warn' : ''}`}>Observed {observedAt ? `${live?.evidence.fresh ? '✓' : '▲'} ${formatDate(observedAt)}` : '· pending'}</div>
-          <div className={`v-tick ${inReviewWindow ? 'warn' : reviewAt && now < reviewAt ? 'done' : ''}`}>Review window {inReviewWindow ? '▲ active' : reviewAt ? formatDate(reviewAt) : '· pending'}</div>
-          <div className={`v-tick ${expired ? 'bad' : ''}`}>Expiry {expiresAt ? `${expired ? '×' : ''} ${formatDate(expiresAt)}` : '· pending'}</div>
-        </div>
-      </div>
-
-      {live && loadState === 'ready' && (
-        <div className="v-card" style={{ marginTop: 16 }}>
-          <div className="v-label">Evidence provenance</div>
-          <dl className="v-kv" style={{ marginTop: 10 }}>
-            <dt>Asset resolver</dt><dd className="v-mono"><a href={`${explorer}/address/${assetResolver}`} target="_blank" rel="noreferrer">{shortHash(assetResolver)} ↗</a></dd>
-            <dt>Audit branch</dt><dd className="v-mono">{auditSource?.name} · <a href={`${explorer}/address/${auditSource?.resolver}`} target="_blank" rel="noreferrer">{shortHash(auditSource?.resolver)} ↗</a></dd>
-            <dt>Risk branch</dt><dd className="v-mono">{observationSource?.name} · <a href={`${explorer}/address/${observationSource?.resolver}`} target="_blank" rel="noreferrer">{shortHash(observationSource?.resolver)} ↗</a></dd>
-            <dt>Heartbeat</dt><dd>{live.evidence.fresh ? 'fresh' : 'stale'}</dd>
-          </dl>
-        </div>
-      )}
+      <PageHead
+        title="Lifecycle"
+        sub="Continuous onchain validity horizons, real-time expiration countdowns, and live ledger writes."
+      />
 
       <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
         <div className="v-card-header">
@@ -118,23 +175,59 @@ export default function LifecyclePage() {
             <h3 className="v-section-title">Conclusion Horizons</h3>
             <p className="v-muted">Each onchain audit conclusion carries an enforced validity window. Track active coverage and renewal schedules across monitored assets.</p>
           </div>
+          <button type="button" className="v-btn" onClick={() => void refresh()} disabled={loadState === 'loading'}>
+            <RefreshCw size={14} aria-hidden="true" />
+            {loadState === 'loading' ? 'Refreshing…' : 'Refresh'}
+          </button>
         </div>
         <div className="v-table-wrap">
           <table className="v-table">
-            <thead><tr><th>Asset</th><th>Conclusion</th><th>Expires in</th><th><span className="v-visually-hidden">Action</span></th></tr></thead>
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>
+                  <div>Trust status</div>
+                  <div className="v-catalog-th-sub">(agent scored)</div>
+                </th>
+                <th>
+                  <div>Validity window</div>
+                  <div className="v-catalog-th-sub">(live countdown)</div>
+                </th>
+                <th><span className="v-visually-hidden">Action</span></th>
+              </tr>
+            </thead>
             <tbody>
-              {radar.map((row) => {
-                const expiresAt = row.score.runAt && row.score.validityDays ? row.score.runAt + row.score.validityDays * 86_400 : null;
-                const left = expiresAt === null ? null : Math.floor((expiresAt - now) / 86_400);
-                return (
-                  <tr key={row.marketId}>
-                    <td><span className="v-asset-name">{row.title}</span> <span className="v-asset-badge">{row.ticker}</span></td>
-                    <td><ColoredScore score={row.score.score} /></td>
-                    <td>{left === null ? '—' : left < 0 ? <span className="v-block-t">expired {Math.abs(left)}d ago</span> : left === 0 ? 'today' : `${left}d`}</td>
-                    <td><a className="v-btn-detail" href={`/agents/inspect/${encodeURIComponent(row.marketId)}`}>Inspect<ArrowUpRight size={13} aria-hidden="true" /></a></td>
-                  </tr>
-                );
-              })}
+              {radar.map((row) => (
+                <tr key={row.marketId}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <AssetLogo asset={row.asset} size={32} />
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span className="v-asset-name">{row.title}</span>
+                          <span className="v-asset-badge">{row.ticker}</span>
+                        </div>
+                        <div className="v-cell-sub" style={{ marginTop: 2 }}>{row.asset.issuer}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <ColoredScore score={row.score.score} />
+                  </td>
+                  <td>
+                    <ExpiryCountdownBar
+                      runAt={row.score.runAt}
+                      validityDays={row.score.validityDays}
+                      now={now}
+                    />
+                  </td>
+                  <td>
+                    <a className="v-btn-detail" href={`/agents/inspect/${encodeURIComponent(row.marketId)}`}>
+                      Inspect<ArrowUpRight size={13} aria-hidden="true" />
+                    </a>
+                  </td>
+                </tr>
+              ))}
               {!radar.length && <tr><td colSpan={4} className="v-table-empty">No scored conclusions yet — run a curator refresh from the radar.</td></tr>}
             </tbody>
           </table>

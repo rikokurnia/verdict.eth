@@ -2689,6 +2689,66 @@
   white-space: nowrap;
 }
 
+/* Real-time Expiry Countdown and Long Simulation Bar */
+.v-expiry-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+  max-width: 320px;
+}
+
+.v-expiry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.v-expiry-countdown {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.v-expiry-pct {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fleet-muted, #737373);
+}
+
+.v-expiry-track {
+  height: 6px;
+  width: 100%;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.v-expiry-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.v-expiry-fill-green {
+  background: linear-gradient(90deg, #059669, #34d399);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.35);
+}
+
+.v-expiry-fill-yellow {
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.35);
+}
+
+.v-expiry-fill-red {
+  background: linear-gradient(90deg, #dc2626, #f87171);
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.35);
+}
+
 .v-catalog-asset-cell { display: flex; align-items: center; gap: 12px; min-width: 265px; }
 .v-asset-logo {
   display: inline-grid;
