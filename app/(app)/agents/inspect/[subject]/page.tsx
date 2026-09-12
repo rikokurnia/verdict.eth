@@ -131,9 +131,6 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
                   <CoverageBadge coverage={asset.coverage} />
                 </div>
               </div>
-              <a className="v-btn v-btn-secondary" href={`/assets/${encodeURIComponent(asset.name)}`}>
-                Onchain ENS proof<ArrowUpRight size={14} aria-hidden="true" />
-              </a>
             </div>
           </div>
 
@@ -187,7 +184,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
                 <dd className="v-mono" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <EnsLogo size={13} />
                   <span>{asset.name}</span>{' '}
-                  <a href={`/assets/${encodeURIComponent(asset.name)}`}><ExternalLink size={12} aria-hidden="true" /></a>
+                  <a href={ENS_EXPLORER_NAME_URL(asset.name)} target="_blank" rel="noreferrer" title={`Open ${asset.name} in ENSv2 Explorer`}><ExternalLink size={12} aria-hidden="true" /></a>
                 </dd>
               </dl>
             ) : (

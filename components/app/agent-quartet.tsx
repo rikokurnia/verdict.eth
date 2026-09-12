@@ -582,14 +582,6 @@ export default function AgentQuartet() {
                       <ArrowUpRight size={16} />
                     </Link>
                   )}
-                  {profileName && (
-                    <Link
-                      href={`/assets/${encodeURIComponent(profileName)}`}
-                      aria-label={`Open onchain proof for ${entry.run.subject}`}
-                    >
-                      <ShieldCheck size={16} />
-                    </Link>
-                  )}
                 </div>
               </article>
             );

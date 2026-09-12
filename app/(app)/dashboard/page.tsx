@@ -267,9 +267,6 @@ function AssetDialog({
             {asset.marketId && (
               <a className="v-btn v-btn-secondary" href={`/agents/inspect/${encodeURIComponent(asset.marketId)}`}>Full inspection<ArrowUpRight size={14} aria-hidden="true" /></a>
             )}
-            {asset.name.endsWith('.eth') && (
-              <a className="v-btn v-btn-secondary" href={`/assets/${encodeURIComponent(asset.name)}`}>Onchain ENS proof<ArrowUpRight size={14} aria-hidden="true" /></a>
-            )}
             <button type="button" className="v-btn" onClick={() => dialogRef.current?.close()}>Close</button>
           </div>
         </div>
