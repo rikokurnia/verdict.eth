@@ -22,7 +22,9 @@ import {
 } from './providers';
 
 const DEMO_ASSET = ENSV2_SEPOLIA.names.asset;
-const RUNS_DIR = join(process.cwd(), '.secrets', 'agent-runs');
+const RUNS_DIR = process.env.VERCEL
+  ? join('/tmp', 'verdict-agent-runs')
+  : join(process.cwd(), '.secrets', 'agent-runs');
 
 function loadEnvFile(): Record<string, string> {
   try {
@@ -119,11 +121,16 @@ function slug(value: string) {
 }
 
 function persist(run: QuartetRun) {
-  mkdirSync(RUNS_DIR, { recursive: true, mode: 0o700 });
-  const path = join(RUNS_DIR, `${Date.now()}-${slug(run.subject)}.json`);
-  writeFileSync(path, `${JSON.stringify(run, null, 2)}\n`, { mode: 0o600 });
-  chmodSync(path, 0o600);
-  return path;
+  try {
+    mkdirSync(RUNS_DIR, { recursive: true, mode: 0o700 });
+    const path = join(RUNS_DIR, `${Date.now()}-${slug(run.subject)}.json`);
+    writeFileSync(path, `${JSON.stringify(run, null, 2)}\n`, { mode: 0o600 });
+    chmodSync(path, 0o600);
+    return path;
+  } catch {
+    // Run persistence is a local convenience and must never fail an inspection.
+    return null;
+  }
 }
 
 const RESOLVER_ABI = [

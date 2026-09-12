@@ -5,7 +5,9 @@ import type { QuartetRun } from '@/lib/agents/types';
 
 export const dynamic = 'force-dynamic';
 
-const RUNS_DIR = join(process.cwd(), '.secrets', 'agent-runs');
+const RUNS_DIR = process.env.VERCEL
+  ? join('/tmp', 'verdict-agent-runs')
+  : join(process.cwd(), '.secrets', 'agent-runs');
 
 export async function GET() {
   try {

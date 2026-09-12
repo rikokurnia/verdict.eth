@@ -13,7 +13,9 @@ const TEXT_ABI = ['function text(bytes32 node,string key) view returns (string)'
 const UNIVERSAL_ABI = ['function resolve(bytes name,bytes data) view returns (bytes result,address resolver)'];
 const textInterface = new Interface(TEXT_ABI);
 
-const SEED_DIR = join(process.cwd(), '.secrets', 'seed-runs');
+const SEED_DIR = process.env.VERCEL
+  ? join('/tmp', 'verdict-seed-runs')
+  : join(process.cwd(), '.secrets', 'seed-runs');
 
 const CATALOG = DEMO_ASSETS.filter((a) => a.marketId && a.coverage === 'CONSENSUS_SCORED').map((a) => ({
   marketId: a.marketId as string,
@@ -71,6 +73,13 @@ export function readSeedReceipts(limit = 30) {
  * snapshot written to its rwa profile name.
  */
 export async function POST(request: Request) {
+  if (process.env.VERCEL) {
+    return NextResponse.json(
+      { error: 'Onchain score refresh is disabled on this deployment.' },
+      { status: 503 },
+    );
+  }
+
   let body: { limit?: number; offset?: number; onlyStale?: boolean; maxAgeDays?: number; marketIds?: string[] };
   try {
     body = (await request.json()) as typeof body;

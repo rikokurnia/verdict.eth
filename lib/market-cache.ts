@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 export type CachedQuotes = Record<string, { usd: number; change24h: number | null; updatedAt: number | null; image?: string }>;
 
-const DIR = join(process.cwd(), '.cache');
+const DIR = process.env.VERCEL ? join('/tmp', 'verdict-market-cache') : join(process.cwd(), '.cache');
 const FILE = join(DIR, 'market-last-good.json');
 
 /** Last successful CoinGecko response, so a rate-limit never blanks the dashboard. */

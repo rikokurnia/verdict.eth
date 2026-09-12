@@ -48,6 +48,13 @@ export async function GET(request: Request) {
 
 /** Sponsored mint: user signs (no gas), operator wallet registers + writes. */
 export async function POST(request: Request) {
+  if (process.env.VERCEL) {
+    return NextResponse.json(
+      { error: 'Sponsored ENS writes are disabled on this deployment.' },
+      { status: 503 },
+    );
+  }
+
   let body: { label?: string; policy?: string; address?: string; message?: string; signature?: string };
   try {
     body = (await request.json()) as typeof body;

@@ -101,6 +101,25 @@ The app and CLI resolve through the hackathon Universal Resolver proxy at
 `0xd26f2040d083af1cd2962ba303f4bea0c4faf142`, not the resolver bundled into
 standard ethers or viem Sepolia configuration.
 
+### Vercel environment
+
+Copy the relevant keys from `.env.example` into Vercel Project Settings →
+Environment Variables. Apply them to Production and Preview, then redeploy:
+
+- `SEPOLIA_RPC_URL` — required server-side Sepolia RPC endpoint.
+- `NEXT_PUBLIC_PRIVY_APP_ID` — required public Privy application ID. Add every
+  deployed Vercel domain to the Privy app's allowed domains.
+- At least one of `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, or
+  `MUSESPARK_API_KEY` — required for live agent inspections.
+- `AI_PROVIDERS` and the provider-specific `*_MODEL` variables are optional.
+
+Do not upload `.env.local`, `.secrets/`, encrypted wallet files, passwords, or
+private keys to Vercel. Sponsored ENS writes remain an operator-only local task;
+the deployed app can resolve ENS records and run inspect-only AI flows without
+custody of a signing wallet. The sponsored-mint and onchain-refresh write routes
+return `503` on Vercel by design. Vercel runtime receipts use temporary storage
+and may disappear when a function instance is recycled.
+
 ### AI audit worker
 
 Set `SEPOLIA_RPC_URL` and `GEMINI_API_KEY` in `.env.local`. Signing keys are
