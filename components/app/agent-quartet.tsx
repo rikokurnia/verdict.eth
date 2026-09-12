@@ -77,10 +77,11 @@ const definitions = {
   },
 };
 const options = [
-  { value: ENS.names.asset, label: "USDY-001 · USD Yield 001" },
+  { value: ENS.names.asset, label: "USDY-001 · USD Yield 001", logo: "/icon.svg" },
   ...DEMO_ASSETS.filter((a) => a.marketId).map((a) => ({
     value: a.marketId!,
     label: `${a.ticker} · ${a.title}`,
+    logo: a.logo,
   })),
 ];
 type Frame = {
@@ -142,6 +143,8 @@ export default function AgentQuartet() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState<Entry[]>([]);
   const [historyStatus, setHistoryStatus] = useState("loading");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
   const [lastFrame, setLastFrame] = useState<Frame | null>(null);
   const [narrow, setNarrow] = useState(false);
   const source = useRef<EventSource | null>(null);
@@ -194,6 +197,24 @@ export default function AgentQuartet() {
       source.current?.close();
     };
   }, [loadHistory]);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPickerOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [pickerOpen]);
   const nodes = useMemo<AgentFlowNode[]>(
     () =>
       ids.map((id, i) => ({
@@ -375,20 +396,48 @@ export default function AgentQuartet() {
             </button>
           ))}
         </div>
-        <label className={s.targetSelect}>
-          <span>Inspection target</span>
-          <select
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
+        <div className="v-asset-picker" ref={pickerRef}>
+          <span className={s.targetSelect} style={{ display: "block" }}>Inspection target</span>
+          <button
+            type="button"
+            className="v-asset-picker-btn"
+            aria-haspopup="listbox"
+            aria-expanded={pickerOpen}
+            aria-label="Inspection target"
             disabled={running}
+            onClick={() => setPickerOpen((o) => !o)}
           >
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            {(() => {
+              const selected = options.find((o) => o.value === subject) ?? options[0];
+              return (
+                <>
+                  <img src={selected.logo} alt="" width={22} height={22} loading="lazy" referrerPolicy="no-referrer" />
+                  <span className="v-asset-picker-label">{selected.label}</span>
+                </>
+              );
+            })()}
+          </button>
+          {pickerOpen && (
+            <ul className="v-asset-picker-list" role="listbox" aria-label="Inspection target">
+              {options.map((option) => (
+                <li key={option.value} role="option" aria-selected={option.value === subject}>
+                  <button
+                    type="button"
+                    className="v-asset-picker-opt"
+                    aria-selected={option.value === subject}
+                    onClick={() => {
+                      setSubject(option.value);
+                      setPickerOpen(false);
+                    }}
+                  >
+                    <img src={option.logo} alt="" width={22} height={22} loading="lazy" referrerPolicy="no-referrer" />
+                    <span className="v-asset-picker-name">{option.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <button className={s.runButton} onClick={start} disabled={running}>
           {run ? (
             <RotateCcw size={16} />
@@ -511,7 +560,6 @@ export default function AgentQuartet() {
             return (
               <article key={entry.run.id} className={s.historyItem}>
                 <div className={s.historyTrigger} style={{ cursor: "default" }}>
-                  <StatusBadge status={entry.run.synthesis.verdict} size="md" />
                   <span className={s.historySubject}>
                     <strong>{entry.run.subject}</strong>
                     <small>

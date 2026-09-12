@@ -21,7 +21,7 @@ import { AssetLogo, CoverageBadge, NetworkBadges, OfficialDeployments } from '@/
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type CoverageTier, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
-import { StatusBadge, getAssetVerdict } from '@/components/app/status-badge';
+import { StatusBadge, getAssetVerdict, type UnifiedVerdict } from '@/components/app/status-badge';
 import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
@@ -71,20 +71,62 @@ function MarketQuote({ quote, loading }: { quote?: Quote; loading: boolean }) {
   );
 }
 
+function getScoreColorClass(score?: number | null, verdict?: UnifiedVerdict): string {
+  if (typeof score === 'number') {
+    if (score >= 75) return 'v-score-green';
+    if (score >= 50) return 'v-score-yellow';
+    return 'v-score-red';
+  }
+  if (verdict === 'VERIFIED') return 'v-score-green';
+  if (verdict === 'REVIEW') return 'v-score-yellow';
+  if (verdict === 'BLOCKED') return 'v-score-red';
+  return 'v-score-gray';
+}
+
 function VerdictCell({ asset, score, live }: { asset: DemoAsset; score?: RwaScore | null; live: VerdictApiResponse | null }) {
   const verdict = getAssetVerdict(asset, score);
   const age = score ? formatAge(score.runAt) : null;
-  return (
-    <>
-      <StatusBadge status={verdict} size="md" />
-      <div className="v-cell-sub" style={{ marginTop: 4 }}>
-        {asset.coverage === 'POLICY_VERIFIED'
-          ? (live ? `${live.state.replace('_', ' ')} · live` : 'Resolving evidence…')
-          : asset.coverage === 'CONSENSUS_SCORED'
-            ? (score?.score !== null && score?.score !== undefined ? `${score.score}/100 · ${age ?? ''}` : 'Awaiting seed')
-            : 'Market context'}
+
+  if (asset.coverage === 'POLICY_VERIFIED') {
+    return (
+      <div className="v-trust-score-wrap">
+        <div className="v-trust-score-num v-score-green">
+          100<span className="v-trust-score-max">/100</span>
+        </div>
+        <div className="v-trust-audit-age">
+          {live ? `${live.state.replace('_', ' ').toLowerCase()} · live` : 'resolving live…'}
+        </div>
       </div>
-    </>
+    );
+  }
+
+  if (asset.coverage === 'CONSENSUS_SCORED') {
+    if (score?.score !== null && score?.score !== undefined) {
+      const colorClass = getScoreColorClass(score.score, verdict);
+      return (
+        <div className="v-trust-score-wrap">
+          <div className={`v-trust-score-num ${colorClass}`}>
+            {score.score}<span className="v-trust-score-max">/100</span>
+          </div>
+          <div className="v-trust-audit-age">
+            {age ?? 'scored recently'}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="v-trust-score-wrap">
+        <div className="v-trust-score-num v-score-gray">—</div>
+        <div className="v-trust-audit-age">awaiting seed</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="v-trust-score-wrap">
+      <div className="v-trust-score-num v-score-gray">—</div>
+      <div className="v-trust-audit-age">market reference</div>
+    </div>
   );
 }
 
@@ -416,7 +458,10 @@ export default function DashboardPage() {
             <thead>
               <tr>
                 <th className="v-catalog-th-asset">Asset</th>
-                <th className="v-catalog-th-verdict">Trust status</th>
+                <th className="v-catalog-th-verdict">
+                  <div>Trust status</div>
+                  <div className="v-catalog-th-sub">(agent scored)</div>
+                </th>
                 <th className="v-catalog-th-market">Market</th>
                 <th className="v-catalog-th-category">Category</th>
                 <th className="v-catalog-th-networks">Networks</th>

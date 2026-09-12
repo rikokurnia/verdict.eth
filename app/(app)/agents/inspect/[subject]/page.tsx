@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowUpRight, ExternalLink } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
 import { AssetLogo } from '@/components/app/asset-identity';
 import { CoverageBadge } from '@/components/app/asset-identity';
-import { StatusBadge } from '@/components/app/status-badge';
+import { StatusBadge, InspectorRiskBadge } from '@/components/app/status-badge';
 import RunDetails from '@/components/app/run-details';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
@@ -41,17 +41,17 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
         ]);
         if (runsRes.ok) {
           const body = (await runsRes.json()) as { runs?: HistoryEntry[] };
-          const latest = (body.runs ?? []).map((e) => e.run).find((r) => r.subject === marketId) ?? null;
-          setRun(latest);
+          const match = body.runs?.find((r) => r.run.subject === marketId);
+          if (match) setRun(match.run);
         }
         if (seedRes.ok) {
-          const body = (await seedRes.json()) as { receipts?: SeedReceipt[] };
-          for (const entry of body.receipts ?? []) {
-            const hit = entry.receipt.results.find((r) => r.marketId === marketId && r.transaction);
-            if (hit?.transaction) {
-              setTx(hit.transaction);
-              break;
-            }
+          const body = (await seedRes.json()) as SeedReceipt;
+          const match = body.receipt.results.find((r) => r.marketId === marketId);
+          if (match?.transaction) {
+            setTx({
+              hash: match.transaction.hash,
+              blockNumber: match.transaction.blockNumber,
+            });
           }
         }
         if (profileRes && profileRes.ok) {
@@ -79,14 +79,33 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
   }, [marketId, asset]);
 
   return (
-    <>
-      <Link href="/dashboard" className="v-btn v-btn-secondary" style={{ textDecoration: 'none', width: 'fit-content' }}>
-        <ArrowLeft size={14} aria-hidden="true" />Back to radar
-      </Link>
-      {asset ? (
-        <PageHead title={`Full inspection · ${asset.ticker}`} sub={`${asset.title} — every inspector conclusion and its onchain receipt.`} />
-      ) : (
-        <PageHead title="Full inspection" sub="Resolve the latest agent conclusion for this asset." />
+    <div className="v-page">
+      <PageHead
+        title={asset ? `${asset.title} · Full inspection` : 'Inspection conclusion'}
+        sub="Verifiable consensus synthesis written by four specialized AI agents to ENS Sepolia."
+      />
+
+      <div style={{ marginBottom: 16 }}>
+        <Link className="v-btn v-btn-secondary" href="/agents" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <ArrowLeft size={14} aria-hidden="true" />
+          Back to Agent Quartet
+        </Link>
+      </div>
+
+      {asset && (
+        <div style={{ marginBottom: 12 }}>
+          <a
+            className="v-btn v-btn-secondary"
+            href={`https://app.ens.domains/${encodeURIComponent(asset.name)}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}
+            title={`View official ENS record for ${asset.name}`}
+          >
+            <span>ENS: {asset.name}</span>
+            <ExternalLink size={13} aria-hidden="true" />
+          </a>
+        </div>
       )}
 
       {loading && <p className="v-muted" role="status">Loading latest conclusion…</p>}
@@ -118,7 +137,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
             <div className="v-card" style={{ marginTop: 16 }}>
               <div className="v-label">Onchain conclusion · transcript archived</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
-                <StatusBadge status={snapshot.status} size="md" />
+                <InspectorRiskBadge status={snapshot.status} score={snapshot.score} size="md" />
                 <span className="v-mono" style={{ fontSize: 12 }}>{snapshot.score}/100 · {snapshot.reason}</span>
               </div>
               <p style={{ fontSize: 14 }}>{snapshot.summary}</p>
@@ -153,6 +172,6 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }

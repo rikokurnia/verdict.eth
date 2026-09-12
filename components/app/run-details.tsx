@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
-import { StatusBadge } from "@/components/app/status-badge";
+import { StatusBadge, InspectorRiskBadge } from "@/components/app/status-badge";
 import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
 import type { QuartetRun } from "@/lib/agents/types";
 import s from "./agent-orchestra.module.css";
@@ -29,7 +29,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
         <div>
           <span className={s.kicker}>Consensus synthesis · {ageOf(run.finishedAt)}</span>
           <h3 className={s.synthesisBadgeWrap}>
-            <StatusBadge status={run.synthesis.policy_state} size="lg" />
+            <InspectorRiskBadge status={run.synthesis.verdict} score={run.synthesis.overall_score} size="lg" />
           </h3>
           <p>{run.synthesis.reasoning_summary}</p>
         </div>
@@ -45,7 +45,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
             {id === "consensus" ? (
               <>
                 <div className={s.inspectorScoreRow}>
-                  <StatusBadge status={run.synthesis.verdict} size="sm" />
+                  <InspectorRiskBadge status={run.synthesis.verdict} score={run.synthesis.overall_score} size="sm" />
                   <span className={s.inspectorScoreText}>
                     · {run.synthesis.mapped.confidence}% confidence ·{" "}
                     {run.synthesis.mapped.validityDays}d validity
@@ -56,7 +56,7 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
             ) : (
               <>
                 <div className={s.inspectorScoreRow}>
-                  <StatusBadge status={run.reports[id].status} size="sm" />
+                  <InspectorRiskBadge status={run.reports[id].status} score={run.reports[id].score} size="sm" />
                   <span className={s.inspectorScoreText}>
                     · {run.reports[id].score}/100
                   </span>

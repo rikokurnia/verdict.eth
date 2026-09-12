@@ -2632,6 +2632,63 @@
   box-shadow: none;
 }
 
+/* Trust status header note and score numbers */
+.v-catalog-th-sub {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--fleet-muted, #737373);
+  margin-top: 3px;
+  line-height: 1;
+}
+
+.v-trust-score-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.2;
+}
+
+.v-trust-score-num {
+  font-family: var(--font-mono, monospace);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.v-trust-score-max {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.55;
+  margin-left: 1px;
+}
+
+.v-score-green {
+  color: #34d399;
+}
+
+.v-score-yellow {
+  color: #fbbf24;
+}
+
+.v-score-red {
+  color: #f87171;
+}
+
+.v-score-gray {
+  color: #a3a3a3;
+}
+
+.v-trust-audit-age {
+  font-size: 11px;
+  font-weight: 400;
+  color: #737373;
+  white-space: nowrap;
+}
+
 .v-catalog-asset-cell { display: flex; align-items: center; gap: 12px; min-width: 265px; }
 .v-asset-logo {
   display: inline-grid;
