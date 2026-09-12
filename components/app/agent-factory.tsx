@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, Wallet } from "lucide-react";
+import { ArrowUpRight, Check, ShieldCheck, Wallet } from "lucide-react";
 import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
 import Image from "next/image";
@@ -220,6 +220,39 @@ export default function AgentFactory({
           </div>
         </div>
 
+        {!isConnected && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              padding: "10px 14px",
+              marginBottom: 16,
+              borderRadius: 8,
+              background: "rgba(37, 99, 235, 0.12)",
+              border: "1px solid rgba(59, 130, 246, 0.3)",
+              color: "#bfdbfe",
+              fontSize: 13,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <ShieldCheck size={16} style={{ color: "#60a5fa", flexShrink: 0 }} />
+              <span>
+                <strong>Wallet required for customization:</strong> Connect your Web3 wallet to claim an ENSv2 subname and sign your custom audit policy.
+              </span>
+            </div>
+            <button
+              type="button"
+              className="v-btn v-btn-secondary"
+              onClick={() => connect()}
+              style={{ padding: "4px 12px", fontSize: 12, height: "auto", flexShrink: 0 }}
+            >
+              Connect Wallet
+            </button>
+          </div>
+        )}
+
         <div className="v-table-toolbar" style={{ alignItems: "stretch" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <label className="v-label" htmlFor="factory-subname">
@@ -338,33 +371,67 @@ export default function AgentFactory({
             flexWrap: "wrap",
           }}
         >
-          <button
-            type="button"
-            className="v-btn"
-            onClick={() => void deploy()}
-            disabled={
-              deploying ||
-              !labelValid ||
-              policy.trim().length < 20 ||
-              availability.state !== "free"
-            }
-            aria-busy={deploying}
-          >
-            {deploying ? (
-              "Deploying to ENSv2…"
-            ) : (
-              <>
-                <Wallet
-                  size={14}
-                  aria-hidden="true"
-                  style={{ marginRight: 6 }}
-                />
-                Sign & Deploy Agent to ENSv2
-              </>
-            )}
-          </button>
-          {isConnected && (
+          {!isConnected ? (
+            <button
+              type="button"
+              className="v-btn"
+              onClick={() => connect()}
+              style={{
+                background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+                color: "#ffffff",
+                boxShadow: "0 0 16px rgba(37, 99, 235, 0.35)",
+                cursor: "pointer",
+              }}
+            >
+              <Wallet
+                size={14}
+                aria-hidden="true"
+                style={{ marginRight: 6 }}
+              />
+              Connect Wallet to Deploy Agent
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="v-btn"
+              onClick={() => void deploy()}
+              disabled={
+                deploying ||
+                !labelValid ||
+                policy.trim().length < 20 ||
+                availability.state !== "free"
+              }
+              aria-busy={deploying}
+            >
+              {deploying ? (
+                "Deploying to ENSv2…"
+              ) : (
+                <>
+                  <Wallet
+                    size={14}
+                    aria-hidden="true"
+                    style={{ marginRight: 6 }}
+                  />
+                  Sign & Deploy Agent to ENSv2
+                </>
+              )}
+            </button>
+          )}
+          {isConnected ? (
             <span className="v-cell-sub v-mono">{shortHash(account)}</span>
+          ) : (
+            <span
+              className="v-cell-sub"
+              style={{
+                color: "#93c5fd",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <ShieldCheck size={14} style={{ color: "#60a5fa" }} />
+              Wallet required to sign and register your custom agent on ENSv2
+            </span>
           )}
         </div>
         {error && (
