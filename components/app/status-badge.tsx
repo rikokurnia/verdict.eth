@@ -27,11 +27,18 @@ export function getUnifiedVerdict(value?: string | null): UnifiedVerdict {
   return 'UNAUDITED';
 }
 
-export function getAssetVerdict(asset: { coverage: CoverageTier; state?: string | null }): UnifiedVerdict {
-  if (asset.coverage !== 'VERIFIED_ONCHAIN') {
-    return 'UNAUDITED';
+export function getAssetVerdict(
+  asset: { coverage: CoverageTier; state?: string | null },
+  score?: { status?: string } | null,
+): UnifiedVerdict {
+  if (asset.coverage === 'POLICY_VERIFIED') {
+    return getUnifiedVerdict(asset.state);
   }
-  return getUnifiedVerdict(asset.state);
+  if (asset.coverage === 'CONSENSUS_SCORED') {
+    if (!score?.status) return 'UNAUDITED';
+    return getUnifiedVerdict(score.status);
+  }
+  return 'UNAUDITED';
 }
 
 export function StatusBadge({

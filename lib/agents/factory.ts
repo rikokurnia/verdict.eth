@@ -64,7 +64,7 @@ function rpc() {
   return new JsonRpcProvider(rpcUrl, ENSV2_SEPOLIA.chainId, { staticNetwork: true });
 }
 
-async function namespaceWallet(provider: JsonRpcProvider) {
+export async function namespaceWallet(provider: JsonRpcProvider) {
   const encrypted = readFileSync(join(process.cwd(), '.secrets', 'verdict-sepolia-agent'), 'utf8');
   const password = readFileSync(join(process.cwd(), '.secrets', 'verdict-sepolia-agent.password'), 'utf8').trim();
   return (await Wallet.fromEncryptedJson(encrypted, password)).connect(provider);

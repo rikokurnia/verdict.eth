@@ -9,7 +9,7 @@ const NETWORK_LABELS: Record<NetworkId, string> = {
 };
 
 const COVERAGE_LABELS: Record<CoverageTier, string> = {
-  VERIFIED_ONCHAIN: 'Verified onchain', SOURCE_LINKED: 'Source linked', MARKET_REFERENCE: 'Market reference',
+  POLICY_VERIFIED: 'Policy-Verified', CONSENSUS_SCORED: 'Consensus-Scored', REGISTERED: 'Registered', REFERENCE: 'Reference',
 };
 
 export function AssetLogo({ asset, size = 42 }: { asset: DemoAsset; size?: number }) {

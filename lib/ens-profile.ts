@@ -21,6 +21,13 @@ export const PROFILE_KEYS = [
   'contract.ethereum',
   'contract.provenance',
   'contract.solana',
+  'verdict.quartet.score',
+  'verdict.quartet.status',
+  'verdict.quartet.policy',
+  'verdict.quartet.reason',
+  'verdict.quartet.summary',
+  'verdict.quartet.runAt',
+  'verdict.quartet.sourceHash',
 ];
 
 export type EnsProfile = {

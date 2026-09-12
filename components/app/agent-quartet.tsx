@@ -44,8 +44,8 @@ const definitions = {
   },
   custody: {
     name: "Custody & Backing",
-    ensName: "Auditor resolver ↗",
-    address: ENS.proxies.auditorResolver,
+    ensName: ENS.names.observation,
+    address: ENS.proxies.monitorResolver,
     avatarUrl: "/assets/agent-assets/plane2.png",
     labels: [
       "Receive shared evidence",
@@ -55,7 +55,7 @@ const definitions = {
   },
   technical: {
     name: "Smart Contract Tech",
-    ensName: ENS.names.agent,
+    ensName: "Token contract ↗",
     address: ENS.proxies.namespaceResolver,
     avatarUrl: "/assets/agent-assets/drone.png",
     labels: [
@@ -130,11 +130,13 @@ const nodeTypes = { agentTerminal: AgentTerminalCard };
 const edgeTypes = { telemetry: DataEdge };
 
 function RunDetails({ run }: { run: QuartetRun }) {
+  const ageSec = Math.max(0, Math.floor(Date.now() / 1000 - Date.parse(run.finishedAt) / 1000));
+  const age = ageSec < 3600 ? "scored just now" : ageSec < 86_400 ? `scored ${Math.floor(ageSec / 3600)}h ago` : `scored ${Math.floor(ageSec / 86_400)}d ago`;
   return (
     <div className={s.runDetails}>
       <div className={s.summary}>
         <div>
-          <span className={s.kicker}>Consensus synthesis</span>
+          <span className={s.kicker}>Consensus synthesis · {age}</span>
           <h3 className={s.synthesisBadgeWrap}>
             <StatusBadge status={run.synthesis.policy_state} size="lg" />
           </h3>
@@ -273,6 +275,13 @@ export default function AgentQuartet() {
   }, []);
   useEffect(() => {
     void loadHistory();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const deepSubject = params.get("subject");
+      if (deepSubject && options.some((o) => o.value === deepSubject)) {
+        setSubject(deepSubject);
+      }
+    } catch {}
     const media = matchMedia("(max-width: 850px)");
     const resize = () => setNarrow(media.matches);
     resize();
@@ -441,7 +450,7 @@ export default function AgentQuartet() {
     <section className={s.inspectionSection} aria-labelledby="inspection-title">
       <div className={s.sectionHeading}>
         <div>
-          <span className={s.kicker}>03 / 4-AGENT INSPECTION</span>
+          <span className={s.kicker}>03 / AGENT CONSENSUS</span>
           <h2 id="inspection-title">
             Independent minds.
             <br />
@@ -469,7 +478,7 @@ export default function AgentQuartet() {
               onClick={() => setMode(value)}
               disabled={running}
             >
-              {value === "official" ? "Official quartet" : "Custom lens"}
+              {value === "official" ? "Official consensus" : "Custom lens"}
             </button>
           ))}
         </div>
@@ -621,7 +630,7 @@ export default function AgentQuartet() {
                   <small>
                     {entry.run.mode === "custom"
                       ? entry.run.customPolicy?.subname
-                      : "Official quartet"}{" "}
+                      : "Official consensus"}{" "}
                     · {Math.round(entry.run.durationMs / 1000)}s
                   </small>
                 </span>

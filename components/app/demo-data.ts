@@ -1,6 +1,6 @@
 import type { VerdictState } from '@/lib/policy';
 
-export type CoverageTier = 'VERIFIED_ONCHAIN' | 'SOURCE_LINKED' | 'MARKET_REFERENCE';
+export type CoverageTier = 'POLICY_VERIFIED' | 'CONSENSUS_SCORED' | 'REGISTERED' | 'REFERENCE';
 export type NetworkId =
   | 'ethereum' | 'sepolia' | 'solana' | 'stellar' | 'polygon' | 'gnosis' | 'bitcoin'
   | 'arbitrum' | 'base' | 'avalanche' | 'bsc' | 'tron' | 'provenance' | 'aptos';
@@ -43,7 +43,7 @@ const NO_POLICY = 'No Verdict policy';
 export const DEMO_ASSETS: DemoAsset[] = [
   {
     id: 'verdict-usdy-001', title: 'USD Yield 001', name: 'usd-yield-001.acme.verdict.eth', ticker: 'USDY-001',
-    assetClass: 'ENS Verified', issuer: 'ACME demo issuer', state: 'POLICY_PASS', coverage: 'VERIFIED_ONCHAIN',
+    assetClass: 'ENS Verified', issuer: 'ACME demo issuer', state: 'POLICY_PASS', coverage: 'POLICY_VERIFIED',
     description: 'Fictional Sepolia asset used to prove independent issuer, AI auditor, and risk-monitor permissions end to end.',
     logo: '/icon.svg', networks: ['sepolia'], network: 'Ethereum Sepolia',
     sourceLabel: 'ENSv2 evidence graph', sourceUrl: 'https://eth-sepolia.blockscout.com/address/0xB18cCDb9fFE2A3CB50Dd00c3Ece15e55c98410cE',
@@ -51,7 +51,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'blackrock-buidl', title: 'BlackRock USD Institutional Digital Liquidity Fund', name: 'buidl.rwa.verdict.eth', ticker: 'BUIDL',
-    assetClass: 'Treasury', issuer: 'BlackRock / Securitize', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Treasury', issuer: 'BlackRock / Securitize', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "BlackRock's tokenized short-term Treasury liquidity fund for qualified purchasers, administered by Securitize with a $1 NAV target.",
     logo: 'https://coin-images.coingecko.com/coins/images/36291/large/blackrock.png?1711013223',
     networks: ['ethereum', 'solana', 'polygon'], network: 'Ethereum + 8 networks', marketId: 'blackrock-usd-institutional-digital-liquidity-fund',
@@ -61,7 +61,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'circle-usyc', title: 'Circle USYC', name: 'usyc.rwa.verdict.eth', ticker: 'USYC',
-    assetClass: 'Treasury', issuer: 'Circle (Hashnote)', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Treasury', issuer: 'Circle (Hashnote)', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Circle's tokenized money-market fund share backed by short-term U.S. government securities.",
     logo: 'https://coin-images.coingecko.com/coins/images/51054/large/Hashnote_SDYC_200x200.png?1730370965',
     networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'hashnote-usyc',
@@ -71,7 +71,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'ondo-usdy', title: 'Ondo US Dollar Yield', name: 'usdy.rwa.verdict.eth', ticker: 'USDY',
-    assetClass: 'Treasury', issuer: 'Ondo', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Treasury', issuer: 'Ondo', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'A yield-bearing token secured by bank deposits and short-term US Treasuries, offered subject to eligibility restrictions.',
     logo: 'https://coin-images.coingecko.com/coins/images/31700/large/usdy_%281%29.png?1696530524',
     networks: ['ethereum', 'solana', 'arbitrum'], network: 'Ethereum + Solana + Arbitrum', marketId: 'ondo-us-dollar-yield',
@@ -81,7 +81,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'ondo-ousg', title: 'Ondo Short-Term U.S. Government Bond Fund', name: 'ousg.rwa.verdict.eth', ticker: 'OUSG',
-    assetClass: 'Treasury', issuer: 'Ondo', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Treasury', issuer: 'Ondo', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Ondo's tokenized short-term U.S. government bond fund with daily liquidity windows for qualified holders.",
     logo: 'https://coin-images.coingecko.com/coins/images/29023/large/OUSG.png?1696527993',
     networks: ['ethereum', 'polygon', 'solana'], network: 'Ethereum + Polygon + Solana', marketId: 'ousg',
@@ -91,7 +91,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'franklin-benji', title: 'Franklin Templeton BENJI', name: 'benji.rwa.verdict.eth', ticker: 'BENJI',
-    assetClass: 'Money Market', issuer: 'Franklin Templeton', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Money Market', issuer: 'Franklin Templeton', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Shares of the U.S.-registered Franklin OnChain U.S. Government Money Fund (FOBXX) with onchain share records; 1 BENJI = 1 fund share.',
     logo: 'https://coin-images.coingecko.com/coins/images/66409/large/Benji_Logo.png?1749371083',
     networks: ['stellar', 'polygon', 'ethereum'], network: 'Stellar + Polygon + 7 more', marketId: 'franklin-templeton-benji',
@@ -101,7 +101,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'superstate-ustb', title: 'Invesco Short Duration US Government Securities Fund', name: 'ustb.rwa.verdict.eth', ticker: 'USTB',
-    assetClass: 'Treasury', issuer: 'Superstate / Invesco', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Treasury', issuer: 'Superstate / Invesco', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Superstate short-duration U.S. government securities fund with onchain share records for qualified holders.',
     logo: 'https://coin-images.coingecko.com/coins/images/35012/large/Invesco_icon_lg.png?1780816895',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'superstate-short-duration-us-government-securities-fund-ustb',
@@ -111,7 +111,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'anemoy-jtrsy', title: 'Janus Henderson Anemoy Treasury Fund', name: 'jtrsy.rwa.verdict.eth', ticker: 'JTRSY',
-    assetClass: 'Treasury', issuer: 'Janus Henderson / Anemoy', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Treasury', issuer: 'Janus Henderson / Anemoy', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Janus Henderson–Anemoy tokenized short-term Treasury fund issued via Centrifuge for qualified holders.',
     logo: 'https://coin-images.coingecko.com/coins/images/70445/large/JTRSY.png?1762078582',
     networks: ['ethereum'], network: 'Ethereum (Centrifuge)', marketId: 'janus-henderson-anemoy-treasury-fund',
@@ -121,7 +121,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'spiko-eutbl', title: 'Spiko EU T-Bills Money Market Fund', name: 'eutbl.rwa.verdict.eth', ticker: 'EUTBL',
-    assetClass: 'Money Market', issuer: 'Spiko', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Money Market', issuer: 'Spiko', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Spiko's euro money-market token backed by EU Treasury bills for eligible European investors.",
     logo: 'https://coin-images.coingecko.com/coins/images/39657/large/EUTBL.png?1723517425',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'eutbl',
@@ -131,7 +131,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'spiko-eur', title: 'Spiko Amundi Overnight Swap Fund (EUR)', name: 'spiko-eur.rwa.verdict.eth', ticker: 'EURSAFO',
-    assetClass: 'Money Market', issuer: 'Spiko / Amundi', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Money Market', issuer: 'Spiko / Amundi', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Spiko–Amundi euro overnight money-market token for onchain euro cash management.",
     logo: 'https://coin-images.coingecko.com/coins/images/102172591/large/Fund_eurSAF0.png?1774104814',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'spiko-amundi-overnight-swap-fund-eur',
@@ -141,7 +141,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'anemoy-jaaa', title: 'Janus Henderson Anemoy AAA CLO Fund', name: 'jaaa.rwa.verdict.eth', ticker: 'JAAA',
-    assetClass: 'Private Credit', issuer: 'Janus Henderson / Anemoy', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Private Credit', issuer: 'Janus Henderson / Anemoy', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Janus Henderson–Anemoy tokenized AAA CLO fund issued via Centrifuge for qualified holders.',
     logo: 'https://coin-images.coingecko.com/coins/images/70446/large/jaaa.png?1762078666',
     networks: ['ethereum'], network: 'Ethereum (Centrifuge)', marketId: 'janus-henderson-anemoy-aaa-clo-fund',
@@ -151,7 +151,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'figure-ylds', title: 'YLDS', name: 'ylds.rwa.verdict.eth', ticker: 'YLDS',
-    assetClass: 'Money Market', issuer: 'Figure', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Money Market', issuer: 'Figure', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Figure's SEC-registered yield-bearing stablecoin accruing interest on Provenance Blockchain.",
     logo: 'https://coin-images.coingecko.com/coins/images/66486/large/YLDS.png?1772560579',
     networks: ['provenance'], network: 'Provenance', marketId: 'ylds',
@@ -161,7 +161,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'tether-xaut', title: 'Tether Gold', name: 'xaut.rwa.verdict.eth', ticker: 'XAUT',
-    assetClass: 'Gold', issuer: 'Tether', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Gold', issuer: 'Tether', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Fungible token backed by allocated physical gold held in Swiss vaults; 1 XAUT tracks one troy ounce of gold.',
     logo: 'https://coin-images.coingecko.com/coins/images/10481/large/logo.png?1774627372',
     networks: ['ethereum', 'tron'], network: 'Ethereum + Tron', marketId: 'tether-gold',
@@ -171,7 +171,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'paxos-paxg', title: 'PAX Gold', name: 'paxg.rwa.verdict.eth', ticker: 'PAXG',
-    assetClass: 'Gold', issuer: 'Paxos', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Gold', issuer: 'Paxos', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Regulated ERC-20 backed 1:1 by allocated London Good Delivery gold bars held in custody.',
     logo: 'https://coin-images.coingecko.com/coins/images/9519/large/asset-paxg.png?1785284785',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'pax-gold',
@@ -181,7 +181,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'kinesis-kau', title: 'Kinesis Gold', name: 'kau.rwa.verdict.eth', ticker: 'KAU',
-    assetClass: 'Gold', issuer: 'Kinesis', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Gold', issuer: 'Kinesis', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'Kinesis gold token backed 1:1 by allocated physical bullion with yield-share mechanics for holders.',
     logo: 'https://coin-images.coingecko.com/coins/images/29788/large/kau-currency-ticker.png?1696528718',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'kinesis-gold',
@@ -191,7 +191,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'nvidia-xstock', title: 'NVIDIA xStock', name: 'nvdax.rwa.verdict.eth', ticker: 'NVDAX',
-    assetClass: 'Tokenized Stock', issuer: 'Backed / xStocks', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Tokenized Stock', issuer: 'Backed / xStocks', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'A tokenized tracker certificate for NVIDIA equity exposure, fully collateralized 1:1. It is not the underlying NVIDIA share itself.',
     logo: 'https://coin-images.coingecko.com/coins/images/55633/large/Ticker_NVDA__Company_Name_NVIDIA_Corp__size_200x200_2x.png?1746862704',
     networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'nvidia-xstock',
@@ -201,7 +201,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'tesla-xstock', title: 'Tesla xStock', name: 'tslax.rwa.verdict.eth', ticker: 'TSLAX',
-    assetClass: 'Tokenized Stock', issuer: 'Backed / xStocks', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Tokenized Stock', issuer: 'Backed / xStocks', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: 'A tokenized tracker certificate for Tesla equity exposure, fully collateralized 1:1. It is not the underlying Tesla share itself.',
     logo: 'https://coin-images.coingecko.com/coins/images/55638/large/Ticker_TSLA__Company_Name_Tesla_Inc.__size_200x200_2x.png?1746863299',
     networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'tesla-xstock',
@@ -211,7 +211,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'maple-syrup', title: 'Maple Finance', name: 'syrup.rwa.verdict.eth', ticker: 'SYRUP',
-    assetClass: 'Private Credit', issuer: 'Maple Finance', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Private Credit', issuer: 'Maple Finance', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Ecosystem token for Maple's onchain private-credit marketplace connecting institutional borrowers and lenders.",
     logo: 'https://coin-images.coingecko.com/coins/images/51232/large/_syrup_token_logo.png?1747292046',
     networks: ['ethereum', 'solana'], network: 'Ethereum + Solana', marketId: 'syrup',
@@ -221,7 +221,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'figure-heloc', title: 'Figure Heloc', name: 'figr-heloc.rwa.verdict.eth', ticker: 'FIGR_HELOC',
-    assetClass: 'Private Credit', issuer: 'Figure', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Private Credit', issuer: 'Figure', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Figure's tokenized home-equity line-of-credit exposure recorded on Provenance Blockchain.",
     logo: 'https://coin-images.coingecko.com/coins/images/68480/large/figure.png?1755863954',
     networks: ['provenance'], network: 'Provenance', marketId: 'figure-heloc',
@@ -231,7 +231,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'blockchain-bcap', title: 'Blockchain Capital', name: 'bcap.rwa.verdict.eth', ticker: 'BCAP',
-    assetClass: 'Private Equity', issuer: 'Blockchain Capital', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Private Equity', issuer: 'Blockchain Capital', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "Blockchain Capital's tokenized venture fund share — one of the first security tokens ever issued.",
     logo: 'https://coin-images.coingecko.com/coins/images/56040/large/bcap_logo_200.png?1748088291',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'blockchain-capital',
@@ -241,7 +241,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'onre-onyc', title: 'OnRe Tokenized Reinsurance', name: 'onyc.rwa.verdict.eth', ticker: 'ONYC',
-    assetClass: 'Insurance', issuer: 'OnRe', state: 'UNAVAILABLE', coverage: 'SOURCE_LINKED',
+    assetClass: 'Insurance', issuer: 'OnRe', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "OnRe's tokenized reinsurance pool token targeting underwriting-linked returns on Solana.",
     logo: 'https://coin-images.coingecko.com/coins/images/67072/large/3D_ONYC.png?1779524172',
     networks: ['solana'], network: 'Solana', marketId: 'onyc',
@@ -251,7 +251,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'bitcoin', title: 'Bitcoin', name: 'bitcoin', ticker: 'BTC', assetClass: 'Crypto',
-    issuer: 'Decentralized network', state: 'UNAVAILABLE', coverage: 'MARKET_REFERENCE',
+    issuer: 'Decentralized network', state: 'UNAVAILABLE', coverage: 'REFERENCE',
     description: 'Native Bitcoin used as a liquid market benchmark. No issuer or RWA evidence is implied.',
     logo: 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400',
     networks: ['bitcoin'], network: 'Bitcoin', marketId: 'bitcoin',
@@ -260,7 +260,7 @@ export const DEMO_ASSETS: DemoAsset[] = [
   },
   {
     id: 'ethereum', title: 'Ethereum', name: 'ethereum', ticker: 'ETH', assetClass: 'Crypto',
-    issuer: 'Decentralized network', state: 'UNAVAILABLE', coverage: 'MARKET_REFERENCE',
+    issuer: 'Decentralized network', state: 'UNAVAILABLE', coverage: 'REFERENCE',
     description: 'Native Ethereum used as the settlement-network benchmark for Verdict and tokenized assets.',
     logo: 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628',
     networks: ['ethereum'], network: 'Ethereum', marketId: 'ethereum',

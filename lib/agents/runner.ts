@@ -320,3 +320,47 @@ export async function runQuartet(subject: string, write: boolean, opts: QuartetO
 export function isDemoAssetSubject(subject: string) {
   return subject.toLowerCase() === DEMO_ASSET;
 }
+
+const QUARTET_RESOLVER_ABI = [
+  'function setText(bytes name,string key,string value)',
+  'function multicall(bytes[] calls) returns (bytes[] results)',
+];
+
+/**
+ * Writes the consensus snapshot to the asset's Verdict registry profile
+ * (<label>.rwa.verdict.eth). Namespace owns all profile names and holds root
+ * roles on the rwa registry, so no new permissions are needed. Identity
+ * records are never touched — only verdict.quartet.* keys.
+ */
+export async function writeQuartetSnapshot(marketId: string, synthesis: Synthesis) {
+  const { DEMO_ASSETS } = await import('@/components/app/demo-data');
+  const asset = DEMO_ASSETS.find((a) => a.marketId === marketId);
+  if (!asset) throw new Error(`Unknown catalog asset: ${marketId}`);
+  const file = loadEnvFile();
+  const rpcUrl = process.env.SEPOLIA_RPC_URL || file.SEPOLIA_RPC_URL;
+  if (!rpcUrl) throw new Error('SEPOLIA_RPC_URL is not configured');
+  const provider = new JsonRpcProvider(rpcUrl, ENSV2_SEPOLIA.chainId, { staticNetwork: true });
+  const { namespaceWallet } = await import('./factory');
+  const wallet = await namespaceWallet(provider);
+  const now = Math.floor(Date.now() / 1000);
+  const sourceHash = keccak256(toUtf8Bytes(JSON.stringify(synthesis.mapped)));
+  const records = {
+    'verdict.quartet.score': String(synthesis.overall_score),
+    'verdict.quartet.status': synthesis.verdict,
+    'verdict.quartet.policy': synthesis.policy_state,
+    'verdict.quartet.reason': synthesis.mapped.reasonCode,
+    'verdict.quartet.summary': synthesis.reasoning_summary.slice(0, 280),
+    'verdict.quartet.runAt': String(now),
+    'verdict.quartet.sourceHash': sourceHash,
+  };
+  const contract = new Contract(ENSV2_SEPOLIA.proxies.namespaceResolver, QUARTET_RESOLVER_ABI, wallet);
+  const iface = new Interface(QUARTET_RESOLVER_ABI);
+  const encoded = dnsEncode(asset.name);
+  const calls = Object.entries(records).map(([key, value]) =>
+    iface.encodeFunctionData('setText', [encoded, key, value]));
+  await contract.multicall.staticCall(calls);
+  const tx = await contract.multicall(calls);
+  const receipt = await tx.wait(1);
+  if (receipt.status !== 1) throw new Error(`Quartet snapshot reverted: ${tx.hash}`);
+  return { hash: String(tx.hash), blockNumber: Number(receipt.blockNumber), sourceHash };
+}
