@@ -1,0 +1,199 @@
+{
+  "id": "1789181377772-pax-gold",
+  "subject": "pax-gold",
+  "startedAt": "2026-09-12T02:49:37.772Z",
+  "finishedAt": "2026-09-12T02:49:54.562Z",
+  "durationMs": 16790,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 989,
+      "outputTokens": 492
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 925,
+      "outputTokens": 515
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 959,
+      "outputTokens": 475
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2539,
+      "outputTokens": 253
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 62,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated as Paxos Trust Company with domicile New York, United States — sourced only from operator-provided curated facts, not verified filings.",
+        "Regulatory framework stated as 'NY limited-purpose trust company; regulated ERC-20' — curated/operator-provided, not confirmed against a primary regulatory register in the pack.",
+        "Catalog description asserts 1:1 backing by allocated London Good Delivery gold bars held in custody; no custodian name, bar list, or attestation report is present in the pack.",
+        "Investor eligibility per curated facts: 'Generally permissionless ERC-20' — no transfer-restriction analysis, no restricted-jurisdiction list, and no accredited/qualified-investor gating disclosed.",
+        "Token contract 0x45804880de22913dafe09f4980848ece6ecbaf78 on ethereum is verified per Blockscout, but the verified name is 'AdminUpgradeabilityProxy' — upgradeable proxy implies admin-controlled logic changes; no implementation address or admin identity in pack.",
+        "No sanctions, OFAC, or enforcement records are present in the pack; status is unknown, not clear.",
+        "No audit reports, reserve attestations, legal opinions, or offering documents are present in the pack.",
+        "No ENS evidence supplied (ensEvidence is null); no on-chain identity binding to verify.",
+        "Market price data (USD 4355.52) is present but is not legal or compliance evidence."
+      ],
+      "evidence_urls": [
+        "https://paxos.com/",
+        "https://etherscan.io/token/0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x45804880de22913dafe09f4980848ece6ecbaf78"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "curated",
+        "regulatory framework": "curated",
+        "investor eligibility": "curated",
+        "gold backing / custody": "curated",
+        "contract verification": "live",
+        "sanctions / enforcement": "unknown",
+        "audits / attestations": "unknown",
+        "ens identity": "unknown"
+      },
+      "issuer_entity": "Paxos Trust Company",
+      "jurisdiction": "New York, United States",
+      "regulatory_framework": "NY limited-purpose trust company; regulated ERC-20 (curated, unverified against primary register)"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 55,
+      "status": "WARN",
+      "findings": [
+        "Issuer identified as Paxos (Paxos Trust Company), a New York limited-purpose trust company per curated catalog data.",
+        "Asset class is Gold; description states 1 PAXG = 1 troy ounce of allocated London Good Delivery gold bars held in custody.",
+        "Custodian is not named anywhere in the evidence pack — reported as unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so backing cannot be independently verified and the score is capped at 79.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Latest attestation date and attestation auditor are not present in the pack — unknown.",
+        "On-chain contract 0x45804880de22913dafe09f4980848ece6ecbaf78 on Ethereum is verified as an AdminUpgradeabilityProxy (upgradeable proxy pattern noted).",
+        "Live market quote: USD 4355.52, 24h change +0.62% — this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Issuer page https://paxos.com/ is reachable but contains no attestation document in this pack."
+      ],
+      "evidence_urls": [
+        "https://paxos.com/",
+        "https://etherscan.io/token/0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x45804880de22913dafe09f4980848ece6ecbaf78"
+      ],
+      "grounding": {
+        "issuer": "curated",
+        "asset_class": "curated",
+        "custodian": "unknown",
+        "proof_of_reserve": "unknown",
+        "spv_structure": "unknown",
+        "attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "contract_verification": "live",
+        "market_quote": "live",
+        "issuer_page": "live"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x45804880de22913dafe09f4980848ece6ecbaf78 on ethereum is reported verified by the Blockscout record (name: AdminUpgradeabilityProxy).",
+        "The verified contract name 'AdminUpgradeabilityProxy' indicates an upgradeable proxy pattern; the pack's isProxy field is null, so proxy status is only inferred from the contract name, not confirmed by an explicit flag.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown; upgradeability without a disclosed admin controller is a material caution.",
+        "Blacklist/freeze capability is not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Issuer/curated metadata (Paxos Trust Company, New York limited-purpose trust, 1 PAXG = 1 troy ounce allocated gold) is curated catalog data, not independently verified on-chain in this pack.",
+        "ENS evidence is null and the subject is a catalog-rwa token, so ENS binding/attestation/revocation checks are not applicable.",
+        "Score capped below 70-tier confidence concerns: verification is live-confirmed, but admin, freeze, and audit facts are unknown, so the score is held in the WARN band."
+      ],
+      "evidence_urls": [
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "https://etherscan.io/token/0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "https://paxos.com/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "live",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_metadata": "curated",
+        "ens_binding": "unknown"
+      },
+      "contract_address": "0x45804880de22913dafe09f4980848ece6ecbaf78",
+      "chain_id": 1,
+      "is_upgradeable": true,
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "PAXG",
+    "overall_score": 62,
+    "verdict": "WARN",
+    "policy_state": "REVIEW",
+    "reasoning_summary": "PAXG is a verified Ethereum ERC-20 (AdminUpgradeabilityProxy) with curated Paxos Trust Company metadata, but custodian, proof-of-reserve, attestation date/auditor, admin controller, and audit facts are all absent from the pack. No FAIL trigger is evidenced; material unknowns cap confidence and place the asset in REVIEW.",
+    "mapped": {
+      "auditStatus": "active",
+      "severity": "warning",
+      "reasonCode": "MATERIAL_UNKNOWNS_REVIEW",
+      "confidence": 55,
+      "validityDays": 14,
+      "rationale": "Verified contract and curated issuer data only; custodian, PoR, attestation, admin controller, and audit facts unknown in pack. No evidenced FAIL trigger, so REVIEW with capped confidence."
+    },
+    "ensv2_records": {
+      "audit.status": "WARN",
+      "audit.score": "62",
+      "audit.reason": "MATERIAL_UNKNOWNS_REVIEW: custodian, proof-of-reserve, attestation, admin controller, and audit facts absent from evidence pack",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "REVIEW"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x45804880de22913dafe09f4980848ece6ecbaf78",
+    "contractVerified": true,
+    "marketUsd": 4355.52,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

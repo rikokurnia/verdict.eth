@@ -1,0 +1,192 @@
+{
+  "id": "1789180447538-blackrock-usd-institutional-digital-liquidity-fund",
+  "subject": "blackrock-usd-institutional-digital-liquidity-fund",
+  "startedAt": "2026-09-12T02:34:07.538Z",
+  "finishedAt": "2026-09-12T02:34:31.848Z",
+  "durationMs": 24310,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "gemini",
+      "model": "gemini-3.6-flash"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "inputTokens": 1020,
+      "outputTokens": 370
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 971,
+      "outputTokens": 506
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 1001,
+      "outputTokens": 542
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2367,
+      "outputTokens": 233
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 65,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity identified as BlackRock with Securitize as administrator based on curated metadata.",
+        "Legal domicile/jurisdiction of the issuing entity is unknown in the provided evidence pack.",
+        "Specific regulatory framework and SEC filing details are unknown from the evidence pack.",
+        "Investor eligibility requires KYC and is transfer-restricted to accredited investors and qualified purchasers.",
+        "Sanctions and regulatory enforcement check status is unknown due to lack of explicit sanctions records in the evidence pack."
+      ],
+      "evidence_urls": [
+        "https://securitize.io/",
+        "https://etherscan.io/token/0x7712c34205737192402172409a8f7ccef8aa2aec",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x7712c34205737192402172409a8f7ccef8aa2aec"
+      ],
+      "grounding": {
+        "issuer_entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory_framework": "unknown",
+        "investor_eligibility": "curated",
+        "sanctions_enforcement": "unknown"
+      },
+      "issuer_entity": "BlackRock",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — custodian: unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; this deployment has no PoR PDF parser, so reserve backing cannot be verified and the score is capped at 79 (applied cap: 45).",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — spv_structure: unknown.",
+        "Market quote shows $1.00 with 0% 24h change, consistent with the stated $1 NAV target, but this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Issuer/administrator identified as BlackRock / Securitize per catalog and curated fields; Securitize issuer page is reachable.",
+        "Token contract 0x7712c34205737192402172409a8f7ccef8aa2aec on Ethereum is verified (Blockscout), but contract verification does not evidence real-world collateral.",
+        "Eligibility is transfer-restricted (accredited / qualified purchasers, KYC required) per curated data, which limits but does not prove collateral backing.",
+        "No attestation date, auditor, or reserve report is present in the pack — latest_attestation_date, attestation_auditor, and attestation_document_url are unknown."
+      ],
+      "evidence_urls": [
+        "https://securitize.io/",
+        "https://etherscan.io/token/0x7712c34205737192402172409a8f7ccef8aa2aec",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x7712c34205737192402172409a8f7ccef8aa2aec"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "proof_of_reserve": "unknown",
+        "spv_structure": "unknown",
+        "market_peg_signal": "live",
+        "issuer_administrator": "curated",
+        "contract_verification": "live",
+        "attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "attestation_document_url": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x7712c34205737192402172409a8f7ccef8aa2aec on ethereum is reported by the Blockscout record as verified (isVerified=true), with the contract name field reading 'Proxy'.",
+        "Proxy status is ambiguous: the verification record's name is 'Proxy' but the isProxy field is null, so upgradeability cannot be confirmed from the pack.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze or transfer-restriction powers are not evidenced at the contract level in the pack; the curated note describes transfer-restricted eligibility (KYC/qualified purchasers) but this is an issuer-policy statement, not on-chain evidence of a blacklist function.",
+        "No third-party audit firm or audit hash is present in the pack — unknown; absence of evidence is not evidence of safety.",
+        "Catalog subject is a tokenized Treasury fund (BUIDL) administered by Securitize, listed on ethereum, solana, and polygon; only the ethereum contract address is supplied.",
+        "Market data shows a $1.00 USD reference with 0% 24h change, consistent with a $1 NAV target stable-value instrument, not a market-priced token.",
+        "ENS evidence is null; the ENS demo-asset path does not apply to this subject."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x7712c34205737192402172409a8f7ccef8aa2aec",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x7712c34205737192402172409a8f7ccef8aa2aec",
+        "https://securitize.io/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "proxy_status": "live",
+        "admin_controller": "unknown",
+        "blacklist_freeze": "unknown",
+        "audit": "unknown",
+        "issuer_administrator": "curated",
+        "eligibility_restrictions": "curated",
+        "market_nav": "live",
+        "ens_evidence": "unknown"
+      },
+      "contract_address": "0x7712c34205737192402172409a8f7ccef8aa2aec",
+      "chain_id": 1,
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "BUIDL",
+    "overall_score": 60,
+    "verdict": "WARN",
+    "policy_state": "REVIEW",
+    "reasoning_summary": "BlackRock/Securitize BUIDL is a verified, transfer-restricted tokenized Treasury fund with a live $1 NAV signal, but custodian, Proof of Reserve, SPV structure, and audit evidence are all absent from the pack. Material unknowns cap confidence and place the asset in REVIEW rather than PASS or BLOCKED.",
+    "mapped": {
+      "auditStatus": "active",
+      "severity": "warning",
+      "reasonCode": "UNVERIFIED_RESERVE_AND_CUSTODY",
+      "confidence": 45,
+      "validityDays": 14,
+      "rationale": "Verified Ethereum contract and live $1 NAV signal, but custodian, Proof of Reserve, SPV structure, and audit are unknown in the evidence pack; no FAIL trigger is evidenced."
+    },
+    "ensv2_records": {
+      "audit.status": "WARN",
+      "audit.score": "60",
+      "audit.reason": "UNVERIFIED_RESERVE_AND_CUSTODY",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "REVIEW"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x7712c34205737192402172409a8f7ccef8aa2aec",
+    "contractVerified": true,
+    "marketUsd": 1,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

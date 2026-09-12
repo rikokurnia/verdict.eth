@@ -13,6 +13,7 @@
     "audit:ai:write": "node scripts/run-ai-audit.mjs --write",
     "configure:ens-permissions": "node scripts/configure-ensv2-permissions.mjs",
     "verify:ens": "node scripts/read-verdict.mjs",
+    "sync:runs": "node scripts/sync-bundled-runs.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test lib/*.test.ts"
   },

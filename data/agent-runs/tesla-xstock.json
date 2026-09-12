@@ -1,0 +1,206 @@
+{
+  "id": "1789181460621-tesla-xstock",
+  "subject": "tesla-xstock",
+  "startedAt": "2026-09-12T02:51:00.621Z",
+  "finishedAt": "2026-09-12T02:51:17.512Z",
+  "durationMs": 16891,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 981,
+      "outputTokens": 516
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 1011,
+      "outputTokens": 530
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 947,
+      "outputTokens": 526
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2632,
+      "outputTokens": 251
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 58,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated in curated pack as 'Backed Assets (JE) Limited' with domicile Jersey — operator-provided, not a verified filing.",
+        "Regulatory framework described only as 'Tracker certificate (ISIN-prospected); 1:1 collateralized' — no named regulator, license number, or prospectus reference in the pack; regime remains unverified.",
+        "Investor eligibility per curated pack: 'Non-US eligible investors only; not the underlying share' — a US-exclusion posture, but no exemption basis, transfer-restriction mechanism, or jurisdictional list is supplied.",
+        "Catalog description confirms the token is a tokenized tracker certificate for Tesla equity exposure, fully collateralized 1:1, and explicitly 'not the underlying Tesla share itself' — no shareholder rights asserted.",
+        "Contract 0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0 on ethereum is reported verified as 'BackedTokenProxy' via Blockscout; proxy status is null (unknown).",
+        "No sanctions, enforcement, litigation, or regulatory-action record appears anywhere in the pack — this is absence of evidence, not a clearance.",
+        "No custody, audit, reserve-attestation, or collateral-verification document is present in the pack; the 1:1 collateralization claim is unsubstantiated by any supplied artifact.",
+        "No ENS evidence supplied (ensEvidence: null); no on-chain identity attestation available for the issuer."
+      ],
+      "evidence_urls": [
+        "https://xstocks.fi/",
+        "https://etherscan.io/token/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "domicile": "curated",
+        "regulatory framework": "curated",
+        "investor eligibility": "curated",
+        "not underlying share": "curated",
+        "tokenized tracker certificate": "live",
+        "1:1 collateralization": "curated",
+        "contract verification": "live",
+        "sanctions/enforcement": "unknown",
+        "custody/audit attestation": "unknown",
+        "ENS identity": "unknown"
+      },
+      "issuer_entity": "Backed Assets (JE) Limited",
+      "jurisdiction": "Jersey",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 62,
+      "status": "WARN",
+      "findings": [
+        "Issuer/entity identified as Backed Assets (JE) Limited, domiciled in Jersey, per curated catalog data (asOf 2026-09).",
+        "Framework described as a tracker certificate (ISIN-prospected) with 1:1 collateralization; the token is explicitly NOT the underlying Tesla share.",
+        "Contract 0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0 on Ethereum is verified as BackedTokenProxy per Blockscout.",
+        "Live market quote: $365.12, +0.66% 24h — this is market-implied signal only and is NOT a Proof of Reserve.",
+        "No Proof of Reserve / attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so backing cannot be independently confirmed and the score is capped at 79.",
+        "Custodian is not named anywhere in the pack — unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "No attestation date or attestation auditor is present in the pack — unknown.",
+        "Eligibility restricted to non-US investors; token is a tracker certificate, not direct equity ownership."
+      ],
+      "evidence_urls": [
+        "https://xstocks.fi/",
+        "https://etherscan.io/token/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0"
+      ],
+      "grounding": {
+        "issuer_entity": "curated",
+        "domicile_jersey": "curated",
+        "tracker_certificate_framework": "curated",
+        "one_to_one_collateralization_claim": "curated",
+        "not_underlying_share": "curated",
+        "contract_verified": "live",
+        "market_quote": "live",
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "attestation_document_url": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security.verdict.eth",
+      "score": 69,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0 on ethereum is reported verified by Blockscout (name: BackedTokenProxy).",
+        "Proxy status is unknown: the Blockscout record returns isProxy: null, so upgradeability cannot be confirmed or denied from the pack.",
+        "Admin controller (multisig/timelock/EOA) is unknown — no admin or ownership evidence is present in the pack.",
+        "Blacklist/freeze capability is unknown — no function-level or ABI evidence is present in the pack.",
+        "No third-party audit firm or audit hash is evidenced in the pack; audit status is unknown.",
+        "Contract name 'BackedTokenProxy' suggests a proxy pattern, but this is an inference from the name only, not confirmed proxy metadata.",
+        "Score capped at 69 because proxy/verification detail is incomplete (isProxy null) and no admin, blacklist, or audit evidence is available.",
+        "Absence of evidence for admin powers, freeze functions, or audits is NOT evidence of safety.",
+        "Subject is a tokenized tracker certificate (Backed / xStocks, Jersey-domiciled, non-US eligible investors); it is not the underlying Tesla share.",
+        "ENS evidence is null and not applicable to this EVM token subject."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+        "https://xstocks.fi/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_metadata": "curated",
+        "market_price": "live"
+      },
+      "contract_address": "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+      "chain_id": 1,
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "TSLAX",
+    "overall_score": 63,
+    "verdict": "WARN",
+    "policy_state": "REVIEW",
+    "reasoning_summary": "TSLAX is a verified BackedTokenProxy tracker certificate on Ethereum, but custody, admin, audit, and regulatory details are absent from the evidence pack. No FAIL trigger is evidenced, yet material unknowns cap confidence and require review.",
+    "mapped": {
+      "auditStatus": "active",
+      "severity": "warning",
+      "reasonCode": "MATERIAL_UNKNOWNS_REVIEW",
+      "confidence": 55,
+      "validityDays": 14,
+      "rationale": "Contract verified live; custody, admin, audit, and regulatory framework unknown in pack. No evidenced FAIL trigger, but material unknowns require REVIEW."
+    },
+    "ensv2_records": {
+      "audit.status": "WARN",
+      "audit.score": "63",
+      "audit.reason": "MATERIAL_UNKNOWNS_REVIEW",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "REVIEW"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+    "contractVerified": true,
+    "marketUsd": 365.12,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

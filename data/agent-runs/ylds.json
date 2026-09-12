@@ -1,0 +1,196 @@
+{
+  "id": "1789181317452-ylds",
+  "subject": "ylds",
+  "startedAt": "2026-09-12T02:48:37.452Z",
+  "finishedAt": "2026-09-12T02:48:53.736Z",
+  "durationMs": 16284,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 780,
+      "outputTokens": 430
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 746,
+      "outputTokens": 442
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 810,
+      "outputTokens": 522
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2243,
+      "outputTokens": 288
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 45,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated as 'Figure' in catalog and curated fields; domicile stated as 'United States' (curated, operator-provided — not a verified filing).",
+        "Regulatory framework asserted as 'SEC-registered yield-bearing stablecoin' in catalog description and curated framework field; no SEC filing, registration statement, or CIK is present in the pack, so the registration claim is unverified.",
+        "Investor eligibility limited to 'KYC; see issuer docs' (curated); no jurisdiction-level eligibility, accreditation standard, or transfer-restriction detail is present.",
+        "Issuer page title retrieved is 'Figure - Fast, Easy Online HELOC Lender', which does not corroborate a stablecoin or SEC-registered yield product; issuer-page evidence is inconsistent with the catalog description.",
+        "No contract address, no verification record, and no ENS evidence supplied (contract, verification, ensEvidence all null) — on-chain and attestation posture unknown.",
+        "Sanctions/enforcement status: unknown — no sanctions, enforcement, or screening record present in the pack; absence of a flag is not a clearance.",
+        "No audit, custodian, reserve attestation, or legal-opinion document present in the pack.",
+        "Market price 0.999911 USD with 24h change ~0.025% is the only live quantitative input; it does not bear on legal or licensing posture."
+      ],
+      "evidence_urls": [
+        "https://figure.com/"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "curated",
+        "regulatory framework": "curated",
+        "SEC registration claim": "unknown",
+        "investor eligibility": "curated",
+        "issuer page corroboration": "live",
+        "contract address": "unknown",
+        "verification record": "unknown",
+        "sanctions screening": "unknown",
+        "enforcement record": "unknown",
+        "audit or reserve attestation": "unknown",
+        "custodian": "unknown",
+        "market price": "live"
+      },
+      "issuer_entity": "Figure",
+      "jurisdiction": "United States",
+      "regulatory_framework": "SEC-registered yield-bearing stablecoin (asserted; unverified — no filing in pack)"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — custodian: unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified. Score capped at 79 per policy, and further reduced for missing custodian and SPV data.",
+        "Market quote shows USD 0.999911 with +0.0253% 24h change, consistent with a stablecoin trading near $1 peg; this is market-implied signal only and is NOT a Proof of Reserve.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — spv_structure: unknown.",
+        "Issuer is identified as Figure (United States), described as an SEC-registered yield-bearing stablecoin on Provenance Blockchain; this is a curated catalog claim, not independently verified in the pack.",
+        "Issuer page URL (https://figure.com/) resolves but its title is 'Figure - Fast, Easy Online HELOC Lender', which does not corroborate the tokenized money-market / stablecoin reserve backing claim.",
+        "No on-chain contract address is provided (contract: null), so token-level reserve or mint/burn verification is impossible from this pack.",
+        "No verification object, ENS evidence, or third-party audit reference is included in the pack."
+      ],
+      "evidence_urls": [
+        "https://figure.com/"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "attestation_auditor": "unknown",
+        "latest_attestation_date": "unknown",
+        "spv_structure": "unknown",
+        "market_peg_signal": "live",
+        "issuer_identity": "curated",
+        "asset_class": "curated",
+        "contract_address": "unknown",
+        "reserve_backing": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 50,
+      "status": "WARN",
+      "findings": [
+        "No EVM token contract is present in the evidence pack (contract: null); the subject YLDS is a catalog-rwa asset issued by Figure on the Provenance network, so no contract address, chain ID, or Blockscout verification record could be inspected.",
+        "Source verification status is unknown: the pack contains no Blockscout (or equivalent) verification record, so contract_verified cannot be established. Per policy, unknown verification caps the score at 69.",
+        "Proxy/upgradeability status is unknown; no bytecode, proxy slot, or implementation pointer is supplied.",
+        "Admin controls (multisig vs timelock vs EOA) are unknown; no owner/admin role evidence is present.",
+        "Blacklist/freeze capability is unknown; no function selector or ABI evidence is present. Absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is evidenced in the pack; audit_firm and audit_hash are unknown.",
+        "Issuer page https://figure.com/ is reachable but its title is 'Figure - Fast, Easy Online HELOC Lender', which does not corroborate the curated claim of an SEC-registered yield-bearing stablecoin; the curated framework label is unverified by the live page.",
+        "Market data shows USD 0.999911 with 24h change +0.0253% (updatedAt 1789181230), consistent with a stable-value instrument but not probative of contract security.",
+        "ENS evidence is null and the subject is not an ENS demo asset, so ENS binding, attestation freshness, and revocation state are not applicable.",
+        "Curated metadata (asOf 2026-09, entity Figure, domicile United States, eligibility KYC) is issuer-supplied and not independently verified within this pack."
+      ],
+      "evidence_urls": [
+        "https://figure.com/"
+      ],
+      "grounding": {
+        "contract_address": "unknown",
+        "chain_id": "unknown",
+        "verification_record": "unknown",
+        "proxy_status": "unknown",
+        "admin_controls": "unknown",
+        "blacklist_freeze": "unknown",
+        "audit": "unknown",
+        "issuer_page": "live",
+        "market_data": "live",
+        "curated_metadata": "curated",
+        "ens_evidence": "unknown"
+      }
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "YLDS",
+    "overall_score": 46,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody verification fails: no custodian, no proof-of-reserve attestation, and no SPV structure are present in the pack, so reserve backing is unverifiable. Legal and technical postures are also unverified (no SEC filing, no contract address, no audit), leaving only a live $0.9999 peg signal as evidence.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "CUSTODY_ATTESTATION_MISSING",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "Custody FAIL: custodian, PoR attestation, auditor, and SPV structure all unknown; no contract address or audit in pack. Reserve backing unverifiable."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "46",
+      "audit.reason": "CUSTODY_ATTESTATION_MISSING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": null,
+    "contractVerified": null,
+    "marketUsd": 0.999911,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

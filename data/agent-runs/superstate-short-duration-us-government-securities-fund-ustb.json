@@ -1,0 +1,204 @@
+{
+  "id": "1789180622386-superstate-short-duration-us-government-securities-fund-ustb",
+  "subject": "superstate-short-duration-us-government-securities-fund-ustb",
+  "startedAt": "2026-09-12T02:37:02.386Z",
+  "finishedAt": "2026-09-12T02:37:20.692Z",
+  "durationMs": 18306,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 955,
+      "outputTokens": 554
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 985,
+      "outputTokens": 634
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 921,
+      "outputTokens": 475
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2626,
+      "outputTokens": 223
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 38,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity: catalog lists issuer as 'Superstate / Invesco' and curated entity as 'Superstate' (operator-provided, not a verified filing).",
+        "Domicile/jurisdiction: not present in the evidence pack — unknown.",
+        "Regulatory framework: no registration regime, exemption, or filing reference appears in the pack — unknown; no regime should be inferred from the fund name or 'qualified holders' language.",
+        "Investor eligibility: transfer-restricted; eligibility per issuer docs, typically accredited / qualified purchasers with KYC required (curated, operator-provided).",
+        "Sanctions/enforcement: no pack-grounded source; status unknown, not 'clear'.",
+        "Contract 0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e on ethereum is a verified TransparentUpgradeableProxy per Blockscout; upgradeability implies admin-controlled logic changes.",
+        "No offering memorandum, prospectus, Form D, custodian, auditor, or transfer-agent evidence is present in the pack.",
+        "Catalog title ('Invesco Short Duration US Government Securities Fund') and issuer string ('Superstate / Invesco') are inconsistent with the curated single entity 'Superstate' — branding vs. legal issuer unresolved."
+      ],
+      "evidence_urls": [
+        "https://superstate.co/",
+        "https://etherscan.io/token/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "sanctions/enforcement": "unknown",
+        "contract verification": "live",
+        "issuer page reachability": "live",
+        "market price": "live"
+      },
+      "issuer_entity": "Superstate (catalog also names 'Superstate / Invesco'; curated entity: Superstate)",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "WARN",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — custodian: unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; this deployment has no PoR PDF parser, so reserve backing cannot be verified and the score is capped at 79.",
+        "No attestation date or attestation auditor is present in the pack — both unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — spv_structure: unknown.",
+        "Market quote (USD 11.21, +0.98% 24h) is market-implied signal only and is NOT a Proof of Reserve; it does not evidence collateral backing.",
+        "Contract 0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e on Ethereum is reported as a verified TransparentUpgradeableProxy per Blockscout; proxy upgradeability means implementation logic can change and is not itself evidence of asset backing.",
+        "Issuer page https://superstate.co/ is reachable (title 'Superstate'), but reachability alone does not substantiate custody or reserves.",
+        "Catalog describes a short-duration U.S. government securities fund with onchain share records; asset class 'Treasury' is a catalog label, not verified holdings.",
+        "Eligibility is transfer-restricted (accredited/qualified purchasers, KYC) per curated issuer docs — this is a transfer restriction, not a reserve attestation.",
+        "No ENS evidence supplied (ensEvidence: null)."
+      ],
+      "evidence_urls": [
+        "https://superstate.co/",
+        "https://etherscan.io/token/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "attestation_document_url": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "eligibility": "curated",
+        "asset_class": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict.eth/smart-contract-onchain-security",
+      "score": 55,
+      "status": "WARN",
+      "findings": [
+        "Contract address 0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e on ethereum is taken from the pack (resolved live via CoinGecko); no memorized address substituted.",
+        "Blockscout record names the contract 'TransparentUpgradeableProxy' and reports isVerified=true, indicating source verification and an upgradeable proxy pattern.",
+        "The pack's verification.isProxy field is null, so proxy status is only inferred from the contract name, not explicitly confirmed by the record.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze powers are not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Curated eligibility notes transfer-restricted shares with KYC/accredited-investor gating, consistent with a permissioned RWA fund, but this is curated metadata, not on-chain verification.",
+        "No ENS evidence was supplied (ensEvidence is null), so ENS subject binding, attestation freshness, and revocation state cannot be assessed.",
+        "Issuer page https://superstate.co/ is reachable per the pack, but no on-chain admin or audit disclosures were extracted from it."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+        "https://superstate.co/"
+      ],
+      "grounding": {
+        "contract_address": "live",
+        "chain_id": "live",
+        "contract_verified": "live",
+        "is_upgradeable": "live",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "eligibility": "curated",
+        "ens_binding": "unknown"
+      },
+      "contract_address": "0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+      "chain_id": 1,
+      "is_upgradeable": true,
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "USTB",
+    "overall_score": 46,
+    "verdict": "WARN",
+    "policy_state": "REVIEW",
+    "reasoning_summary": "Verified upgradeable proxy on Ethereum with a reachable issuer page, but custodian, SPV structure, reserve attestation, audit, and admin-controller details are all absent from the evidence pack. No FAIL trigger is evidenced, yet pervasive unknowns cap confidence and require review rather than a pass.",
+    "mapped": {
+      "auditStatus": "active",
+      "severity": "warning",
+      "reasonCode": "UNVERIFIED_RESERVES_AND_ADMIN",
+      "confidence": 40,
+      "validityDays": 14,
+      "rationale": "Contract verified as TransparentUpgradeableProxy on Ethereum, but custodian, attestation, audit, and admin controller are unknown in the pack; no FAIL trigger evidenced, so review is required."
+    },
+    "ensv2_records": {
+      "audit.status": "WARN",
+      "audit.score": "46",
+      "audit.reason": "UNVERIFIED_RESERVES_AND_ADMIN",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "REVIEW"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x43415eb6ff9db7e26a15b704e7a3edce97d31c4e",
+    "contractVerified": true,
+    "marketUsd": 11.21,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

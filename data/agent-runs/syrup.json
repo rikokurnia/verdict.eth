@@ -1,0 +1,199 @@
+{
+  "id": "1789181487596-syrup",
+  "subject": "syrup",
+  "startedAt": "2026-09-12T02:51:27.596Z",
+  "finishedAt": "2026-09-12T02:51:43.722Z",
+  "durationMs": 16126,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 937,
+      "outputTokens": 569
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 903,
+      "outputTokens": 518
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 967,
+      "outputTokens": 470
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2574,
+      "outputTokens": 279
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 38,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity per catalog and curated pack: \"Maple Finance\" (curated facts are operator-provided, not verified filings).",
+        "Domicile/jurisdiction: not present in the evidence pack — unknown.",
+        "Regulatory framework: no licensing regime, registration, or regulator named anywhere in the pack — unknown; no regime should be inferred from the \"Private Credit\" asset class.",
+        "Investor eligibility: curated pack states \"Protocol governance token; permissionless\"; catalog describes an ecosystem token for an onchain private-credit marketplace. No accreditation, qualified-purchaser, or restricted-jurisdiction disclosure is present in the pack.",
+        "Sanctions/enforcement: no sanctions, enforcement, or litigation record is present in the pack — unknown, not \"clear\".",
+        "Contract 0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66 on ethereum is reported verified as \"MapleTokenProxy\" (live Blockscout source); proxy status is null in the pack.",
+        "Issuer page https://maple.finance/ is reachable with title \"Maple Finance | The Leader in Onchain Asset Management\" (live).",
+        "No offering memorandum, prospectus, terms of service, custody arrangement, or audit reference appears in the pack — all unknown.",
+        "Note: the token is described as a permissionless governance/ecosystem token, which is not itself evidence of a licensed RWA issuance structure; the private-credit marketplace it references is not documented in this pack."
+      ],
+      "evidence_urls": [
+        "https://maple.finance/",
+        "https://etherscan.io/token/0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "sanctions/enforcement": "unknown",
+        "contract verification": "live",
+        "issuer page": "live",
+        "offering documentation": "unknown",
+        "custody": "unknown"
+      },
+      "issuer_entity": "Maple Finance",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 35,
+      "status": "FAIL",
+      "findings": [
+        "Subject is the SYRUP ecosystem/governance token for Maple Finance, not a tokenized RWA claim on specific off-chain collateral; the pack contains no tokenized-collateral instrument to verify.",
+        "Custodian: unknown — no custodian, trustee, or qualified depositary is named anywhere in the evidence pack.",
+        "No Proof-of-Reserve or attestation document URL is present in the pack; this deployment has no PoR PDF parser, so reserve backing cannot be verified and the score is capped at 79 (applied cap: 35).",
+        "SPV / bankruptcy-remoteness: unknown — the pack does not state any SPV, trust, or segregation structure.",
+        "Latest attestation date: unknown — no attestation or audit date appears in the pack.",
+        "Attestation auditor: unknown — no auditor or attester is named in the pack.",
+        "Market quote (USD 0.219142, +2.14% 24h) is market-implied signal only and is NOT a Proof of Reserve; it says nothing about collateral backing.",
+        "On-chain evidence is limited to a verified contract (MapleTokenProxy, 0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66 on Ethereum) — contract verification confirms code, not asset backing.",
+        "Issuer page (maple.finance) is reachable but the pack contains no extracted reserve, custody, or collateral disclosures from it.",
+        "No sanctions, legal, or regulatory records are included in the pack; nothing on this axis can be asserted."
+      ],
+      "evidence_urls": [
+        "https://maple.finance/",
+        "https://etherscan.io/token/0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "attestation_document_url": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "catalog_metadata": "curated",
+        "ens_evidence": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 69,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66 on ethereum is reported verified by Blockscout (name: MapleTokenProxy).",
+        "Proxy status is null in the Blockscout record; the contract name 'MapleTokenProxy' suggests a proxy pattern but isProxy is not confirmed by the pack — upgradeability is unknown.",
+        "Admin controller (multisig/timelock/EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze powers are not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Subject is a catalog RWA (Maple Finance, SYRUP) with no ENS evidence supplied (ensEvidence: null), so ENS binding/attestation/revocation checks are not applicable.",
+        "Score capped at 69 because proxy/verification detail is incomplete (isProxy null) despite isVerified true."
+      ],
+      "evidence_urls": [
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+        "https://etherscan.io/token/0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+        "https://maple.finance/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "ens_binding": "unknown"
+      },
+      "contract_address": "0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "SYRUP",
+    "overall_score": 45,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "SYRUP is a permissionless governance/ecosystem token with no evidenced custody, reserve attestation, SPV, or regulatory framework in the pack. Custody verification fails outright, and legal and technical axes remain materially unknown, so the deterministic policy blocks.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "high",
+      "reasonCode": "CUSTODY_UNVERIFIED_NO_ATTESTATION",
+      "confidence": 72,
+      "validityDays": 7,
+      "rationale": "Custody axis FAIL: no custodian, SPV, attestation document, date, or auditor in pack; legal and technical axes materially unknown. Contract verified but proxy/admin/audit unproven."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "45",
+      "audit.reason": "CUSTODY_UNVERIFIED_NO_ATTESTATION",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+    "contractVerified": true,
+    "marketUsd": 0.219142,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

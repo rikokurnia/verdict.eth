@@ -1,0 +1,200 @@
+{
+  "id": "1789180574213-franklin-templeton-benji",
+  "subject": "franklin-templeton-benji",
+  "startedAt": "2026-09-12T02:36:14.213Z",
+  "finishedAt": "2026-09-12T02:36:31.207Z",
+  "durationMs": 16994,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 988,
+      "outputTokens": 501
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 1052,
+      "outputTokens": 496
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 1022,
+      "outputTokens": 507
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2622,
+      "outputTokens": 275
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated in pack as Franklin Templeton (curated, operator-provided; not a verified filing).",
+        "Domicile stated in pack as United States (curated).",
+        "Regulatory framework stated in pack as US-registered mutual fund (FOBXX, Investment Company Act of 1940) (curated; no filing, CIK, or registration record supplied).",
+        "Investor eligibility per pack: KYC via Benji platform; 1 BENJI = 1 fund share (curated). Catalog description references shares of the U.S.-registered Franklin OnChain U.S. Government Money Fund (FOBXX) with onchain share records.",
+        "Issuer page reachable with title 'Invest with Benji | Blockchain-Powered Investments for Everyone | Invest with Benji' (live).",
+        "Onchain contract 0x3ddc84940ab509c11b20b76b466933f40b750dc9 on ethereum reported as verified ERC1967Proxy (live).",
+        "Sanctions/enforcement status: unknown — no sanctions or enforcement record present in the pack; absence of a flag is not a clearance.",
+        "No offering documents, prospectus, registration statement, custodian, auditor, or transfer-agent evidence present in the pack.",
+        "No ENS evidence supplied (ensEvidence null)."
+      ],
+      "evidence_urls": [
+        "https://digitalassets.franklintempleton.com/benji/",
+        "https://etherscan.io/token/0x3ddc84940ab509c11b20b76b466933f40b750dc9",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x3ddc84940ab509c11b20b76b466933f40b750dc9"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "domicile": "curated",
+        "regulatory framework": "curated",
+        "investor eligibility": "curated",
+        "issuer page reachability": "live",
+        "contract verification": "live",
+        "sanctions/enforcement": "unknown",
+        "offering documents": "unknown",
+        "custodian/auditor": "unknown",
+        "ens evidence": "unknown"
+      },
+      "issuer_entity": "Franklin Templeton",
+      "jurisdiction": "United States",
+      "regulatory_framework": "US-registered mutual fund (FOBXX, Investment Company Act of 1940)"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Issuer identified as Franklin Templeton; subject is the Franklin OnChain U.S. Government Money Fund (FOBXX), a US-registered mutual fund under the Investment Company Act of 1940 (curated).",
+        "1 BENJI = 1 fund share per catalog and curated metadata; token represents shares of a US-registered money market fund (curated).",
+        "Market quote shows USD 1.00 with ~0% 24h change; this is market-implied signal only and is NOT a Proof of Reserve (live).",
+        "Token contract 0x3ddc84940ab509c11b20b76b466933f40b750dc9 on Ethereum is a verified ERC1967Proxy per Blockscout (live).",
+        "No Proof of Reserve / attestation document URL is present in the evidence pack; no PoR PDF parser is available in this deployment, so reserve attestation cannot be verified and score is capped at 79.",
+        "Custodian is not named anywhere in the pack — unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Latest attestation date and attestation auditor are not present in the pack — unknown.",
+        "Issuer page is reachable but the pack contains no reserve composition, holdings, or NAV attestation data."
+      ],
+      "evidence_urls": [
+        "https://digitalassets.franklintempleton.com/benji/",
+        "https://etherscan.io/token/0x3ddc84940ab509c11b20b76b466933f40b750dc9",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x3ddc84940ab509c11b20b76b466933f40b750dc9"
+      ],
+      "grounding": {
+        "issuer": "curated",
+        "fund_registration": "curated",
+        "token_share_ratio": "curated",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "proof_of_reserve": "unknown",
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "attestation_date": "unknown",
+        "attestation_auditor": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security-agent.verdict.eth",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x3ddc84940ab509c11b20b76b466933f40b750dc9 on ethereum is reported verified by the Blockscout record (name: ERC1967Proxy).",
+        "The verified source name ERC1967Proxy indicates an upgradeable proxy pattern; the pack's isProxy field is null, so proxy status is only inferred from the contract name, not confirmed by the record.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze capability is not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Subject is a catalog RWA (Franklin Templeton BENJI / FOBXX) with 1 BENJI = 1 fund share per curated metadata; no ENS evidence was supplied (ensEvidence: null), so ENS binding/attestation/revocation checks are not applicable.",
+        "Score capped below 70-tier confidence concerns: verification is live-verified, but upgradeability, admin control, and audit posture remain unevidenced, so the score is held at 72 with WARN."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x3ddc84940ab509c11b20b76b466933f40b750dc9",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x3ddc84940ab509c11b20b76b466933f40b750dc9",
+        "https://digitalassets.franklintempleton.com/benji/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "live",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "subject_binding": "curated",
+        "attestation_freshness": "unknown",
+        "revocation_state": "unknown"
+      },
+      "contract_address": "0x3ddc84940ab509c11b20b76b466933f40b750dc9",
+      "chain_id": 1,
+      "is_upgradeable": true,
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "BENJI",
+    "overall_score": 72,
+    "verdict": "WARN",
+    "policy_state": "REVIEW",
+    "reasoning_summary": "BENJI is a verified ERC1967Proxy on Ethereum tied to Franklin Templeton's FOBXX money market fund, but reserve attestation, custodian, admin control, and audit posture are all unevidenced in the pack. Material unknowns cap confidence and require review rather than a pass.",
+    "mapped": {
+      "auditStatus": "active",
+      "severity": "warning",
+      "reasonCode": "MATERIAL_UNKNOWNS_REVIEW",
+      "confidence": 60,
+      "validityDays": 14,
+      "rationale": "Verified proxy contract and reachable issuer page, but no PoR, custodian, attestation date, admin control, or audit evidence in pack; unknowns cap confidence and require review."
+    },
+    "ensv2_records": {
+      "audit.status": "WARN",
+      "audit.score": "72",
+      "audit.reason": "MATERIAL_UNKNOWNS_REVIEW",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "REVIEW"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x3ddc84940ab509c11b20b76b466933f40b750dc9",
+    "contractVerified": true,
+    "marketUsd": 1,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

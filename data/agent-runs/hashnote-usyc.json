@@ -1,0 +1,188 @@
+{
+  "id": "1789194083245-hashnote-usyc",
+  "subject": "hashnote-usyc",
+  "startedAt": "2026-09-12T06:21:23.245Z",
+  "finishedAt": "2026-09-12T06:21:46.798Z",
+  "durationMs": 23553,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "gemini",
+      "model": "gemini-3.6-flash"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "inputTokens": 1005,
+      "outputTokens": 334
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 968,
+      "outputTokens": 502
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 938,
+      "outputTokens": 540
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2307,
+      "outputTokens": 293
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verifier",
+      "score": 60,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity identified as Circle (Hashnote) per operator-provided curated data; specific legal domicile is unknown.",
+        "Regulatory framework and registration posture are unknown due to missing regulatory filings in evidence.",
+        "Investor eligibility is transfer-restricted, requiring KYC and accredited/qualified purchaser status per curated disclosures.",
+        "Sanctions and enforcement verification status is unknown as no sanctions screening records were provided."
+      ],
+      "evidence_urls": [
+        "https://usyc.hashnote.com/",
+        "https://etherscan.io/token/0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x136471a34f6ef19fe571effc1ca711fdb8e49f2b"
+      ],
+      "grounding": {
+        "issuer_entity": "curated",
+        "domicile": "unknown",
+        "regulatory_framework": "unknown",
+        "investor_eligibility": "curated",
+        "sanctions_check": "unknown"
+      },
+      "issuer_entity": "Circle (Hashnote)"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "No Proof of Reserve or attestation document URL is present in the evidence pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified and the score is capped at 79.",
+        "Custodian is not named anywhere in the pack — custodian is unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Latest attestation date and attestation auditor are absent from the pack — unknown.",
+        "Market quote shows USD 1.14 vs an implied 1.00 reference for a Treasury-backed money-market share, a ~14% premium, with +2.77% 24h change; this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Catalog description asserts backing by short-term U.S. government securities, sourced to Hashnote issuer disclosures (curated), but no independent reserve evidence is supplied.",
+        "Token contract 0x136471a34f6ef19fe571effc1ca711fdb8e49f2b on Ethereum is verified as ShortDurationYieldCoinProxy per Blockscout; contract verification does not evidence collateral backing.",
+        "Issuer page https://usyc.hashnote.com/ is reachable (title 'USYC | Circle') but the pack contains no reserve, custody, or audit content from it.",
+        "Transfer-restricted eligibility (KYC, typically accredited/qualified purchasers) is noted in curated data; this is a compliance attribute, not proof of reserves."
+      ],
+      "evidence_urls": [
+        "https://usyc.hashnote.com/",
+        "https://etherscan.io/token/0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x136471a34f6ef19fe571effc1ca711fdb8e49f2b"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "attestation_document_url": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "asset_backing_claim": "curated",
+        "eligibility": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security.verdict.eth",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x136471a34f6ef19fe571effc1ca711fdb8e49f2b on ethereum is reported verified by Blockscout (isVerified=true), with source name 'ShortDurationYieldCoinProxy'.",
+        "Proxy status is indeterminate: the pack's isProxy field is null, so upgradeability cannot be confirmed or denied from the supplied evidence.",
+        "Admin controller (multisig vs timelock vs EOA) is unknown — no owner/admin record is present in the pack.",
+        "Blacklist/freeze capability is unknown — no function-level or ABI evidence is supplied, despite curated eligibility noting transfer restrictions.",
+        "No third-party audit firm or audit hash is evidenced in the pack; audit status is unknown.",
+        "Curated eligibility states transfer-restricted access (typically accredited/qualified purchasers, KYC required), consistent with a permissioned RWA token, but this is issuer-doc curation, not on-chain verification.",
+        "ENS evidence is null and the subject is a catalog-rwa token, so ENS binding/attestation/revocation checks are not applicable.",
+        "Score capped below 70-threshold concerns: verification is live-confirmed, but proxy, admin, and audit dimensions are all unknown, so confidence is limited."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+        "https://usyc.hashnote.com/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "proxy_status": "unknown",
+        "admin_controller": "unknown",
+        "blacklist_freeze": "unknown",
+        "audit": "unknown",
+        "eligibility_restrictions": "curated",
+        "ens_binding": "unknown"
+      },
+      "contract_address": "0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "USYC",
+    "overall_score": 57,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody verification fails: no Proof of Reserve, custodian, SPV structure, or attestation is present in the evidence pack, and the live market quote shows a ~14% premium to the implied $1.00 reference. Legal and technical dimensions remain WARN with domicile, regulatory posture, admin controller, proxy status, and audit all unknown.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "RESERVE_BACKING_UNVERIFIED",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "Custody FAIL: no PoR, custodian, SPV, or attestation in pack; market quote at ~14% premium to implied $1.00 reference. Legal and technical unknowns persist."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "57",
+      "audit.reason": "RESERVE_BACKING_UNVERIFIED",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x136471a34f6ef19fe571effc1ca711fdb8e49f2b",
+    "contractVerified": true,
+    "marketUsd": 1.14,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

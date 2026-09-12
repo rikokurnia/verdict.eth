@@ -1,0 +1,200 @@
+{
+  "id": "1789180551321-ousg",
+  "subject": "ousg",
+  "startedAt": "2026-09-12T02:35:51.321Z",
+  "finishedAt": "2026-09-12T02:36:06.966Z",
+  "durationMs": 15645,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 986,
+      "outputTokens": 661
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 956,
+      "outputTokens": 498
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 922,
+      "outputTokens": 403
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2497,
+      "outputTokens": 279
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 45,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated as 'Ondo Finance' in curated pack data (operator-provided, not a verified filing); catalog lists issuer as 'Ondo'.",
+        "Domicile/jurisdiction: not present in the evidence pack — unknown.",
+        "Regulatory framework: not present in the evidence pack — unknown; no securities regime (e.g., 1940 Act, Reg D/S, MiCA) can be asserted from the pack.",
+        "Investor eligibility: transfer-restricted; eligibility per issuer docs, typically accredited / qualified purchasers with KYC required (curated, not verified).",
+        "Sanctions/enforcement status: no pack-grounded source — unknown, not 'clear'.",
+        "Token contract 0x1b19c19393e2d034d8ff31ff34c81252fcbbee92 on Ethereum reported as verified (TokenProxy) via Blockscout.",
+        "No legal opinion, offering memorandum, prospectus, or regulatory registration is present in the pack.",
+        "No custodian, auditor, or fund administrator is identified in the pack."
+      ],
+      "evidence_urls": [
+        "https://ondo.finance/",
+        "https://etherscan.io/token/0x1b19c19393e2d034d8ff31ff34c81252fcbbee92",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x1b19c19393e2d034d8ff31ff34c81252fcbbee92"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "sanctions/enforcement": "unknown",
+        "contract verification": "live",
+        "custodian/auditor": "unknown"
+      },
+      "issuer_entity": "Ondo Finance",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — marked unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified and the score is capped at 79.",
+        "No latest attestation date is provided in the pack — unknown.",
+        "No attestation auditor is named in the pack — unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Market quote (USD 116.53, +0.83% 24h) is market-implied signal only and is NOT a Proof of Reserve.",
+        "Token contract 0x1b19c19393e2d034d8ff31ff34c81252fcbbee92 on Ethereum is reported verified (TokenProxy) per Blockscout — contract verification does not evidence collateral backing.",
+        "Issuer page https://ondo.finance/ is reachable and describes the fund as a tokenized short-term U.S. government bond fund with daily liquidity windows for qualified holders.",
+        "Eligibility is transfer-restricted (typically accredited / qualified purchasers, KYC required) per curated issuer docs.",
+        "No on-chain reserve, custodian, or bank account evidence is included in the pack."
+      ],
+      "evidence_urls": [
+        "https://ondo.finance/",
+        "https://etherscan.io/token/0x1b19c19393e2d034d8ff31ff34c81252fcbbee92",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x1b19c19393e2d034d8ff31ff34c81252fcbbee92"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "spv_structure": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "eligibility": "curated",
+        "asset_class": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security-agent",
+      "score": 62,
+      "status": "WARN",
+      "findings": [
+        "Contract address 0x1b19c19393e2d034d8ff31ff34c81252fcbbee92 on ethereum is the only address supplied by the pack; no substitution made.",
+        "Blockscout record reports contract name 'TokenProxy' with isVerified=true, indicating source verification is present.",
+        "Blockscout isProxy field is null, so proxy/upgradeability status is unknown despite the 'TokenProxy' name; cannot confirm upgradeable or immutable.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze powers are not evidenced in the pack — unknown; transfer-restricted eligibility is noted in curated issuer docs but the on-chain enforcement mechanism is not verified.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Curated eligibility note states transfer-restricted with KYC/accredited-qualified-purchaser requirements, consistent with a permissioned RWA token, but this is issuer-doc curation, not on-chain verification.",
+        "Issuer page https://ondo.finance/ is reachable per pack; no ENS evidence was supplied (ensEvidence is null), so ENS binding/attestation/revocation checks are not applicable to this subject.",
+        "Score capped below 70 because proxy status is unresolved (isProxy=null) and admin/blacklist/audit controls are unevidenced; absence of evidence is not evidence of safety."
+      ],
+      "evidence_urls": [
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x1b19c19393e2d034d8ff31ff34c81252fcbbee92",
+        "https://etherscan.io/token/0x1b19c19393e2d034d8ff31ff34c81252fcbbee92",
+        "https://ondo.finance/"
+      ],
+      "grounding": {
+        "contract_address": "live",
+        "chain_id": "live",
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "eligibility_restrictions": "curated",
+        "issuer_page_reachable": "live",
+        "ens_evidence": "unknown"
+      },
+      "contract_address": "0x1b19c19393e2d034d8ff31ff34c81252fcbbee92",
+      "chain_id": 1,
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "OUSG",
+    "overall_score": 50,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody verification fails: no custodian, no Proof of Reserve, and no attestation date or auditor are present in the evidence pack, so reserve backing is unverifiable. Legal and technical controls are also largely unevidenced, leaving material unknowns that block institutional reliance.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "CUSTODY_ATTESTATION_MISSING",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "Custody report FAILs: custodian, PoR document, attestation date, and auditor are all unknown in the pack; reserve backing is unverifiable, so the asset is blocked pending evidence."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "50",
+      "audit.reason": "CUSTODY_ATTESTATION_MISSING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x1b19c19393e2d034d8ff31ff34c81252fcbbee92",
+    "contractVerified": true,
+    "marketUsd": 116.53,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

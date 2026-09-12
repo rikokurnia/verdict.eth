@@ -1,0 +1,207 @@
+{
+  "id": "1789181293924-janus-henderson-anemoy-aaa-clo-fund",
+  "subject": "janus-henderson-anemoy-aaa-clo-fund",
+  "startedAt": "2026-09-12T02:48:13.924Z",
+  "finishedAt": "2026-09-12T02:48:30.488Z",
+  "durationMs": 16564,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 989,
+      "outputTokens": 524
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 925,
+      "outputTokens": 553
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 959,
+      "outputTokens": 538
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2655,
+      "outputTokens": 279
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 38,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity listed in catalog/curated pack as 'Janus Henderson / Anemoy' (curated, operator-provided — not a verified filing).",
+        "Domicile/jurisdiction of the issuer is not stated anywhere in the pack — unknown.",
+        "Regulatory framework is not stated in the pack; no regime (e.g., 40-Act, Reg D/S, MiCA) can be asserted — unknown.",
+        "Investor eligibility per curated pack: transfer-restricted; typically accredited / qualified purchasers with KYC required (curated, hedged with 'typically').",
+        "Catalog description states fund is 'for qualified holders' — consistent with restricted eligibility but not a definitive legal standard.",
+        "Issuer page (https://centrifuge.io/) was unreachable (reachable: false, title: null) — no primary-source legal documentation could be retrieved.",
+        "No offering memorandum, prospectus, private placement memo, or subscription agreement is present in the pack — unknown.",
+        "No licensing, registration, or regulatory authorization record is present in the pack — unknown.",
+        "Sanctions/enforcement status: no pack-grounded source provided — unknown (not 'clear').",
+        "Contract 0x5a0f93d040de44e78f251b03c43be9cf317dcf64 on ethereum is verified per Blockscout (live), but contract verification is not a legal or licensing attestation.",
+        "No custodian, auditor, or transfer-agent attestation is present in the pack — unknown.",
+        "No legal opinion, counsel identification, or SPV/feeder structure documentation is present in the pack — unknown."
+      ],
+      "evidence_urls": [
+        "https://centrifuge.io/",
+        "https://etherscan.io/token/0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x5a0f93d040de44e78f251b03c43be9cf317dcf64"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "transfer restriction": "curated",
+        "qualified holders": "live",
+        "issuer page reachability": "live",
+        "contract verification": "live",
+        "sanctions/enforcement": "unknown",
+        "licensing/registration": "unknown",
+        "custodian/auditor": "unknown",
+        "legal documentation": "unknown"
+      },
+      "issuer_entity": "Janus Henderson / Anemoy",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — custodian: unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; this deployment has no PoR PDF parser, so reserve backing cannot be verified and the score is capped at 79 (applied cap: 45).",
+        "No attestation date or attestation auditor is present in the pack — both unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — spv_structure: unknown.",
+        "Market quote (USD 1.049, +1.51% 24h) is market-implied signal only and is NOT a Proof of Reserve; it does not evidence collateral backing.",
+        "Issuer page https://centrifuge.io/ is marked reachable: false, so no issuer-side reserve or custody disclosure could be retrieved.",
+        "Contract 0x5a0f93d040de44e78f251b03c43be9cf317dcf64 on ethereum is reported verified (name: Tranche) via Blockscout — this confirms contract verification only, not asset backing.",
+        "Curated metadata (asOf 2026-09) lists entity Janus Henderson / Anemoy and administrator Centrifuge, with transfer-restricted eligibility (KYC, typically accredited/qualified purchasers); this is catalog metadata, not a reserve attestation.",
+        "No sanctions, audit, or regulatory filing records are present in the pack — unknown."
+      ],
+      "evidence_urls": [
+        "https://centrifuge.io/",
+        "https://etherscan.io/token/0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x5a0f93d040de44e78f251b03c43be9cf317dcf64"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "attestation_auditor": "unknown",
+        "latest_attestation_date": "unknown",
+        "spv_structure": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page_reachability": "live",
+        "catalog_metadata": "curated",
+        "eligibility": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security-agent.verdict.eth",
+      "score": 69,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x5a0f93d040de44e78f251b03c43be9cf317dcf64 on ethereum is reported verified by the Blockscout record (name: Tranche).",
+        "Proxy status is unknown: the Blockscout record returns isProxy = null, so upgradeability cannot be confirmed or ruled out.",
+        "Admin controller (multisig / timelock / EOA) is unknown — no ownership or admin evidence is present in the pack.",
+        "Blacklist / freeze / transfer-restriction powers are unknown at the contract level; the curated record states the asset is transfer-restricted with KYC/eligibility gating per issuer docs, but no on-chain enforcement mechanism is evidenced.",
+        "No third-party audit firm or audit hash is present in the pack — audit status is unknown, and absence of evidence is not evidence of safety.",
+        "Issuer page https://centrifuge.io/ was unreachable at pack build time, so issuer-side disclosures could not be corroborated.",
+        "ENS evidence is null; this subject is a catalog RWA token, not an ENS demo asset, so ENS binding/attestation/revocation checks are not applicable.",
+        "Score capped at 69 because proxy status is unresolved (null) in the verification record."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+        "https://centrifuge.io/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "transfer_restriction": "curated",
+        "issuer_page": "live",
+        "ens_evidence": "unknown"
+      },
+      "contract_address": "0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "JAAA",
+    "overall_score": 50,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody verification fails: no custodian, no Proof of Reserve, no attestation date or auditor is present in the evidence pack, so asset backing is unverified. Legal and technical layers remain WARN with jurisdiction, regulatory framework, admin controller, and audit status all unknown.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "CUSTODY_ATTESTATION_MISSING",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "Custody layer FAIL: custodian, PoR document, attestation date, and auditor are all absent from the pack; reserve backing is unverified. Legal and technical layers WARN with material unknowns."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "50",
+      "audit.reason": "CUSTODY_ATTESTATION_MISSING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x5a0f93d040de44e78f251b03c43be9cf317dcf64",
+    "contractVerified": true,
+    "marketUsd": 1.049,
+    "issuerReachable": false
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

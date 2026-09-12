@@ -1,0 +1,198 @@
+{
+  "id": "1789181245580-spiko-amundi-overnight-swap-fund-eur",
+  "subject": "spiko-amundi-overnight-swap-fund-eur",
+  "startedAt": "2026-09-12T02:47:25.580Z",
+  "finishedAt": "2026-09-12T02:47:40.212Z",
+  "durationMs": 14632,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 967,
+      "outputTokens": 549
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 997,
+      "outputTokens": 476
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 933,
+      "outputTokens": 521
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2620,
+      "outputTokens": 319
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 35,
+      "status": "WARN",
+      "findings": [
+        "Issuer is described in the catalog as 'Spiko / Amundi' (curated entity field matches), but no legal entity name, registration number, or domicile is present in the pack — jurisdiction is unknown.",
+        "No regulatory framework, license, prospectus, or fund authorization is present in the pack; the money-market characterization comes only from catalog metadata (assetClass: Money Market), not from a filing.",
+        "Investor eligibility is limited to the curated statement 'Eligible European investors; see issuer docs' — the referenced issuer docs are not in the pack, so eligibility conditions (qualified/professional/retail, jurisdiction restrictions) are unverified.",
+        "The issuer page URL in the pack is unreachable (reachable: false, title: null), so no primary issuer disclosure could be confirmed.",
+        "No sanctions, enforcement, or regulatory-action records are present in the pack; this is unknown, not clear.",
+        "No custodian, auditor, NAV attestation, or reserve report is present in the pack.",
+        "On-chain evidence is limited to a verified ERC1967Proxy contract at 0x0990b149e915cb08e2143a5c6f669c907eddc8b0 on Ethereum; contract verification does not establish legal or licensing posture.",
+        "Market data (usd 1.17, 24h change -0.98%) is sourced from CoinGecko and is not a legal or compliance input."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/spiko-amundi-overnight-swap-fund-eur",
+        "https://etherscan.io/token/0x0990b149e915cb08e2143a5c6f669c907eddc8b0",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x0990b149e915cb08e2143a5c6f669c907eddc8b0"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "sanctions/enforcement": "unknown",
+        "issuer page reachability": "live",
+        "contract verification": "live",
+        "market data": "live"
+      },
+      "issuer_entity": "Spiko / Amundi (as labeled in catalog and curated fields; no legal entity name provided)",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 35,
+      "status": "FAIL",
+      "findings": [
+        "No Proof of Reserve or attestation document URL is present in the evidence pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified and the score is capped at 79 (actual score lower due to additional gaps).",
+        "Custodian is not named anywhere in the pack — custodian: unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — spv_structure: unknown.",
+        "Latest attestation date is absent from the pack — latest_attestation_date: unknown.",
+        "Attestation auditor is absent from the pack — attestation_auditor: unknown.",
+        "Market quote shows USD 1.17 with 24h change of -0.98%; this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Token contract 0x0990b149e915cb08e2143a5c6f669c907eddc8b0 on Ethereum is reported as a verified ERC1967Proxy per Blockscout; proxy verification does not evidence collateral backing.",
+        "Issuer page (CoinGecko listing) is marked unreachable, so no issuer-hosted reserve or fund documentation could be retrieved from the pack.",
+        "Catalog describes the subject as a Spiko–Amundi euro overnight money-market token, but the pack contains no fund prospectus, NAV report, or custodian statement to corroborate real-world collateral.",
+        "No ENS evidence present in the pack."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/spiko-amundi-overnight-swap-fund-eur",
+        "https://etherscan.io/token/0x0990b149e915cb08e2143a5c6f669c907eddc8b0",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x0990b149e915cb08e2143a5c6f669c907eddc8b0"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "attestation_document_url": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "catalog_metadata": "curated",
+        "ens_evidence": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-onchain-security-agent",
+      "score": 69,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x0990b149e915cb08e2143a5c6f669c907eddc8b0 on ethereum is reported by Blockscout as verified source (name: ERC1967Proxy).",
+        "The verified contract name ERC1967Proxy indicates an upgradeable proxy pattern; the implementation address and upgrade authority are not provided in the pack, so upgradeability control is unknown.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze capabilities are not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Issuer page (CoinGecko) was unreachable at pack build time, so issuer-level disclosures could not be confirmed.",
+        "ENS evidence is null; this subject is a catalog RWA token, not an ENS demo asset, so ENS binding/attestation checks are not applicable.",
+        "Score capped at 69 because proxy/implementation status is unresolved (isProxy: null) and verification details are limited to the Blockscout record."
+      ],
+      "evidence_urls": [
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x0990b149e915cb08e2143a5c6f669c907eddc8b0",
+        "https://etherscan.io/token/0x0990b149e915cb08e2143a5c6f669c907eddc8b0",
+        "https://www.coingecko.com/en/coins/spiko-amundi-overnight-swap-fund-eur"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "live",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_disclosures": "unknown",
+        "ens_binding": "unknown"
+      },
+      "contract_address": "0x0990b149e915cb08e2143a5c6f669c907eddc8b0",
+      "chain_id": 1,
+      "is_upgradeable": true,
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "EURSAFO",
+    "overall_score": 45,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody verification fails: no custodian, SPV structure, attestation date, auditor, or reserve document exists in the evidence pack, so asset backing is unverifiable. Legal and technical inputs are also materially unknown (jurisdiction, licensing, proxy admin, audits), leaving only a verified ERC1967Proxy contract and a live market quote as grounded facts.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "CUSTODY_BACKING_UNVERIFIED",
+      "confidence": 72,
+      "validityDays": 7,
+      "rationale": "Evidence pack contains no custodian, SPV, attestation date, auditor, or reserve document; custody agent scored 35/FAIL. Legal and technical inputs are largely unknown, so backing cannot be verified."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "45",
+      "audit.reason": "CUSTODY_BACKING_UNVERIFIED: no custodian, SPV, attestation, auditor, or reserve document in pack; legal/technical unknowns.",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x0990b149e915cb08e2143a5c6f669c907eddc8b0",
+    "contractVerified": true,
+    "marketUsd": 1.17,
+    "issuerReachable": false
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

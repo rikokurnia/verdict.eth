@@ -1,0 +1,207 @@
+{
+  "id": "1789181543761-blockchain-capital",
+  "subject": "blockchain-capital",
+  "startedAt": "2026-09-12T02:52:23.761Z",
+  "finishedAt": "2026-09-12T02:52:40.860Z",
+  "durationMs": 17099,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 923,
+      "outputTokens": 502
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 889,
+      "outputTokens": 425
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 953,
+      "outputTokens": 683
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2532,
+      "outputTokens": 273
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 45,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated in pack as 'Blockchain Capital' (curated, operator-provided; not a verified filing).",
+        "Domicile/jurisdiction: not present in the evidence pack — unknown.",
+        "Regulatory framework: not present in the evidence pack — unknown; no regime asserted.",
+        "Investor eligibility: transfer-restricted; eligibility per issuer docs, typically accredited / qualified purchasers with KYC required (curated).",
+        "Asset class listed as Private Equity; token described as a tokenized venture fund share and one of the first security tokens issued (catalog description).",
+        "Token contract 0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc on ethereum is verified as an ERC1967Proxy per Blockscout; proxy status not resolved in pack.",
+        "Sanctions/enforcement: no pack-grounded source — unknown, not 'clear'.",
+        "No offering memorandum, registration/exemption citation, transfer-agent, custodian, or audit evidence present in the pack."
+      ],
+      "evidence_urls": [
+        "https://blockchain.capital/",
+        "https://etherscan.io/token/0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "eligibility": "curated",
+        "asset class": "curated",
+        "token description": "curated",
+        "contract verification": "live",
+        "issuer page reachable": "live",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "sanctions/enforcement": "unknown",
+        "offering/registration citation": "unknown",
+        "custodian/transfer agent": "unknown"
+      },
+      "issuer_entity": "Blockchain Capital",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "No Proof of Reserve or attestation document URL is present in the evidence pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified and the score is capped at 79.",
+        "Custodian is not named anywhere in the pack — unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Latest attestation date is not present in the pack — unknown.",
+        "Attestation auditor is not present in the pack — unknown.",
+        "Market quote shows USD 106.49 with 0% 24h change; this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Token contract 0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc on Ethereum is reported as a verified ERC1967Proxy per Blockscout; proxy verification does not evidence collateral backing.",
+        "Issuer page https://blockchain.capital/ is reachable, but the pack contains no reserve, custody, or audit disclosures from it.",
+        "Curated metadata describes transfer-restricted eligibility (typically accredited / qualified purchasers, KYC required) as of 2026-09, but no on-chain or documentary backing evidence is supplied.",
+        "No ENS evidence is present in the pack."
+      ],
+      "evidence_urls": [
+        "https://blockchain.capital/",
+        "https://etherscan.io/token/0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "attestation_document_url": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "eligibility": "curated",
+        "ens_evidence": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict.eth/smart-contract-onchain-security",
+      "score": 55,
+      "status": "WARN",
+      "findings": [
+        "Contract address 0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc on ethereum is taken from the live-resolved pack (CoinGecko/explorer), not from memory.",
+        "Blockscout verification record names the contract 'ERC1967Proxy' and reports isVerified=true, indicating the proxy source is verified.",
+        "The verification record's isProxy field is null, so proxy status is not explicitly confirmed by the record even though the contract name implies an ERC1967 proxy pattern.",
+        "Because the contract is (or appears to be) a proxy, the implementation address and its verification status are not present in the pack — implementation-level logic is unknown.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze/transfer-restriction powers are not evidenced in the pack — unknown. Note the curated eligibility field states transfers are restricted per issuer docs, but the on-chain enforcement mechanism is not evidenced.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "No ENS evidence was supplied (ensEvidence is null) and the subject is a catalog-rwa token, so ENS binding/attestation/revocation checks are not applicable.",
+        "Issuer page https://blockchain.capital/ is reachable per the pack, but no on-chain admin or audit disclosures were extracted from it.",
+        "Absence of evidence for admin controls, freeze powers, and audits is not evidence of safety; these remain open risks."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc",
+        "https://blockchain.capital/"
+      ],
+      "grounding": {
+        "contract_address": "live",
+        "chain_id": "live",
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_page_reachable": "live",
+        "eligibility_restrictions": "curated"
+      },
+      "contract_address": "0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc",
+      "chain_id": 1,
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "BCAP",
+    "overall_score": 48,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody inspection returned FAIL because no Proof of Reserve, custodian, SPV structure, or attestation is present in the evidence pack, leaving reserve backing unverifiable. Legal and technical reports remain WARN with jurisdiction, regulatory framework, admin controller, and audit evidence all unknown.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "CUSTODY_ATTESTATION_MISSING",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "Custody agent returned FAIL: no PoR, custodian, SPV, or attestation in pack; reserve backing unverifiable. Legal/technical unknowns persist."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "48",
+      "audit.reason": "CUSTODY_ATTESTATION_MISSING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x8347fffb3abeb2fae5c21b09e983bdefa1a047dc",
+    "contractVerified": true,
+    "marketUsd": 106.49,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

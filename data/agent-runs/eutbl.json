@@ -1,0 +1,196 @@
+{
+  "id": "1789181210186-eutbl",
+  "subject": "eutbl",
+  "startedAt": "2026-09-12T02:46:50.186Z",
+  "finishedAt": "2026-09-12T02:47:06.525Z",
+  "durationMs": 16339,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 929,
+      "outputTokens": 459
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 959,
+      "outputTokens": 490
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 895,
+      "outputTokens": 472
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2439,
+      "outputTokens": 291
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 38,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated as 'Spiko' in catalog and curated fields; this is operator-provided (curated) and not a verified filing.",
+        "Domicile/jurisdiction of the issuer is not stated in the pack; jurisdiction is unknown.",
+        "Regulatory framework is not stated in the pack; no MiCA, MiFID, UCITS, or other regime can be asserted. The description references 'EU Treasury bills' and 'eligible European investors' but names no regulatory regime.",
+        "Investor eligibility: catalog description and curated eligibility both state 'eligible European investors' / 'Eligible European investors; see issuer docs' — eligibility is asserted but the defining criteria are not in the pack.",
+        "Issuer page (https://www.coingecko.com/en/coins/eutbl) is marked reachable:false with null title, so no primary issuer disclosure was retrievable.",
+        "Sanctions/enforcement status: no pack-grounded source provided; status is unknown, not 'clear'.",
+        "Contract 0xa0769f7a8fc65e47de93797b4e21c073c117fc80 on ethereum is reported verified as ERC1967Proxy; this is a technical verification only and carries no legal or licensing weight.",
+        "No prospectus, offering memorandum, license number, regulator registration, custodian, or audit reference appears anywhere in the pack."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/eutbl",
+        "https://etherscan.io/token/0xa0769f7a8fc65e47de93797b4e21c073c117fc80",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0xa0769f7a8fc65e47de93797b4e21c073c117fc80"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "sanctions/enforcement": "unknown",
+        "contract verification": "live",
+        "issuer page reachability": "live"
+      },
+      "issuer_entity": "Spiko",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — unknown.",
+        "No Proof-of-Reserve or attestation document URL is present in the pack; this deployment has no PoR PDF parser, so reserve backing cannot be verified and the score is capped at 79.",
+        "No attestation date or attestation auditor is provided — unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Market quote shows USD 1.23 with a 24h change of -1.78%; this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Token contract 0xa0769f7a8fc65e47de93797b4e21c073c117fc80 on Ethereum is reported as a verified ERC1967Proxy, but proxy verification does not evidence real-world collateral.",
+        "Issuer page (CoinGecko) is marked unreachable, so no issuer-level reserve documentation could be retrieved.",
+        "Catalog description asserts backing by EU Treasury bills, but this is a catalog claim with no supporting attestation in the pack."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/eutbl",
+        "https://etherscan.io/token/0xa0769f7a8fc65e47de93797b4e21c073c117fc80",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0xa0769f7a8fc65e47de93797b4e21c073c117fc80"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "attestation_auditor": "unknown",
+        "latest_attestation_date": "unknown",
+        "spv_structure": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "catalog_backing_claim": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security-agent.verdict.eth",
+      "score": 69,
+      "status": "WARN",
+      "findings": [
+        "Contract 0xa0769f7a8fc65e47de93797b4e21c073c117fc80 on ethereum is reported by Blockscout as verified source (name: ERC1967Proxy).",
+        "The contract name ERC1967Proxy indicates an upgradeable proxy pattern, but the pack's isProxy field is null, so proxy status is not confirmed by the record.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze capabilities are not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Issuer page (CoinGecko) was unreachable at pack build time, so issuer-level disclosures could not be corroborated.",
+        "ENS evidence is null; this subject is a catalog-rwa token, not an ENS demo asset, so ENS binding/attestation/revocation checks are not applicable.",
+        "Score capped at 69 because proxy status is unresolved (isProxy null) despite verified source."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0xa0769f7a8fc65e47de93797b4e21c073c117fc80",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0xa0769f7a8fc65e47de93797b4e21c073c117fc80",
+        "https://www.coingecko.com/en/coins/eutbl"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_page": "live",
+        "ens_evidence": "unknown"
+      },
+      "contract_address": "0xa0769f7a8fc65e47de93797b4e21c073c117fc80",
+      "chain_id": 1,
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "EUTBL",
+    "overall_score": 51,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody verification fails: no custodian, attestation, auditor, or SPV structure is evidenced in the pack, so reserve backing for the EU T-bill claim is unverified. Legal and technical layers are also materially unknown (jurisdiction, regulatory regime, proxy admin, audits), leaving the asset below the pass threshold.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "high",
+      "reasonCode": "CUSTODY_ATTESTATION_MISSING",
+      "confidence": 72,
+      "validityDays": 7,
+      "rationale": "Custody layer FAIL: no custodian, attestation document, auditor, or SPV structure in pack; EU T-bill backing is an unverified catalog claim. Legal and technical unknowns reinforce the block."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "51",
+      "audit.reason": "CUSTODY_ATTESTATION_MISSING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0xa0769f7a8fc65e47de93797b4e21c073c117fc80",
+    "contractVerified": true,
+    "marketUsd": 1.23,
+    "issuerReachable": false
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "id": "1789181509986-figure-heloc",
+  "subject": "figure-heloc",
+  "startedAt": "2026-09-12T02:51:49.986Z",
+  "finishedAt": "2026-09-12T02:52:06.968Z",
+  "durationMs": 16982,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 702,
+      "outputTokens": 475
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 736,
+      "outputTokens": 483
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 766,
+      "outputTokens": 503
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2284,
+      "outputTokens": 277
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 38,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated as 'Figure' in catalog and curated fields; this is operator-provided and not a verified legal filing — no registered legal entity name (e.g., Figure Technologies, Inc.) is present in the pack.",
+        "Domicile/jurisdiction: unknown — no jurisdiction, incorporation, or registration data appears anywhere in the pack.",
+        "Regulatory framework: unknown — the pack contains no reference to SEC, CFTC, FinCEN, state licensing, Reg D, Reg S, or any other regime. No framework may be inferred from the 'Private Credit' asset class label.",
+        "Investor eligibility: transfer-restricted; curated text states eligibility per issuer docs, 'typically accredited / qualified purchasers, KYC required'. The word 'typically' indicates this is not a confirmed eligibility determination.",
+        "Asset description: tokenized home-equity line-of-credit exposure recorded on Provenance Blockchain (catalog description, issuer-platform sourced).",
+        "Sanctions/enforcement: unknown — no sanctions screening, enforcement action, or regulatory record is present in the pack. Absence of a flag is NOT a clearance.",
+        "No offering memorandum, private placement memorandum, prospectus, exemption filing, or CIK is present in the pack.",
+        "No custodian, auditor, trustee, or transfer agent is identified in the pack.",
+        "No smart-contract audit or on-chain contract reference is present (contract and verification fields are null).",
+        "Issuer page reachable at https://figure.com/ with title 'Figure - Fast, Easy Online HELOC Lender'; this confirms a live web presence only, not licensing or registration.",
+        "Market data is null — no pricing, NAV, or liquidity evidence available."
+      ],
+      "evidence_urls": [
+        "https://figure.com/"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "transfer restriction": "curated",
+        "asset description": "live",
+        "sanctions/enforcement": "unknown",
+        "offering/filing documents": "unknown",
+        "custodian/auditor": "unknown",
+        "contract/audit": "unknown",
+        "issuer web presence": "live"
+      },
+      "issuer_entity": "Figure",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 35,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — unknown.",
+        "No Proof-of-Reserve or attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified and the score is capped at 79 (actual score set lower due to additional gaps).",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "No latest attestation date and no attestation auditor are provided — unknown.",
+        "Market data is null: no live quote, price-vs-peg, or 24h change available, so no market-implied signal can be assessed.",
+        "Contract data is null: no on-chain contract address or token contract evidence supplied.",
+        "Verification block is null: no independent verification, audit, or third-party confirmation present.",
+        "Only issuer self-description is available (Figure issuer platform, figure.com), which is a marketing/issuer page, not reserve evidence.",
+        "Asset class is Private Credit (tokenized HELOC exposure on Provenance Blockchain) per catalog metadata; this is a curated catalog label, not verified collateral documentation.",
+        "Eligibility is transfer-restricted (accredited / qualified purchasers, KYC required) per curated metadata — consistent with a permissioned RWA but does not evidence collateral backing.",
+        "No ENS evidence and no sanctions/custody records supplied; nothing to corroborate real-world collateral.",
+        "Overall: tokenized RWA claim is plausible per issuer branding but unbacked by any attestation, custodian, SPV, or contract evidence in this pack."
+      ],
+      "evidence_urls": [
+        "https://figure.com/"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "spv_structure": "unknown",
+        "market_signal": "unknown",
+        "contract_evidence": "unknown",
+        "verification": "unknown",
+        "issuer_page": "live",
+        "asset_class": "curated",
+        "eligibility": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 50,
+      "status": "WARN",
+      "findings": [
+        "No EVM token contract is present in the evidence pack: `contract` is null, so no contract address, chain ID, or Blockscout verification record could be inspected.",
+        "Subject is a catalog RWA (Figure Heloc, FIGR_HELOC) recorded on Provenance Blockchain, not an EVM token contract; the EVM contract-inspection path does not apply.",
+        "Source verification status is unknown — no Blockscout (or equivalent) record was supplied, so contract_verified cannot be asserted.",
+        "Proxy / upgradeability status is unknown — no bytecode, ABI, or proxy record in the pack.",
+        "Admin controls (multisig, timelock, or EOA) are unknown — no owner/admin evidence supplied. Absence of evidence is not evidence of safety.",
+        "Blacklist / freeze powers are unknown — no contract source or ABI supplied to confirm or exclude transfer-restriction logic.",
+        "Third-party audit firm and audit hash are unknown — no audit artifact referenced in the pack.",
+        "Curated eligibility note states transfer-restricted exposure with KYC and accredited / qualified-purchaser requirements, but this is a curated issuer-doc summary, not on-chain enforcement evidence.",
+        "Issuer page https://figure.com/ was reachable at pack build time (title: 'Figure - Fast, Easy Online HELOC Lender'), which corroborates issuer identity only, not contract security.",
+        "ENS evidence is null and the subject is not an ENS demo asset, so the ENS binding / attestation-freshness / revocation path does not apply.",
+        "Score capped below 70 because source verification is unknown/unreachable for this subject."
+      ],
+      "evidence_urls": [
+        "https://figure.com/"
+      ],
+      "grounding": {
+        "contract_address": "unknown",
+        "chain_id": "unknown",
+        "contract_verified": "unknown",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_identity": "live",
+        "eligibility_restrictions": "curated",
+        "subject_kind": "curated"
+      }
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "FIGR_HELOC",
+    "overall_score": 40,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "The evidence pack contains no custodian, attestation, SPV, contract, or audit evidence for this tokenized HELOC exposure, leaving collateral backing entirely unverified. Legal and technical coverage are also unknown, so the subject fails on unbacked custody claims and cannot be cleared for institutional use.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "UNVERIFIED_COLLATERAL_BACKING",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "Custody report FAILs: no custodian, attestation, SPV, or contract evidence in pack; collateral backing unverified. Legal and technical fields largely unknown."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "40",
+      "audit.reason": "UNVERIFIED_COLLATERAL_BACKING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": null,
+    "contractVerified": null,
+    "marketUsd": null,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

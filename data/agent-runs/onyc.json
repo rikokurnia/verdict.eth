@@ -1,0 +1,195 @@
+{
+  "id": "1789181583810-onyc",
+  "subject": "onyc",
+  "startedAt": "2026-09-12T02:53:03.810Z",
+  "finishedAt": "2026-09-12T02:53:18.338Z",
+  "durationMs": 14528,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 732,
+      "outputTokens": 378
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 766,
+      "outputTokens": 443
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 796,
+      "outputTokens": 469
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2091,
+      "outputTokens": 264
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 22,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity named in catalog as 'OnRe' (curated, operator-provided; not a verified filing).",
+        "Domicile/jurisdiction: not present in the evidence pack — unknown.",
+        "Regulatory framework: not present in the evidence pack — unknown; no licensing regime can be asserted.",
+        "Investor eligibility: catalog/curated text states only 'See issuer docs' — no eligibility criteria (accredited/qualified purchaser, geographic restrictions) are specified in the pack.",
+        "Issuer page unreachable (reachable: false, title: null) — no primary-source legal, licensing, or disclosure documents could be retrieved.",
+        "No contract address, no verification record, and no ENS evidence supplied — on-chain legal attestations cannot be assessed.",
+        "Sanctions/enforcement status: unknown — no pack-grounded sanctions or enforcement source; absence of a flag is NOT a clearance.",
+        "Asset class listed as 'Insurance' (tokenized reinsurance) — a regulated activity in most jurisdictions, yet no license, registration, or regulator reference appears in the pack.",
+        "Market data (USD 1.14, +1.67% 24h) is sourced from CoinGecko market data and carries no legal or compliance weight."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/onyc"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "issuer page reachability": "live",
+        "sanctions/enforcement": "unknown",
+        "contract/verification": "unknown",
+        "asset class": "curated",
+        "market data": "live"
+      },
+      "issuer_entity": "OnRe",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 35,
+      "status": "FAIL",
+      "findings": [
+        "No custodian is named anywhere in the evidence pack; custodian is unknown.",
+        "No Proof of Reserve or attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so reserve backing cannot be verified and the score is capped at 79.",
+        "No attestation date or attestation auditor is provided in the pack.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack; treated as unknown.",
+        "No on-chain contract address is provided (contract: null), so token-level collateral linkage cannot be checked.",
+        "Issuer page (CoinGecko) is marked unreachable, so no primary issuer documentation was retrievable.",
+        "Market quote shows USD 1.14 with +1.67% 24h change; this is market-implied signal only and is NOT a Proof of Reserve.",
+        "Catalog metadata (issuer OnRe, asset class Insurance, Solana network) is sourced from CoinGecko market data and is unverified against issuer filings.",
+        "Curated entry only states entity OnRe and 'See issuer docs' for eligibility, with no substantive backing detail.",
+        "No ENS evidence and no verification object supplied, leaving asset-backing claims entirely unsubstantiated."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/onyc"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "proof_of_reserve": "unknown",
+        "attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "spv_structure": "unknown",
+        "contract_address": "unknown",
+        "issuer_page": "live",
+        "market_quote": "live",
+        "catalog_metadata": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 50,
+      "status": "WARN",
+      "findings": [
+        "Subject is a catalog RWA entry (OnRe Tokenized Reinsurance, ONYC) with networks limited to solana; no EVM token contract is present in the pack (contract: null).",
+        "No contract address is available in the pack, so no source-verification or proxy determination can be made; contract_verified is unknown and the score is capped at 69 per policy.",
+        "No Blockscout (or any explorer) verification record is included; verification status is unknown, not confirmed safe.",
+        "Admin controls (multisig/timelock/EOA) are not evidenced in the pack — unknown.",
+        "Blacklist/freeze powers are not evidenced in the pack — unknown.",
+        "Third-party audit firm and audit hash are not evidenced in the pack — unknown.",
+        "Issuer page (CoinGecko coin page) is marked reachable: false, so no issuer documentation could be inspected.",
+        "ENS evidence is null and the subject is not an ENS demo asset, so ENS binding/attestation/revocation checks are not applicable.",
+        "Market data shows USD 1.14 with +1.67% 24h change (updatedAt 1789181490), sourced from CoinGecko market data; this is market context only, not a security assessment.",
+        "Absence of evidence for audits, admin controls, and freeze powers is not evidence of safety; all such items remain unknown."
+      ],
+      "evidence_urls": [
+        "https://www.coingecko.com/en/coins/onyc"
+      ],
+      "grounding": {
+        "contract_address": "unknown",
+        "chain_id": "unknown",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "contract_verified": "unknown",
+        "subject_identity": "curated",
+        "market_data": "live",
+        "issuer_page_reachability": "live",
+        "ens_evidence": "unknown"
+      }
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "ONYC",
+    "overall_score": 35,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "All three inspections return unknown on custodian, Proof of Reserve, attestation, contract address, admin controls, and regulatory status; the issuer page is unreachable and no primary-source documentation exists in the pack. With no verifiable backing, no on-chain contract, and no legal or sanctions clearance, the asset cannot be cleared for institutional or agent use.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "UNVERIFIED_BACKING_NO_ATTESTATION",
+      "confidence": 40,
+      "validityDays": 7,
+      "rationale": "No custodian, Proof of Reserve, attestation date/auditor, SPV structure, or contract address in pack; issuer page unreachable. Backing and legal status unverifiable, so clearance is revoked."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "35",
+      "audit.reason": "UNVERIFIED_BACKING_NO_ATTESTATION: custodian, PoR, attestation, contract, and regulatory status all unknown; issuer page unreachable",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": null,
+    "contractVerified": null,
+    "marketUsd": 1.14,
+    "issuerReachable": false
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "id": "1789181400628-kinesis-gold",
+  "subject": "kinesis-gold",
+  "startedAt": "2026-09-12T02:50:00.628Z",
+  "finishedAt": "2026-09-12T02:50:17.504Z",
+  "durationMs": 16876,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 946,
+      "outputTokens": 421
+    },
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 882,
+      "outputTokens": 431
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 916,
+      "outputTokens": 554
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2410,
+      "outputTokens": 294
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 35,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated as 'Kinesis' in catalog and curated fields; no legal entity name, registration number, or corporate domicile present in pack.",
+        "No regulatory framework, license, or registration regime is present in the pack; regulatory posture is unknown.",
+        "Investor eligibility is not specified: curated eligibility reads only 'See issuer docs' and the issuer page title is null, so no eligibility determination can be made.",
+        "Sanctions/enforcement status is unknown; no pack-grounded sanctions or enforcement source is provided, and absence of a flag must not be read as 'clear'.",
+        "Backing claim ('1:1 allocated physical bullion') and yield-share mechanics originate from the catalog description (curated/operator-provided), not from a verified filing, audit, or custodian attestation.",
+        "No custodian, auditor, reserve attestation, or proof-of-reserves document appears in the pack.",
+        "On-chain contract is verified per Blockscout (isVerified true) but isProxy is null, so proxy/admin control posture is unresolved.",
+        "No ENS evidence supplied (ensEvidence null)."
+      ],
+      "evidence_urls": [
+        "https://kinesis.money/",
+        "https://etherscan.io/token/0x14dab79fd7b7b3f748d434812fd6a9aac460ea52",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x14dab79fd7b7b3f748d434812fd6a9aac460ea52"
+      ],
+      "grounding": {
+        "issuer_entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory_framework": "unknown",
+        "investor_eligibility": "curated",
+        "sanctions_enforcement": "unknown",
+        "backing_claim": "curated",
+        "custodian_audit": "unknown",
+        "contract_verification": "live",
+        "proxy_control": "unknown"
+      },
+      "issuer_entity": "Kinesis",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named anywhere in the evidence pack — unknown.",
+        "No Proof of Reserve / attestation document URL is present in the pack; no PoR PDF parser is available in this deployment, so backing cannot be independently verified. Score capped at 79 per policy.",
+        "No attestation date or attestation auditor is present in the pack — unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated in the pack — unknown.",
+        "Issuer self-describes KAU as backed 1:1 by allocated physical bullion (catalog description, sourceLabel 'Kinesis issuer platform') — this is an issuer claim, not third-party verified evidence.",
+        "Market quote: USD 140.73, 24h change +1.16% (updatedAt 1789181300). This is market-implied signal only and is NOT a Proof of Reserve.",
+        "Token contract 0x14dab79fd7b7b3f748d434812fd6a9aac460ea52 on Ethereum is reported verified (name 'Proxy') via Blockscout; isProxy field is null, so proxy status is unconfirmed.",
+        "Issuer page https://kinesis.money/ is reachable but returned no title; no substantive reserve documentation was captured in the pack.",
+        "No ENS evidence supplied (ensEvidence: null).",
+        "Overall: contract existence and a live market quote are confirmed, but custody, reserve attestation, auditor, and legal structure are all absent — insufficient evidence to substantiate asset backing."
+      ],
+      "evidence_urls": [
+        "https://kinesis.money/",
+        "https://etherscan.io/token/0x14dab79fd7b7b3f748d434812fd6a9aac460ea52",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x14dab79fd7b7b3f748d434812fd6a9aac460ea52"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "attestation_auditor": "unknown",
+        "latest_attestation_date": "unknown",
+        "spv_structure": "unknown",
+        "issuer_backing_claim": "curated",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page_reachable": "live",
+        "ens_evidence": "unknown"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "smart-contract-onchain-security-agent",
+      "score": 69,
+      "status": "WARN",
+      "findings": [
+        "Contract 0x14dab79fd7b7b3f748d434812fd6a9aac460ea52 on ethereum is reported by Blockscout as verified (name: 'Proxy'), so source verification is evidenced.",
+        "Proxy status is ambiguous: the Blockscout record names the contract 'Proxy' but the isProxy field is null, so upgradeability cannot be confirmed from the pack.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced in the pack — unknown.",
+        "Blacklist/freeze powers are not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Issuer page https://kinesis.money/ is reachable but returned no title; no on-chain admin or audit documentation was retrieved from it.",
+        "Score capped at 69 because proxy/upgradeability status is unresolved in the supplied record."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x14dab79fd7b7b3f748d434812fd6a9aac460ea52",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x14dab79fd7b7b3f748d434812fd6a9aac460ea52",
+        "https://kinesis.money/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "proxy_status": "live",
+        "admin_controller": "unknown",
+        "blacklist_freeze": "unknown",
+        "audit": "unknown",
+        "issuer_page": "live"
+      },
+      "contract_address": "0x14dab79fd7b7b3f748d434812fd6a9aac460ea52",
+      "chain_id": 1,
+      "admin_controller": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "KAU",
+    "overall_score": 49,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Kinesis Gold (KAU) shows a verified Ethereum contract and a live market quote, but custody, reserve attestation, auditor, custodian, and legal/regulatory posture are all absent from the evidence pack. With no third-party proof of the 1:1 bullion backing and unresolved proxy/admin control, the asset cannot be cleared for institutional use.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "critical",
+      "reasonCode": "UNVERIFIED_RESERVE_BACKING",
+      "confidence": 70,
+      "validityDays": 7,
+      "rationale": "No custodian, attestation, auditor, or SPV evidence in pack; 1:1 bullion backing is issuer-claimed only. Proxy/admin control unresolved. Custody FAIL drives BLOCKED."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "49",
+      "audit.reason": "UNVERIFIED_RESERVE_BACKING",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x14dab79fd7b7b3f748d434812fd6a9aac460ea52",
+    "contractVerified": true,
+    "marketUsd": 140.73,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

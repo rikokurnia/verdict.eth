@@ -1,0 +1,201 @@
+{
+  "id": "1789181428080-nvidia-xstock",
+  "subject": "nvidia-xstock",
+  "startedAt": "2026-09-12T02:50:28.080Z",
+  "finishedAt": "2026-09-12T02:50:43.573Z",
+  "durationMs": 15493,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 935,
+      "outputTokens": 454
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 999,
+      "outputTokens": 476
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 969,
+      "outputTokens": 528
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2501,
+      "outputTokens": 233
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 58,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated in curated pack as Backed Assets (JE) Limited, domicile Jersey — operator-provided, not a verified filing.",
+        "Regulatory framework: curated pack describes a tracker certificate (ISIN-prospected) with 1:1 collateralization; no regulator, license number, or prospectus reference is present in the pack.",
+        "Investor eligibility: curated pack states non-US eligible investors only; catalog description confirms the token is not the underlying NVIDIA share.",
+        "Token contract 0xc845b2894dbddd03858fd2d643b4ef725fe0849d on ethereum is verified as BackedTokenProxy per Blockscout; proxy status is null (unknown).",
+        "No sanctions, enforcement, audit, custodian, or regulatory-registration evidence appears anywhere in the pack — these remain unknown, not clear.",
+        "Catalog issuer field ('Backed / xStocks') and curated entity ('Backed Assets (JE) Limited') are not reconciled within the pack; legal issuer of record is unconfirmed.",
+        "No ENS evidence supplied (ensEvidence: null)."
+      ],
+      "evidence_urls": [
+        "https://xstocks.fi/",
+        "https://etherscan.io/token/0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0xc845b2894dbddd03858fd2d643b4ef725fe0849d"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "domicile": "curated",
+        "regulatory framework": "curated",
+        "investor eligibility": "curated",
+        "not underlying share": "live",
+        "contract verification": "live",
+        "sanctions/enforcement": "unknown",
+        "audit": "unknown",
+        "custodian": "unknown",
+        "regulatory registration": "unknown",
+        "ens": "unknown"
+      },
+      "issuer_entity": "Backed Assets (JE) Limited",
+      "jurisdiction": "Jersey",
+      "regulatory_framework": "Tracker certificate (ISIN-prospected); 1:1 collateralized — per curated pack only; no named regulator or license in pack"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 55,
+      "status": "WARN",
+      "findings": [
+        "Issuer is Backed / xStocks; curated pack names entity 'Backed Assets (JE) Limited' domiciled in Jersey, framework described as an ISIN-prospected tracker certificate, 1:1 collateralized.",
+        "Custodian is not named anywhere in the evidence pack — custodian: unknown.",
+        "No Proof-of-Reserve / attestation document URL is present in the pack; this deployment has no PoR PDF parser, so reserve backing cannot be independently verified and the score is capped at 79.",
+        "SPV / bankruptcy-remoteness is not stated in the pack — spv_structure: unknown.",
+        "Market quote (USD 219.33, +0.27% 24h) is market-implied signal only and is NOT a Proof of Reserve.",
+        "On-chain contract 0xc845b2894dbddd03858fd2d643b4ef725fe0849d on Ethereum is verified as 'BackedTokenProxy' per Blockscout; contract verification confirms code, not collateral.",
+        "Catalog description explicitly states the token is a tracker certificate and 'not the underlying NVIDIA share itself'; eligibility is non-US investors only.",
+        "No attestation date, auditor, or reserve report is supplied — latest_attestation_date, attestation_auditor, and attestation_document_url are unknown."
+      ],
+      "evidence_urls": [
+        "https://xstocks.fi/",
+        "https://etherscan.io/token/0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0xc845b2894dbddd03858fd2d643b4ef725fe0849d"
+      ],
+      "grounding": {
+        "issuer": "curated",
+        "entity_domicile": "curated",
+        "framework_1to1_collateralized": "curated",
+        "custodian": "unknown",
+        "spv_structure": "unknown",
+        "attestation_document_url": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page_reachable": "live",
+        "not_underlying_share": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Contract 0xc845b2894dbddd03858fd2d643b4ef725fe0849d on ethereum is reported verified by Blockscout (name: BackedTokenProxy).",
+        "Proxy status is unknown: the Blockscout record returns isProxy: null, so upgradeability cannot be confirmed or denied from the pack.",
+        "Admin controller (multisig/timelock/EOA) is unknown — no admin or ownership evidence is present in the pack.",
+        "Blacklist/freeze capability is unknown — no function-level or ABI evidence is present in the pack.",
+        "No third-party audit firm or audit hash is evidenced in the pack; audit status is unknown.",
+        "Contract name 'BackedTokenProxy' suggests a proxy pattern, but this is a naming inference only and is not confirmed by the isProxy field.",
+        "Subject is a tokenized tracker certificate (Backed / xStocks, Jersey-domiciled issuer, non-US eligible investors); it is explicitly not the underlying NVIDIA share.",
+        "No ENS evidence was supplied (ensEvidence: null), so ENS binding/attestation checks are not applicable to this subject."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+        "https://xstocks.fi/"
+      ],
+      "grounding": {
+        "contract_verified": "live",
+        "is_upgradeable": "unknown",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_framework": "curated",
+        "market_price": "live"
+      },
+      "contract_address": "0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+      "admin_controller": "unknown",
+      "audit_firm": "unknown",
+      "audit_hash": "unknown",
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "NVDAX",
+    "overall_score": 61,
+    "verdict": "WARN",
+    "policy_state": "REVIEW",
+    "reasoning_summary": "Tokenized NVIDIA tracker certificate (Backed/xStocks, Jersey) with a verified Ethereum contract, but custodian, attestation, admin control, and audit evidence are all absent from the pack. No FAIL trigger is evidenced; material unknowns cap confidence and require review rather than pass.",
+    "mapped": {
+      "auditStatus": "active",
+      "severity": "warning",
+      "reasonCode": "MATERIAL_EVIDENCE_UNKNOWN",
+      "confidence": 45,
+      "validityDays": 14,
+      "rationale": "Verified BackedTokenProxy on Ethereum and curated 1:1 tracker-certificate framework, but custodian, attestation, admin controller, and audit are unknown in the pack; no evidenced FAIL trigger."
+    },
+    "ensv2_records": {
+      "audit.status": "WARN",
+      "audit.score": "61",
+      "audit.reason": "MATERIAL_EVIDENCE_UNKNOWN: custodian, attestation, admin control, and audit absent from evidence pack",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "REVIEW"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+    "contractVerified": true,
+    "marketUsd": 219.33,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}

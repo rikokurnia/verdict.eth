@@ -1,0 +1,203 @@
+{
+  "id": "1789181344217-tether-gold",
+  "subject": "tether-gold",
+  "startedAt": "2026-09-12T02:49:04.217Z",
+  "finishedAt": "2026-09-12T02:49:20.563Z",
+  "durationMs": 16346,
+  "model": "deepseek-chat",
+  "mode": "official",
+  "engines": {
+    "legal": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "custody": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "technical": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    },
+    "synthesis": {
+      "provider": "deepseek",
+      "model": "deepseek-chat"
+    }
+  },
+  "usage": [
+    {
+      "call": "legal",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 903,
+      "outputTokens": 479
+    },
+    {
+      "call": "technical",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 967,
+      "outputTokens": 549
+    },
+    {
+      "call": "custody",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 937,
+      "outputTokens": 510
+    },
+    {
+      "call": "synthesis",
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "inputTokens": 2577,
+      "outputTokens": 247
+    }
+  ],
+  "reports": {
+    "legal": {
+      "agent": "legal-compliance-verification-agent",
+      "score": 45,
+      "status": "WARN",
+      "findings": [
+        "Issuer entity stated in pack as 'Tether' (curated, operator-provided; not a verified filing).",
+        "Domicile/jurisdiction of the issuer is not stated in the pack — unknown.",
+        "Regulatory framework (e.g., licensing regime, securities classification) is not stated in the pack — unknown; no regime should be inferred from the Swiss-vault custody reference.",
+        "Investor eligibility per pack: 'Generally permissionless ERC-20/TRC-20' (curated) — no accreditation, restriction, or transfer-lock disclosure present.",
+        "Asset backing claim: fungible token backed by allocated physical gold in Swiss vaults, 1 XAUT = 1 troy ounce (catalog description, sourceLabel 'Tether Gold disclosures').",
+        "Custodian/vault operator, auditor, and attestation reports are absent from the pack — unknown.",
+        "Sanctions/enforcement status: no pack-grounded source — unknown, not 'clear'.",
+        "On-chain contract 0x68749665ff8d2d112fa859aa293f07a622782f38 (ethereum) reported verified as TransparentUpgradeableProxy; proxy status field is null — upgradeability/admin control not confirmed.",
+        "Issuer page reachable with generic title 'Tether – Official Home of Tether'; no dedicated XAUT legal/terms page captured in pack."
+      ],
+      "evidence_urls": [
+        "https://tether.to/",
+        "https://etherscan.io/token/0x68749665ff8d2d112fa859aa293f07a622782f38",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x68749665ff8d2d112fa859aa293f07a622782f38"
+      ],
+      "grounding": {
+        "issuer entity": "curated",
+        "jurisdiction": "unknown",
+        "regulatory framework": "unknown",
+        "investor eligibility": "curated",
+        "gold backing claim": "curated",
+        "custodian": "unknown",
+        "auditor/attestation": "unknown",
+        "sanctions/enforcement": "unknown",
+        "contract verification": "live",
+        "issuer page": "live"
+      },
+      "issuer_entity": "Tether",
+      "jurisdiction": "unknown",
+      "regulatory_framework": "unknown"
+    },
+    "custody": {
+      "agent": "custody-asset-backing-verification-agent",
+      "score": 45,
+      "status": "FAIL",
+      "findings": [
+        "Custodian is not named in the evidence pack; vault location is described only generically as 'Swiss vaults' in the catalog description, with no named custodian entity.",
+        "No Proof of Reserve / attestation document URL is present in the pack; this deployment has no PoR PDF parser, so backing cannot be independently verified and the score is capped at 79.",
+        "No attestation date or attestation auditor is provided in the pack; latest_attestation_date and attestation_auditor are unknown.",
+        "SPV / bankruptcy-remoteness structure is not stated anywhere in the pack; spv_structure is unknown.",
+        "Market quote (USD 4350.05, +0.64% 24h) is market-implied signal only and is NOT a Proof of Reserve; it does not evidence physical gold backing.",
+        "Token contract 0x68749665ff8d2d112fa859aa293f07a622782f38 on Ethereum is verified as a TransparentUpgradeableProxy per Blockscout; contract verification does not evidence collateral backing.",
+        "Issuer page https://tether.to/ is reachable but the pack contains no reserve report, vault audit, or bar-list reference from it.",
+        "Catalog claim of '1 XAUT tracks one troy ounce of gold' is a curated issuer disclosure, not independently verified against a reserve attestation."
+      ],
+      "evidence_urls": [
+        "https://tether.to/",
+        "https://etherscan.io/token/0x68749665ff8d2d112fa859aa293f07a622782f38",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x68749665ff8d2d112fa859aa293f07a622782f38"
+      ],
+      "grounding": {
+        "custodian": "unknown",
+        "attestation_document_url": "unknown",
+        "latest_attestation_date": "unknown",
+        "attestation_auditor": "unknown",
+        "spv_structure": "unknown",
+        "market_quote": "live",
+        "contract_verification": "live",
+        "issuer_page": "live",
+        "catalog_description": "curated",
+        "eligibility": "curated"
+      },
+      "custodian": "unknown",
+      "spv_structure": "unknown",
+      "latest_attestation_date": "unknown",
+      "attestation_auditor": "unknown",
+      "attestation_document_url": "unknown"
+    },
+    "technical": {
+      "agent": "verdict-smart-contract-onchain-security",
+      "score": 72,
+      "status": "WARN",
+      "findings": [
+        "Contract address 0x68749665ff8d2d112fa859aa293f07a622782f38 on ethereum is taken from the pack (resolved live via CoinGecko) and is the only address used.",
+        "Blockscout record reports the contract name as TransparentUpgradeableProxy with isVerified=true, so source verification is evidenced as live.",
+        "The contract name TransparentUpgradeableProxy indicates an upgradeable proxy pattern, but the pack's isProxy field is null, so proxy status is not independently confirmed by the record.",
+        "Admin controller (multisig vs timelock vs EOA) is not evidenced anywhere in the pack — unknown.",
+        "Blacklist/freeze powers are not evidenced in the pack — unknown; absence of evidence is not evidence of safety.",
+        "No third-party audit firm or audit hash is present in the pack — unknown.",
+        "Issuer page https://tether.to/ is reachable per the pack, but it is a general issuer homepage and does not itself evidence contract-level controls.",
+        "Catalog describes XAUT as a gold-backed ERC-20/TRC-20 with 1 token tracking one troy ounce, sourced from Tether Gold disclosures; this is curated catalog metadata, not on-chain verification.",
+        "ensEvidence is null, so no ENS subject binding, attestation freshness, or revocation state could be inspected for this subject.",
+        "Score capped below 70-tier confidence concerns: verification is evidenced, but admin, blacklist, and audit facts are all unknown, so the score is held at 72 with WARN rather than PASS."
+      ],
+      "evidence_urls": [
+        "https://etherscan.io/token/0x68749665ff8d2d112fa859aa293f07a622782f38",
+        "https://eth.blockscout.com/api/v2/smart-contracts/0x68749665ff8d2d112fa859aa293f07a622782f38",
+        "https://tether.to/"
+      ],
+      "grounding": {
+        "contract_address": "live",
+        "chain_id": "live",
+        "contract_verified": "live",
+        "is_upgradeable": "live",
+        "admin_controller": "unknown",
+        "has_blacklist_or_freeze": "unknown",
+        "audit_firm": "unknown",
+        "audit_hash": "unknown",
+        "issuer_page": "live",
+        "ens_evidence": "unknown"
+      },
+      "contract_address": "0x68749665ff8d2d112fa859aa293f07a622782f38",
+      "chain_id": 1,
+      "is_upgradeable": true,
+      "contract_verified": true
+    }
+  },
+  "synthesis": {
+    "asset_symbol": "XAUT",
+    "overall_score": 53,
+    "verdict": "FAIL",
+    "policy_state": "BLOCKED",
+    "reasoning_summary": "Custody inspection fails: no named custodian, no Proof-of-Reserve or attestation document, date, or auditor is present in the evidence pack, so physical gold backing is unverified. Legal and technical facts (jurisdiction, regulatory regime, admin controller, blacklist powers, audits) are likewise unknown, capping confidence.",
+    "mapped": {
+      "auditStatus": "revoked",
+      "severity": "high",
+      "reasonCode": "CUSTODY_ATTESTATION_MISSING",
+      "confidence": 40,
+      "validityDays": 7,
+      "rationale": "Evidence pack contains no named custodian, no PoR/attestation document, date, or auditor; gold backing is unverified and custody inspection returned FAIL."
+    },
+    "ensv2_records": {
+      "audit.status": "FAIL",
+      "audit.score": "53",
+      "audit.reason": "CUSTODY_ATTESTATION_MISSING: no custodian, PoR, attestation date, or auditor in evidence pack; backing unverified",
+      "policy.agent_action": "BLOCK",
+      "policy.state": "BLOCKED"
+    }
+  },
+  "evidenceSummary": {
+    "contractAddress": "0x68749665ff8d2d112fa859aa293f07a622782f38",
+    "contractVerified": true,
+    "marketUsd": 4350.05,
+    "issuerReachable": true
+  },
+  "write": {
+    "requested": false,
+    "performed": false,
+    "reason": "Dry run — no chain writes requested."
+  }
+}
