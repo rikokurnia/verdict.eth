@@ -5,8 +5,8 @@ import { AlertTriangle, CheckCircle2, ExternalLink, Unplug, XCircle } from 'luci
 import StatusChip from '@/components/app/status-chip';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
-import { OfficialDeployments } from '@/components/app/asset-identity';
-import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
+import { EnsLogo, OfficialDeployments } from '@/components/app/asset-identity';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL, ENS_RESOLVER_URL } from '@/lib/ensv2-config';
 import type { EnsProfile } from '@/lib/ens-profile';
 import { evaluate, type Evidence, type VerdictState } from '@/lib/policy';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
@@ -141,7 +141,10 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
         <div>
           <h2>{display.title}</h2>
           <div className="v-ensline">
-            <span>{decodedName}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <EnsLogo size={15} />
+              <span>{decodedName}</span>
+            </span>
             <button className="v-copy-btn" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
             {decodedName.endsWith('.eth') && (
               <a
@@ -153,6 +156,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
                 title={`Open ${decodedName} on app.ens.domains`}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
               >
+                <EnsLogo size={12} />
                 <span>ENS</span>
                 <ExternalLink size={11} aria-hidden="true" />
               </a>
@@ -179,9 +183,16 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
 
       {profileMode && profile ? (
         <div className="v-card">
-          <div className="v-label">Onchain ENS proof · {profile.name}</div>
+          <div className="v-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <EnsLogo size={13} />
+            <span>Onchain ENS proof · {profile.name}</span>
+          </div>
           <p style={{ fontSize: 14, margin: '10px 0' }}>
             {profile.records['verdict.profile.authority'] ?? ''} — every row below resolved live from Sepolia at block {profile.sourceBlock}.
+          </p>
+          <p className="v-muted" style={{ fontSize: 12, margin: '0 0 10px' }}>
+            app.ens.domains targets mainnet and will show 0 records for hackathon names — cross-check on the{' '}
+            <a href={ENS_EXPLORER_NAME_URL(profile.name)} target="_blank" rel="noreferrer">Sepolia ENSv2 explorer ↗</a>.
           </p>
           <dl className="v-kv" style={{ marginTop: 10 }}>
             {Object.entries(profile.records).filter(([, v]) => v).map(([key, value]) => (
@@ -189,7 +200,7 @@ export default function AssetDetailPage({ params }: { params: Promise<{ name: st
                 <dt>{key}</dt><dd className="v-mono" style={{ overflowWrap: 'anywhere' }}>{value}</dd>
               </div>
             ))}
-            <dt>Resolver</dt><dd className="v-mono"><a href={`${ENSV2_SEPOLIA.explorer}/address/${profile.resolver}`} target="_blank" rel="noreferrer">{shortHash(profile.resolver)} ↗</a></dd>
+            <dt>Resolver</dt><dd className="v-mono"><a href={ENS_RESOLVER_URL(profile.resolver)} target="_blank" rel="noreferrer">{shortHash(profile.resolver)} ↗</a></dd>
             {profile.registration && (
               <>
                 <dt>Registration</dt><dd>{profile.registration.statusLabel} · owner <span className="v-mono">{shortHash(profile.registration.owner)}</span></dd>

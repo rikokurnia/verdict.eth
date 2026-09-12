@@ -4,11 +4,11 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, ExternalLink } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo, CoverageBadge } from '@/components/app/asset-identity';
+import { AssetLogo, CoverageBadge, EnsLogo } from '@/components/app/asset-identity';
 import { ColoredScore } from '@/components/app/status-badge';
 import RunDetails from '@/components/app/run-details';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
-import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
 import type { QuartetRun } from '@/lib/agents/types';
 
 type HistoryEntry = { file: string; recordedAt: string; run: QuartetRun };
@@ -25,7 +25,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
   const asset = DEMO_ASSETS.find((a) => a.marketId === marketId);
   const [run, setRun] = useState<QuartetRun | null>(null);
   const [tx, setTx] = useState<SeedTx | null>(null);
-  const [snapshot, setSnapshot] = useState<{ status: string; score: number | null; reason: string; summary: string; runAt: number | null } | null>(null);
+  const [snapshot, setSnapshot] = useState<{ status: string; score: number | null; reason: string; summary: string; runAt: number | null; underlying: string; standard: string; eligibility: string; custodian: string; docs: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +67,11 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
               reason: profile.records['verdict.quartet.reason'] || '',
               summary: profile.records['verdict.quartet.summary'] || '',
               runAt: Number.isFinite(runAt) && runAt > 0 ? runAt : null,
+              underlying: profile.records['asset.underlying'] || '',
+              standard: profile.records['token.standard'] || '',
+              eligibility: profile.records['investor.eligibility'] || '',
+              custodian: profile.records['provider.custodian'] || '',
+              docs: profile.records['docs.official'] || '',
             });
           }
         }
@@ -98,12 +103,13 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
         <div style={{ marginBottom: 12 }}>
           <a
             className="v-btn v-btn-secondary"
-            href={`https://app.ens.domains/${encodeURIComponent(asset.name)}`}
+            href={ENS_EXPLORER_NAME_URL(asset.name)}
             target="_blank"
             rel="noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}
-            title={`View official ENS record for ${asset.name}`}
+            title={`View ${asset.name} on the Sepolia ENSv2 explorer (app.ens.domains targets mainnet and cannot see hackathon names)`}
           >
+            <EnsLogo size={14} />
             <span>ENS: {asset.name}</span>
             <ExternalLink size={13} aria-hidden="true" />
           </a>
@@ -130,6 +136,19 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
               </a>
             </div>
           </div>
+
+          {snapshot && (snapshot.docs || snapshot.underlying || snapshot.standard || snapshot.eligibility || snapshot.custodian) && (
+            <div className="v-card" style={{ marginTop: 16 }}>
+              <div className="v-label">Documentation & provenance · live ENS records</div>
+              <dl className="v-kv" style={{ marginTop: 10 }}>
+                {snapshot.underlying && (<><dt>Underlying</dt><dd>{snapshot.underlying}</dd></>)}
+                {snapshot.standard && (<><dt>Token standard</dt><dd className="v-mono">{snapshot.standard}</dd></>)}
+                {snapshot.eligibility && (<><dt>Eligibility</dt><dd>{snapshot.eligibility}</dd></>)}
+                {snapshot.custodian && (<><dt>Custodian</dt><dd>{snapshot.custodian}</dd></>)}
+                {snapshot.docs && (<><dt>Official docs</dt><dd><a href={snapshot.docs} target="_blank" rel="noreferrer">{snapshot.docs.replace(/^https?:\/\//, '').split('/')[0]} ↗</a></dd></>)}
+              </dl>
+            </div>
+          )}
 
           {run ? (
             <div style={{ marginTop: 16 }}>
@@ -165,8 +184,9 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
                   </a>{' '}· block {tx.blockNumber}
                 </dd>
                 <dt>Profile</dt>
-                <dd className="v-mono">
-                  {asset.name}{' '}
+                <dd className="v-mono" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <EnsLogo size={13} />
+                  <span>{asset.name}</span>{' '}
                   <a href={`/assets/${encodeURIComponent(asset.name)}`}><ExternalLink size={12} aria-hidden="true" /></a>
                 </dd>
               </dl>

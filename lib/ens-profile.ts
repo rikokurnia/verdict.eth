@@ -39,6 +39,11 @@ export const PROFILE_KEYS = [
   'verdict.quartet.runAt',
   'verdict.quartet.validity',
   'verdict.quartet.sourceHash',
+  'asset.underlying',
+  'token.standard',
+  'investor.eligibility',
+  'provider.custodian',
+  'docs.official',
 ];
 
 export type EnsProfile = {

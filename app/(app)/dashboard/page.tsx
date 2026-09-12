@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
+import { AssetLogo, EnsLogo, NetworkBadges, OfficialDeployments } from '@/components/app/asset-identity';
 import { ToastStack, useToasts } from '@/components/app/toast';
 import { DEMO_ACTIVITY, DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
@@ -189,8 +189,9 @@ function AssetDialog({
                   />
                 </dd>
                 <dt>Identifier</dt>
-                <dd className="v-mono">
-                  {asset.name}
+                <dd className="v-mono" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <EnsLogo size={14} />
+                  <span>{asset.name}</span>
                   {asset.name.endsWith('.eth') && (
                     <a
                       className="v-inline-copy-btn"
@@ -461,7 +462,7 @@ export default function DashboardPage() {
                 const quote = asset.marketId ? quotes[asset.marketId] : undefined;
                 const score = asset.marketId ? scores[asset.marketId] : undefined;
                 return <tr key={asset.id} className="v-asset-row">
-                  <td className="v-catalog-cell-asset"><div className="v-catalog-asset-cell"><AssetLogo asset={asset} /><div><div className="v-asset-name-group"><span className="v-asset-name">{asset.title}</span><span className="v-asset-badge">{asset.ticker}</span></div><div className="v-asset-sub-row"><span className="v-asset-sub">{asset.name}</span><button type="button" className="v-inline-copy-btn" onClick={() => void copyIdentifier(asset.name)} aria-label={`Copy ${asset.name}`}>{copied === asset.name ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}</button>{asset.name.endsWith('.eth') && <a className="v-inline-copy-btn" href={ENS_EXPLORER_NAME_URL(asset.name)} target="_blank" rel="noreferrer" aria-label={`Open ${asset.name} on app.ens.domains`} title={`Open ${asset.name} on app.ens.domains`}><ExternalLink size={12} aria-hidden="true" /></a>}</div></div></div></td>
+                  <td className="v-catalog-cell-asset"><div className="v-catalog-asset-cell"><AssetLogo asset={asset} /><div><div className="v-asset-name-group"><span className="v-asset-name">{asset.title}</span><span className="v-asset-badge">{asset.ticker}</span></div><div className="v-asset-sub-row"><EnsLogo size={12} /><span className="v-asset-sub">{asset.name}</span><button type="button" className="v-inline-copy-btn" onClick={() => void copyIdentifier(asset.name)} aria-label={`Copy ${asset.name}`}>{copied === asset.name ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}</button>{asset.name.endsWith('.eth') && <a className="v-inline-copy-btn" href={ENS_EXPLORER_NAME_URL(asset.name)} target="_blank" rel="noreferrer" aria-label={`Open ${asset.name} on app.ens.domains`} title={`Open ${asset.name} on app.ens.domains`}><ExternalLink size={12} aria-hidden="true" /></a>}</div></div></div></td>
                   <td className="v-catalog-cell-verdict"><VerdictCell asset={asset} score={score} live={live} /></td>
                   <td className="v-catalog-cell-market"><MarketQuote quote={quote} loading={loadState === 'loading' && Boolean(asset.marketId)} /></td>
                   <td className="v-catalog-cell-category"><div className="v-cell-main">{asset.assetClass}</div><div className="v-cell-sub">{asset.issuer}</div></td>

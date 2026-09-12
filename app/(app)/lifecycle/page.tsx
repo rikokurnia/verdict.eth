@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo } from '@/components/app/asset-identity';
+import { AssetLogo, EnsLogo } from '@/components/app/asset-identity';
 import { ColoredScore } from '@/components/app/status-badge';
 import { DEMO_ASSETS, type DemoAsset } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
@@ -207,7 +207,10 @@ export default function LifecyclePage() {
                           <span className="v-asset-name">{row.title}</span>
                           <span className="v-asset-badge">{row.ticker}</span>
                         </div>
-                        <div className="v-cell-sub" style={{ marginTop: 2 }}>{row.asset.issuer}</div>
+                        <div className="v-cell-sub" style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <EnsLogo size={12} />
+                          <span>{row.asset.name}</span>
+                        </div>
                       </div>
                     </div>
                   </td>

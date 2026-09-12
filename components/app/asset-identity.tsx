@@ -25,6 +25,39 @@ export function AssetLogo({ asset, size = 42 }: { asset: DemoAsset; size?: numbe
   return <span className="v-asset-logo" style={{ width: size, height: size }}><Image src={asset.logo} alt={`${asset.title} logo`} width={size} height={size} sizes={`${size}px`} /></span>;
 }
 
+export function EnsLogo({
+  size = 14,
+  className = '',
+  style,
+}: {
+  size?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <img
+      src="/assets/ens.svg"
+      alt="ENS"
+      width={size}
+      height={size}
+      loading="lazy"
+      style={{
+        width: size,
+        height: size,
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        flexShrink: 0,
+        borderRadius: size >= 16 ? 4 : 3,
+        ...style,
+      }}
+      className={className}
+      aria-hidden="true"
+    />
+  );
+}
+
+
+
 const CHAIN_ICON_SLUGS: Record<NetworkId, string> = {
   ethereum: 'ethereum',
   // Sepolia has no icon on the CDN — it is Ethereum testnet, so the real
