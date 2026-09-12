@@ -196,6 +196,9 @@
   top: 48px;
   height: calc(100% - 90px) !important;
 }
+.flowShell :global(.react-flow__node) {
+  pointer-events: auto !important;
+}
 /* The landing-page media reset otherwise collapses React Flow's edge SVGs to zero width. */
 .flowShell :global(.react-flow__edges svg) {
   max-width: none;
@@ -319,16 +322,42 @@
 .ensLink {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 28px;
-  font: 11px var(--font-mono);
-  color: #a9c4da;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  margin: 4px 0 2px;
+  background: rgba(82, 152, 255, 0.1);
+  border: 1px solid rgba(82, 152, 255, 0.28);
+  border-radius: 6px;
+  font: 11px / 1.3 var(--font-mono);
+  color: #c0deff;
   text-decoration: none;
   overflow-wrap: anywhere;
-  transition: color 0.15s ease;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 20;
+  transition: all 0.18s ease-in-out;
+  user-select: text;
 }
 .ensLink:hover {
-  color: #5298ff;
+  background: rgba(82, 152, 255, 0.25);
+  border-color: #5298ff;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(82, 152, 255, 0.45);
+  transform: translateY(-1px);
+}
+.ensLink:active {
+  transform: translateY(0);
+  background: rgba(82, 152, 255, 0.35);
+}
+.ensLinkIcon {
+  color: #7ab8ff;
+  transition: transform 0.18s ease, color 0.18s ease;
+  flex-shrink: 0;
+}
+.ensLink:hover .ensLinkIcon {
+  color: #ffffff;
+  transform: translate(1px, -1px);
 }
 .nodeScore {
   position: absolute;

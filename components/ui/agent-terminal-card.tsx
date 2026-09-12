@@ -91,13 +91,16 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
           <a
             href={ENS_EXPLORER_NAME_URL(data.ensName)}
             target="_blank"
-            rel="noreferrer"
-            className={styles.ensLink}
+            rel="noopener noreferrer"
+            className={`${styles.ensLink} nodrag nopan`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             title={`View ${data.ensName} on app.ens.domains`}
           >
             <EnsLogo size={13} />
             <span>{data.ensName}</span>
-            <ExternalLink size={11} aria-hidden="true" />
+            <ExternalLink size={11} className={styles.ensLinkIcon} aria-hidden="true" />
           </a>
         </div>
         {typeof data.score === "number" ? (
