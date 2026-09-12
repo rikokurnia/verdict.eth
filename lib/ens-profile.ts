@@ -37,6 +37,7 @@ export const PROFILE_KEYS = [
   'verdict.quartet.reason',
   'verdict.quartet.summary',
   'verdict.quartet.runAt',
+  'verdict.quartet.validity',
   'verdict.quartet.sourceHash',
 ];
 

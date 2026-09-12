@@ -1,14 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
 import StatusChip from '@/components/app/status-chip';
+import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
 import type { LifecycleProofs } from '@/lib/lifecycle-proofs';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 
 type LoadState = 'loading' | 'ready' | 'error';
+type ScoreRow = { score: number | null; status: string; reason: string; runAt: number | null; validityDays: number | null };
+type ActivityTx = { hash: string; blockNumber: number; timestamp: string; from: string; method: string; contract: string };
 
 function formatDate(timestamp: number) {
   return new Date(timestamp * 1000).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
@@ -29,18 +32,40 @@ function shortHash(value: string | undefined) {
 export default function LifecyclePage() {
   const [live, setLive] = useState<VerdictApiResponse | null>(null);
   const [proofs, setProofs] = useState<LifecycleProofs | null>(null);
+  const [radar, setRadar] = useState<{ marketId: string; ticker: string; title: string; score: ScoreRow }[]>([]);
+  const [activity, setActivity] = useState<ActivityTx[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
 
   const refresh = useCallback(async () => {
     setLoadState('loading');
     try {
-      const [verdictResponse, proofsResponse] = await Promise.all([
+      const [verdictResponse, proofsResponse, scoresResponse, activityResponse] = await Promise.all([
         fetch('/api/verdict', { cache: 'no-store' }),
         fetch('/api/lifecycle-proofs', { cache: 'no-store' }),
+        fetch('/api/rwa-scores', { cache: 'no-store' }),
+        fetch('/api/activity', { cache: 'no-store' }),
       ]);
       if (!verdictResponse.ok) throw new Error('resolver unavailable');
       setLive((await verdictResponse.json()) as VerdictApiResponse);
       if (proofsResponse.ok) setProofs((await proofsResponse.json()) as LifecycleProofs);
+      if (scoresResponse.ok) {
+        const body = (await scoresResponse.json()) as { ok: boolean; scores: Record<string, ScoreRow> };
+        if (body.ok) {
+          const rows = DEMO_ASSETS.filter((a) => a.marketId && body.scores[a.marketId]).map((a) => ({
+            marketId: a.marketId as string,
+            ticker: a.ticker,
+            title: a.title,
+            score: body.scores[a.marketId as string],
+          }));
+          const horizon = (r: ScoreRow) => (r.runAt && r.validityDays ? r.runAt + r.validityDays * 86_400 : Number.MAX_SAFE_INTEGER);
+          rows.sort((x, y) => horizon(x.score) - horizon(y.score));
+          setRadar(rows);
+        }
+      }
+      if (activityResponse.ok) {
+        const body = (await activityResponse.json()) as { ok: boolean; transactions: ActivityTx[] };
+        if (body.ok) setActivity(body.transactions);
+      }
       setLoadState('ready');
     } catch {
       setLoadState('error');
@@ -151,10 +176,65 @@ export default function LifecyclePage() {
             <dt>Asset resolver</dt><dd className="v-mono"><a href={`${explorer}/address/${assetResolver}`} target="_blank" rel="noreferrer">{shortHash(assetResolver)} ↗</a></dd>
             <dt>Audit branch</dt><dd className="v-mono">{auditSource?.name} · <a href={`${explorer}/address/${auditSource?.resolver}`} target="_blank" rel="noreferrer">{shortHash(auditSource?.resolver)} ↗</a></dd>
             <dt>Risk branch</dt><dd className="v-mono">{observationSource?.name} · <a href={`${explorer}/address/${observationSource?.resolver}`} target="_blank" rel="noreferrer">{shortHash(observationSource?.resolver)} ↗</a></dd>
-            <dt>AI confidence</dt><dd>{live.audit?.ai.confidence ?? '—'}%</dd>
+            <dt>Heartbeat</dt><dd>{live.evidence.fresh ? 'fresh' : 'stale'}</dd>
           </dl>
         </div>
       )}
+
+      <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
+        <div className="v-card-header">
+          <div>
+            <div className="v-card-tag">RENEWAL RADAR</div>
+            <h3 className="v-section-title">Conclusion horizons · all 20 assets</h3>
+            <p className="v-muted">Each onchain conclusion carries its validity window. Expiring soon? Re-score from the radar or inspect in depth.</p>
+          </div>
+        </div>
+        <div className="v-table-wrap">
+          <table className="v-table">
+            <thead><tr><th>Asset</th><th>Conclusion</th><th>Expires in</th><th><span className="v-visually-hidden">Action</span></th></tr></thead>
+            <tbody>
+              {radar.map((row) => {
+                const expiresAt = row.score.runAt && row.score.validityDays ? row.score.runAt + row.score.validityDays * 86_400 : null;
+                const left = expiresAt === null ? null : Math.floor((expiresAt - now) / 86_400);
+                return (
+                  <tr key={row.marketId}>
+                    <td><span className="v-asset-name">{row.title}</span> <span className="v-asset-badge">{row.ticker}</span></td>
+                    <td><StatusChip state={row.score.status === 'PASS' ? 'POLICY_PASS' : row.score.status === 'WARN' ? 'REVIEW' : row.score.status === 'FAIL' ? 'BLOCKED' : 'UNAVAILABLE'} /> <span className="v-cell-sub">{row.score.score ?? '—'}/100</span></td>
+                    <td>{left === null ? '—' : left < 0 ? <span className="v-block-t">expired {Math.abs(left)}d ago</span> : left === 0 ? 'today' : `${left}d`}</td>
+                    <td><a className="v-btn-detail" href={`/agents/inspect/${encodeURIComponent(row.marketId)}`}>Inspect<ArrowUpRight size={13} aria-hidden="true" /></a></td>
+                  </tr>
+                );
+              })}
+              {!radar.length && <tr><td colSpan={4} className="v-table-empty">No scored conclusions yet — run a curator refresh from the radar.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="v-card v-glass-card v-fullwidth-card" style={{ marginTop: 16 }}>
+        <div className="v-card-header">
+          <div>
+            <div className="v-card-tag">ONCHAIN ACTIVITY</div>
+            <h3 className="v-section-title">Live Sepolia writes</h3>
+            <p className="v-muted">Every record write, registration, and role change across Verdict contracts.</p>
+          </div>
+        </div>
+        <div className="v-activity-list">
+          {activity.map((tx) => (
+            <div className="v-activity-item" key={`${tx.hash}-${tx.contract}`}>
+              <div className="v-activity-left">
+                <span className="v-activity-badge">{tx.contract}</span>
+                <div className="v-activity-desc v-mono">{tx.method} · from {shortHash(tx.from)}</div>
+              </div>
+              <div className="v-activity-meta">
+                <span>{tx.timestamp ? new Date(tx.timestamp).toLocaleString() : `block ${tx.blockNumber}`}</span>
+                <a className="v-mono" href={`${explorer}/tx/${tx.hash}`} target="_blank" rel="noreferrer">{shortHash(tx.hash)} ↗</a>
+              </div>
+            </div>
+          ))}
+          {!activity.length && <p className="v-muted">No recent writes indexed — activity appears here as the loop runs.</p>}
+        </div>
+      </div>
 
       <p className="v-muted" style={{ marginTop: 16 }}>
         All four states resolve live from ENSv2 at a pinned source block: expiring audit, revocable

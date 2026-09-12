@@ -16,6 +16,7 @@ const KEYS = [
   'verdict.quartet.reason',
   'verdict.quartet.summary',
   'verdict.quartet.runAt',
+  'verdict.quartet.validity',
   'verdict.quartet.sourceHash',
 ] as const;
 
@@ -26,6 +27,7 @@ export type RwaScore = {
   reason: string;
   summary: string;
   runAt: number | null;
+  validityDays: number | null;
   sourceHash: string;
 };
 
@@ -47,9 +49,10 @@ async function readScore(universal: Contract, name: string, blockTag: number): P
       }
     }),
   );
-  const [score, status, policy, reason, summary, runAt, sourceHash] = rows;
+  const [score, status, policy, reason, summary, runAt, validity, sourceHash] = rows;
   const parsedScore = Number(score);
   const parsedRunAt = Number(runAt);
+  const parsedValidity = Number(validity);
   return {
     score: Number.isFinite(parsedScore) && score !== '' ? parsedScore : null,
     status,
@@ -57,6 +60,7 @@ async function readScore(universal: Contract, name: string, blockTag: number): P
     reason,
     summary,
     runAt: Number.isFinite(parsedRunAt) && runAt !== '' ? parsedRunAt : null,
+    validityDays: Number.isFinite(parsedValidity) && validity !== '' ? parsedValidity : null,
     sourceHash,
   };
 }

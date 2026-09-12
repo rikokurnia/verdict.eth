@@ -351,6 +351,7 @@ export async function writeQuartetSnapshot(marketId: string, synthesis: Synthesi
     'verdict.quartet.reason': synthesis.mapped.reasonCode,
     'verdict.quartet.summary': synthesis.reasoning_summary.slice(0, 280),
     'verdict.quartet.runAt': String(now),
+    'verdict.quartet.validity': String(synthesis.mapped.validityDays),
     'verdict.quartet.sourceHash': sourceHash,
   };
   const contract = new Contract(ENSV2_SEPOLIA.proxies.namespaceResolver, QUARTET_RESOLVER_ABI, wallet);
