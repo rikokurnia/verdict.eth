@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
+import { findDeployment } from '@/lib/custom-agent-store';
+import { AgentIdentityProof } from '@/components/app/agent-identity-proof';
 
 export type VerifiedCustomAgent = { name: string; owner: string; policy: string; context: string; sourceBlock: number };
 
@@ -42,9 +43,14 @@ export function CustomAgentPicker({ names, selected, running, onSelect, onVerifi
     </p>
     {error && <button type="button" onClick={() => setRetry((value) => value + 1)} disabled={running || loading}>Retry ENS verification</button>}
     {agent && <div style={{ fontSize: 12, overflowWrap: 'anywhere' }}>
-      <a href={ENS_EXPLORER_NAME_URL(agent.name)} target="_blank" rel="noreferrer">View agent in ENS Explorer ↗</a>
-      <p>Owner: {agent.owner}</p>
-      <p>Policy: {agent.policy}</p>
+      <AgentIdentityProof
+        subname={agent.name}
+        owner={agent.owner}
+        registerTx={findDeployment(agent.name)?.register ?? null}
+        recordsTx={findDeployment(agent.name)?.records ?? null}
+        compact
+      />
+      <p style={{ marginTop: 8 }}>Policy: {agent.policy}</p>
       <p>This lens applies to Consensus after the three inspectors report. Owner and policy are re-read before every run.</p>
     </div>}
     <p style={{ fontSize: 11, opacity: 0.7 }}>Saved names are browser- and domain-local, not chain verification. A different browser/domain won’t share this list. Policies are public ENS records.</p>

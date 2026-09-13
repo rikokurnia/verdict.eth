@@ -3,12 +3,18 @@ import { join } from 'node:path';
 import { Contract, Interface, JsonRpcProvider, Wallet, dnsEncode, keccak256, namehash, toUtf8Bytes, verifyMessage } from 'ethers';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
 import { validCustomAgentName } from '@/lib/custom-agent-store';
+import {
+  AUDITOR_BRANCH_BITMAP,
+  AUDITOR_BRANCH_ROLES,
+  MAX_POLICY_CHARS,
+  SUBNAME_LIFETIME_SECONDS,
+  ZERO_ADDRESS,
+} from '@/lib/auditor-branch-policy';
+export { AUDITOR_BRANCH_BITMAP, AUDITOR_BRANCH_ROLES };
 export { validLabel, mintMessage, parseMintMessage } from '@/lib/agent-mint-request';
 export { sponsoredMintEnabled } from '@/lib/agent-relayer-config';
 
 /** Least-privilege auditor branch: owner may set text records on their own name, and delegate that. */
-export const AUDITOR_BRANCH_BITMAP = (BigInt(1) << BigInt(4)) | ((BigInt(1) << BigInt(4)) << BigInt(128));
-export const AUDITOR_BRANCH_ROLES = 'ROLE_SET_TEXT (bit 4) + ROLE_SET_TEXT_ADMIN (bit 132), name-scoped';
 
 const REGISTRY_ABI = [
   'function register(string label,address owner,address registry,address resolver,uint256 roleBitmap,uint64 expiry) returns (uint256)',
@@ -23,10 +29,6 @@ const RESOLVER_ABI = [
 const UNIVERSAL_ABI = ['function resolve(bytes name,bytes data) view returns (bytes result,address resolver)'];
 const TEXT_ABI = ['function text(bytes32 node,string key) view returns (string)'];
 const textInterface = new Interface(TEXT_ABI);
-
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-const SUBNAME_LIFETIME = BigInt(180 * 86_400);
-const MAX_POLICY_CHARS = 2000;
 
 function loadEnvFile(): Record<string, string> {
   try {
@@ -131,7 +133,7 @@ export async function mintAuditorBranch(label: string, owner: string, policy: st
     throw new Error('The sponsored relayer needs Sepolia ETH. Please fund the operator wallet.');
   }
   const subname = `${label}.verdict.eth`;
-  const expiry = BigInt(Math.floor(Date.now() / 1000)) + SUBNAME_LIFETIME;
+  const expiry = BigInt(Math.floor(Date.now() / 1000)) + SUBNAME_LIFETIME_SECONDS;
 
   const registry = new Contract(ENSV2_SEPOLIA.proxies.verdictRegistry, REGISTRY_ABI, wallet);
   const id = BigInt(keccak256(toUtf8Bytes(label)));

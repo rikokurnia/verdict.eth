@@ -5,10 +5,14 @@ import { ArrowUpRight, Check, ShieldCheck, Wallet } from "lucide-react";
 import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
 import { signAgentDeployment } from "@/lib/agent-wallet-signing";
+import { selfDeployAuditorBranch, type SelfDeployPhase } from "@/lib/agent-self-deploy";
+import { AUDITOR_BRANCH_BITMAP, AUDITOR_BRANCH_ROLES } from "@/lib/auditor-branch-policy";
+import type { ToastKind } from "@/components/app/toast";
+import { AgentIdentityProof } from "@/components/app/agent-identity-proof";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
 import { ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
-import { rememberCustomAgent } from '@/lib/custom-agent-store';
+import { loadDeployments, rememberCustomAgent, rememberDeployment, type DeploymentRecord } from '@/lib/custom-agent-store';
 
 const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
@@ -42,8 +46,10 @@ function shortHash(value: string) {
 
 export default function AgentFactory({
   onMinted,
+  onNotify,
 }: {
   onMinted?: (subname: string) => void;
+  onNotify?: (kind: ToastKind, title: string, body: string) => void;
 }) {
   const { account, isConnected, connect } = useWallet();
   const { wallets } = useWallets();
@@ -56,6 +62,8 @@ export default function AgentFactory({
   const [deploying, setDeploying] = useState(false);
   const [deploymentEnabled, setDeploymentEnabled] = useState(true);
   const [deployPhase, setDeployPhase] = useState("Confirm in wallet…");
+  const [deployMode, setDeployMode] = useState<'sponsored' | 'self-pay'>('sponsored');
+  const [deployments, setDeployments] = useState<DeploymentRecord[]>([]);
   const deployLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<MintConfirmation | null>(
@@ -114,6 +122,94 @@ export default function AgentFactory({
     };
   }, [clean, checkAvailability]);
 
+  useEffect(() => {
+    try {
+      setDeployments(loadDeployments());
+    } catch {
+      // Private mode: this page session still works, list just won't persist.
+    }
+  }, []);
+
+  function finishMint(mint: MintConfirmation, mode: 'sponsored' | 'self-pay') {
+    setConfirmation(mint);
+    try {
+      setDeployments(rememberDeployment({
+        subname: mint.subname,
+        owner: mint.owner,
+        register: mint.transactions.register,
+        records: mint.transactions.records,
+        mode,
+      }));
+    } catch {
+      rememberCustomAgent(mint.subname);
+    }
+    onMinted?.(mint.subname);
+    onNotify?.(
+      'pass',
+      mode === 'sponsored' ? 'Agent deployed · gas sponsored' : 'Agent deployed · self-paid',
+      `${mint.subname} is live on ENS. Select it below in Custom lens to run the quartet through your rules.`,
+    );
+    void checkAvailability(clean);
+  }
+
+  function sponsoredUnavailable(error: unknown, status?: number) {
+    if (status === 503 || status === 429) return true;
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    return /sponsor|relayer|keystore|decrypt|not configured|operator must enable/i.test(message);
+  }
+
+  async function deploySelfPay(
+    wallet: { getEthereumProvider: () => Promise<unknown> },
+    owner: string,
+    cleanPolicy: string,
+  ) {
+    setDeployMode('self-pay');
+    const phases: Record<SelfDeployPhase, string> = {
+      'checking-wallet': 'Checking wallet & Sepolia ETH…',
+      registering: 'Confirm registration in wallet…',
+      'publishing-policy': 'Confirm policy publish in wallet…',
+      confirming: 'Reading back onchain proof…',
+    };
+    const result = await selfDeployAuditorBranch(
+      (await wallet.getEthereumProvider()) as never,
+      clean,
+      owner,
+      cleanPolicy,
+      (phase) => setDeployPhase(phases[phase]),
+    );
+    // Read back the live branch as mint proof (public records, short poll).
+    let proof: { owner: string; policy: string; context: string } | null = null;
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      try {
+        const response = await fetch(`/api/agents/custom?name=${encodeURIComponent(result.subname)}`, { cache: 'no-store' });
+        const body = (await response.json()) as { ok: boolean; agent?: { owner: string; policy: string; context: string } };
+        if (response.ok && body.ok && body.agent
+          && body.agent.owner.toLowerCase() === owner.toLowerCase()
+          && body.agent.policy === cleanPolicy) {
+          proof = body.agent;
+          break;
+        }
+      } catch {
+        // Indexer/RPC lag — retry.
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+    if (!proof) {
+      throw new Error(
+        `Transactions confirmed (${result.register.hash.slice(0, 10)}…, ${result.records.hash.slice(0, 10)}…) but the live read-back is lagging. Your agent exists — retry verification from Custom lens in a minute.`,
+      );
+    }
+    finishMint({
+      subname: result.subname,
+      owner,
+      roles: AUDITOR_BRANCH_ROLES,
+      roleBitmap: `0x${AUDITOR_BRANCH_BITMAP.toString(16)}`,
+      transactions: { register: result.register, records: result.records },
+      policy: proof.policy,
+      context: proof.context,
+    }, 'self-pay');
+  }
+
   async function deploy() {
     if (deployLock.current) return;
     setError(null);
@@ -136,10 +232,17 @@ export default function AgentFactory({
     }
     deployLock.current = true;
     setDeploying(true);
+    setDeployMode('sponsored');
     setDeployPhase("Confirm in wallet…");
     try {
       const cleanPolicy = policy.trim();
-      const { owner, message, signature } = await signAgentDeployment(
+      const owner = wallet.address;
+      // Self-pay first when the sponsored relayer is known to be off.
+      if (!deploymentEnabled) {
+        await deploySelfPay(wallet, owner, cleanPolicy);
+        return;
+      }
+      const { message, signature } = await signAgentDeployment(
         await wallet.getEthereumProvider(), wallet.address, clean, cleanPolicy,
       );
       setDeployPhase("Registering ENS agent…");
@@ -159,14 +262,23 @@ export default function AgentFactory({
         mint?: MintConfirmation;
         error?: string;
       };
-      if (!response.ok || !body.ok || !body.mint)
-        throw new Error(body.error ?? "Mint failed");
-      setConfirmation(body.mint);
-      rememberCustomAgent(body.mint.subname);
-      onMinted?.(body.mint.subname);
-      void checkAvailability(clean);
+      if (!response.ok || !body.ok || !body.mint) {
+        const failure = new Error(body.error ?? "Mint failed");
+        // Sponsored path down (e.g. broken relayer keystore on a hosted
+        // deployment) — fall back to the user's own wallet paying gas.
+        if (sponsoredUnavailable(failure, response.status)) {
+          onNotify?.('info', 'Sponsored relayer unavailable', 'Falling back to your wallet — you pay Sepolia gas, same onchain result.');
+          await deploySelfPay(wallet, owner, cleanPolicy);
+          return;
+        }
+        throw failure;
+      }
+      setDeployMode('sponsored');
+      finishMint(body.mint, 'sponsored');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Mint failed");
+      const message = err instanceof Error ? err.message : "Mint failed";
+      setError(message);
+      onNotify?.('blocked', 'Agent deployment failed', message);
     } finally {
       deployLock.current = false;
       setDeploying(false);
@@ -195,7 +307,7 @@ export default function AgentFactory({
             Give your investment thesis an onchain identity. The fleet inspects
             through your lens.
           </p>
-          <small>ENSv2 · SPONSORED DEPLOYMENT</small>
+          <small>ENSv2 · SPONSORED OR SELF-PAID</small>
         </div>
       </aside>
       <div className={s.factoryForm}>
@@ -206,8 +318,9 @@ export default function AgentFactory({
             <p className="v-muted">
               Claim <span className="v-mono">[name].verdict.eth</span> with your
               wallet as owner, publish your audit policy onchain, then run the
-              quartet through your lens. Confirm one signature in your wallet;
-              the relayer pays Sepolia gas to register ENS and publish your policy.
+              quartet through your lens. Sponsored (gasless) when the relayer
+              is configured — otherwise your wallet pays Sepolia gas for the
+              same two onchain steps.
             </p>
           </div>
         </div>
@@ -389,7 +502,6 @@ export default function AgentFactory({
               onClick={() => void deploy()}
               disabled={
                 deploying ||
-                !deploymentEnabled ||
                 !labelValid ||
                 policy.trim().length < 20 ||
                 availability.state !== "free"
@@ -397,7 +509,7 @@ export default function AgentFactory({
               aria-busy={deploying}
             >
               {deploying ? (
-                deployPhase
+                <span className={s.deployingPulse}>{deployPhase}</span>
               ) : (
                 <>
                   <Wallet
@@ -405,7 +517,7 @@ export default function AgentFactory({
                     aria-hidden="true"
                     style={{ marginRight: 6 }}
                   />
-                  Deploy agent
+                  {!deploymentEnabled ? "Deploy agent · you pay gas" : "Deploy agent"}
                 </>
               )}
             </button>
@@ -428,14 +540,56 @@ export default function AgentFactory({
           )}
         </div>
         {!deploymentEnabled && (
-          <p className="v-block-t" role="status" style={{ marginTop: 8 }}>
-            Sponsored deployment is not configured on this server. The operator must enable the Vercel relayer.
+          <p className="v-cell-sub" role="status" style={{ marginTop: 8 }}>
+            Sponsored (gasless) deployment is off on this server — deploying
+            with your wallet instead. You pay Sepolia gas; the onchain result
+            is identical.
           </p>
         )}
         {error && (
           <p className="v-block-t" role="alert" style={{ marginTop: 8 }}>
             {error}
           </p>
+        )}
+
+        {deployments.length > 0 && (
+          <div
+            className="v-verification-panel"
+            style={{ marginTop: 14 }}
+            aria-live="polite"
+            aria-label="Your deployed agents in this browser"
+          >
+            <div>
+              <div className="v-label">Your agents · this browser only</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+                {deployments.map((d) => (
+                  <div key={d.subname}>
+                    <AgentIdentityProof
+                      subname={d.subname}
+                      owner={d.owner}
+                      registerTx={d.register}
+                      recordsTx={d.records}
+                      compact
+                    />
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+                      <span className="v-cell-sub">
+                        {d.mode === 'sponsored' ? 'gas sponsored' : 'self-paid'} · {new Date(d.deployedAt).toLocaleString()}
+                      </span>
+                      <button
+                        type="button"
+                        className="v-btn v-btn-secondary"
+                        style={{ padding: '4px 12px', fontSize: 12, height: 'auto' }}
+                        onClick={() => onMinted?.(d.subname)}
+                        title={`Run the quartet through ${d.subname}`}
+                      >
+                        Use as custom lens
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
 
         {confirmation && (
@@ -445,15 +599,23 @@ export default function AgentFactory({
             aria-live="polite"
           >
             <div>
-              <div className="v-label">Deployed · proof below</div>
-              <h3>
-                {confirmation.subname}{" "}
-                <Check
-                  size={16}
-                  aria-hidden="true"
-                  style={{ verticalAlign: -2 }}
+              <div className="v-label">
+                Deployed · {deployMode === 'sponsored' ? 'gas sponsored' : 'self-paid'} · proof below
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0 4px' }}>
+                <span className={s.deploySuccess} aria-hidden="true">
+                  <Check size={22} />
+                </span>
+                <h3 style={{ margin: 0 }}>{confirmation.subname}</h3>
+              </div>
+              <div style={{ margin: '10px 0' }}>
+                <AgentIdentityProof
+                  subname={confirmation.subname}
+                  owner={confirmation.owner}
+                  registerTx={confirmation.transactions.register}
+                  recordsTx={confirmation.transactions.records}
                 />
-              </h3>
+              </div>
               <dl className="v-kv" style={{ marginTop: 10 }}>
                 <dt>Deployed subname</dt>
                 <dd className="v-mono">{confirmation.subname}</dd>

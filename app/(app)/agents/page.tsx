@@ -3,8 +3,10 @@
 import { PageHead } from "@/components/app/app-shell";
 import AgentFactory from "@/components/app/agent-factory";
 import AgentQuartet from "@/components/app/agent-quartet";
+import { ToastStack, useToasts } from "@/components/app/toast";
 
 export default function AgentsPage() {
+  const { toasts, push } = useToasts();
   return (
     <>
       <PageHead
@@ -12,8 +14,9 @@ export default function AgentsPage() {
         sub="Commission your auditor. Watch specialized offchain agents turn evidence into an onchain decision."
       />
 
-      <AgentFactory />
+      <AgentFactory onNotify={push} />
       <AgentQuartet />
+      <ToastStack toasts={toasts} />
     </>
   );
 }
