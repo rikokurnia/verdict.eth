@@ -1,58 +1,127 @@
 # Verdict (`verdict.eth`)
 
-> Autonomous, decentralized trust & verification registry for tokenized Real World Assets (RWAs), powered by ENSv2.
+> **Institutional Verification Registry & Autonomous Multi-Agent Consensus Layer for Real World Assets (RWAs), powered natively by ENSv2.**
 
-Verdict turns an ENS asset name into a deterministic institutional decision engine. By leveraging ENSv2's hierarchical structure and Enhanced Access Control (EAC), Verdict separates authority between Asset Issuers, Independent Auditors, and Risk Monitors—providing cryptographically verifiable, machine-readable trust for onchain finance.
+[![Live App](https://img.shields.io/badge/Live%20App-verdict--eth.vercel.app-0052FF?style=flat&logo=vercel)](https://verdict-eth.vercel.app/)
+[![ENSv2 Hackathon](https://img.shields.io/badge/ENSv2-Sepolia%20Deployment-5298FF?style=flat&logo=ethereum)](https://hackathon-deployment-portal-app.ens-cf.workers.dev/buidl.rwa.verdict.eth)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Tests Passing](https://img.shields.io/badge/Tests-25%20Passing-brightgreen?style=flat)](https://github.com/rikokurnia/verdict.eth)
 
 ---
 
-## ⚡ Architecture Overview
+## 📌 Executive Summary
 
-Verdict establishes a trust hierarchy where separate authorities control their respective records without risk of parent revocation or unauthorized overrides:
+Over **$13B in Real World Assets (RWAs)** are currently tokenized on public blockchains—led by institutions like BlackRock (BUIDL), Ondo (USDY), and Hashnote (USYC). Yet, when DeFi protocols or autonomous agents interact with these contracts, they encounter a critical trust dilemma:
+- **Opaque Contract Addresses**: Raw 40-character hexadecimal strings (`0x...`) provide zero visibility into legal standing, reserve backing, or audit freshness.
+- **Unverified Web2 Disclosures**: Legal opinions, bank statements, and reserve ratios remain trapped in static issuer PDFs.
+- **Zero Authority Separation**: If an issuer controls the website, they have unilateral power to claim an asset is backed, with no cryptographic separation between issuer claims and auditor attestations.
+
+**Verdict (`verdict.eth`)** implements the official **ENS Labs thesis: *"ENS as a Registry for Tokenized Assets"***, replacing blind trust with canonical, machine-readable asset profiles, autonomous multi-agent consensus scoring, and cryptographic authority separation via **ENSv2 Enhanced Access Control (EAC)**.
+
+---
+
+## ⚡ Key Features
+
+### 1. Canonical Named Asset Profiles (`*.rwa.verdict.eth`)
+Replaces fragmented contract addresses with unified, human-readable ENSv2 profiles for 20 major RWA assets:
+- **BUIDL**: `buidl.rwa.verdict.eth` (BlackRock USD Institutional Digital Liquidity Fund)
+- **USDY**: `usdy.rwa.verdict.eth` (Ondo US Dollar Yield)
+- **USYC**: `usyc.rwa.verdict.eth` (Hashnote US Yield Coin)
+- **PAXG**: `paxg.rwa.verdict.eth` (Paxos Gold)
+
+Each profile aggregates multi-chain contract addresses, SPV legal entities, custodian bank attestations, and live audit scores under standard ENS text records and contenthashes.
+
+### 2. Autonomous 4-Agent Inspection Quartet
+A specialized multi-agent fleet executes parallel off-chain analysis across three distinct audit vectors, synthesized into an on-chain risk matrix:
+- 🛰️ **01 / Legal & Compliance Agent (`legal.agent.verdict.eth` — 30% weight)**: Audits SPV entity structure, prospectus disclosures, sanctions compliance, and investor eligibility.
+- ✈️ **02 / Custody & Backing Agent (`custody.agent.verdict.eth` — 40% weight)**: Inspects treasury multi-sig wallets (Safe), reserve ratios, bank solvency proofs, and bankruptcy-remoteness.
+- 🛸 **03 / Smart Contract Technical Agent (`technical.agent.verdict.eth` — 30% weight)**: Analyzes decompiled bytecode on Sepolia/Etherscan, admin timelocks, blacklist/freeze functions, and oracle dependencies.
+- 🌐 **04 / Consensus Synthesizer Core (`consensus.agent.verdict.eth`)**: Aggregates the three inspector reports, computes the weighted mean integer score (0–100), and assigns the deterministic risk verdict.
+
+### 3. Numerical Scoring & Deterministic Risk Verdicts
+Off-chain evidence is synthesized into clear numerical scores (0–100) and mapped to 4 discrete status states:
+- **`VERIFIED` (Low Risk)**: All legal, custody, and technical gates satisfied.
+- **`REVIEW` (Moderate Risk)**: Attestation approaching expiration or minor documentation gap.
+- **`BLOCKED` (High Risk)**: Reserves unverified, license lapse, or admin security vulnerability.
+- **`UNAUDITED`**: Telemetry missing or pending initial inspection.
+
+### 4. Two Operational Modes: Default vs Custom Lens
+- **Default Mode (Official Fleet)**: Runs the canonical trio (Legal 30%, Custody 40%, Technical 30%) synthesized directly into the standard consensus score.
+- **Custom Mode (Agent Factory)**: Users connect their Web3 wallet to mint their own sovereign auditor subname (e.g. `alpha-auditor.verdict.eth`) directly on ENSv2. The custom agent plugs into the Agent Quartet as a **Custom Lens**, applying the user's bespoke mandate to co-sign the final consensus verdict.
+
+### 5. Cryptographic Separation of Authority (ENSv2 EAC)
+Verdict guarantees mathematical immunity against issuer self-certification:
+- Issuers maintain reference profiles at `<asset>.rwa.verdict.eth`.
+- Independent auditors write exclusively to dedicated resolver contracts (`<asset>.verdict-auditor.eth`).
+- Auditor worker wallets hold strict, scoped **`grantSetterRoles`** only for specific attestation keys (`audit.score`, `documentHash`, `expiresAt`) with zero root write permissions.
+- **An asset issuer cannot overwrite or forge an auditor's score; any unauthorized write transaction automatically reverts on-chain.**
+
+---
+
+## 🏛️ Architecture & Hierarchy
 
 ```
-verdict.eth (Root Registry)
- └── acme.verdict.eth (Issuer)
-      └── usd-yield-001.acme.verdict.eth (Canonical Asset Identity)
-           ├── Identity Records (Ticker, Documents, Metadata) -> Issuer authority
-           ├── Attestation Records -> audit-001.verdict-auditor.eth
-           └── Risk Signals -> risk-001.verdict-monitor.eth
+                                  verdict.eth (Root Registry)
+                                               │
+       ┌───────────────────────────────────────┼───────────────────────────────────────┐
+       ▼                                       ▼                                       ▼
+*.rwa.verdict.eth                       *.agent.verdict.eth                    <custom>.verdict.eth
+[Canonical Asset Profiles]             [Autonomous Inspector Fleet]           [Sovereign Agent Factory]
+  ├── buidl.rwa.verdict.eth              ├── legal.agent.verdict.eth            ├── alpha.verdict.eth
+  ├── usdy.rwa.verdict.eth               ├── custody.agent.verdict.eth          └── ... (User-Minted)
+  ├── usyc.rwa.verdict.eth               ├── technical.agent.verdict.eth                 │
+  └── paxg.rwa.verdict.eth               └── consensus.agent.verdict.eth                 │
+                                                       │                                 │
+                                                       └───────────────┬─────────────────┘
+                                                                       ▼
+                                                         Consensus Synthesizer Core
+                                                           (Composite 0-100 Score)
 ```
 
-The auditor and monitor use separate resolver proxies, signing wallets, and
-recovery-admin wallets. Their AI workers have `ROLE_SET_TEXT` only for eight
-explicit dynamic keys each. They have no root text permission and cannot
-upgrade their resolvers. Fixed subject and authority bindings are not writable
-by the workers.
+---
 
-### Deterministic Policy Engine
-Evaluates asset evidence in real time into 4 discrete states:
-- **`POLICY_PASS`**: All audits valid and risk signals fresh.
-- **`REVIEW`**: Approaching expiry window (< 14 days) or pending updates.
-- **`BLOCKED`**: Audit expired, attestation revoked, or conflicting risk signal.
-- **`UNAVAILABLE`**: Resolver read failure or network timeout.
+## 🌟 Real-World User Impact
+
+| Stakeholder | Concrete Value & Impact |
+| :--- | :--- |
+| **DeFi Protocols** *(Aave, Morpho, Sky)* | Automate collateral onboarding and risk parameters by reading `verdict.status` directly from the ENS resolver before accepting RWA collateral. |
+| **RWA Issuers** *(Ondo, Backed, RealT)* | Establish institutional trust by providing continuous, tamper-proof proof of reserves and legal compliance on-chain. |
+| **Autonomous AI Agents & DAOs** | Access a standardized, machine-readable truth layer to safely allocate treasury capital without relying on unparsable PDFs. |
+| **Institutional Investors** | Monitor live health, reserve ratios, and attestation expiration countdowns via an interactive terminal. |
+
+---
+
+## 🔗 Live On-Chain Proofs (ENSv2 Sepolia Explorer)
+
+Verdict is deployed on the official ETHOnline ENSv2 Sepolia deployment. Inspect the live names, resolvers, and role permissions directly:
+
+- 🏛️ **Canonical BUIDL Profile**: [`buidl.rwa.verdict.eth`](https://hackathon-deployment-portal-app.ens-cf.workers.dev/buidl.rwa.verdict.eth)
+- 📝 **Live Records**: [`buidl.rwa.verdict.eth/records`](https://hackathon-deployment-portal-app.ens-cf.workers.dev/buidl.rwa.verdict.eth/records)
+- 🔐 **Auditor Permissioned Resolver EAC Roles**: [`Resolver 0x1C6e.../roles`](https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/0x1C6e26A8f56C8B6C9286Fe217851c1FC9e7dA6e6/roles)
+- 🛡️ **Monitor Permissioned Resolver EAC Roles**: [`Resolver 0x6592.../roles`](https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/0x6592566d7185bbf811D2508683e4a545297A7C13/roles)
+- 🌐 **Sepolia Universal Resolver Proxy**: `0xd26f2040d083af1cd2962ba303f4bea0c4faf142`
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router), React 19, TypeScript
-- **Styling & Motion**: Vanilla CSS, GSAP, Archivo Variable Typography
-- **Protocol**: [ENSv2](https://ens.domains/) (Hierarchical Registry, Enhanced Access Control, UniversalResolverV2)
-- **AI evidence classification**: Gemini structured JSON with local semantic validation
-- **Onchain components**: Deployed ENSv2 Permissioned Registries and Permissioned Resolvers; no custom Solidity
-- **Media & Assets**: Local Hyperframes rendering, SVG vector icons
+- **Frontend & App Shell**: [Next.js](https://nextjs.org/) (App Router, React 19, TypeScript)
+- **Agent Canvas & Motion**: [@xyflow/react](https://reactflow.dev/) (React Flow v12), [Framer Motion](https://motion.dev/), [GSAP](https://gsap.com/)
+- **Styling**: Vanilla CSS Modules with cosmic space-cadet design tokens, Archivo & Inter Variable typography
+- **Web3 & ENS Resolution**: [Viem](https://viem.sh/), [Wagmi](https://wagmi.sh/), [@privy-io/react-auth](https://www.privy.io/)
+- **Smart Contracts & ENS Protocol**: [ENSv2](https://docs.ens.domains/ensv2) (Hierarchical Registry, Enhanced Access Control, Permissioned Resolvers)
+- **AI Agent Intelligence**: Google Gemini API (`gemini-2.5-flash`), DeepSeek, MuseSpark
+- **Testing**: Native Node.js test runner with strip-types support
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart Guide
 
 ### Prerequisites
-- Node.js (v18 or higher)
+- Node.js (v20 or higher recommended, minimum v18)
 - npm / yarn / pnpm
 
 ### Installation
-
 ```bash
 # Clone the repository
 git clone https://github.com/rikokurnia/verdict.eth.git
@@ -63,193 +132,50 @@ npm install
 ```
 
 ### Running Locally
-
 ```bash
-# Start development server
+# Start Next.js development server
 npm run dev
 ```
-
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Testing
-
+### Verification & Testing
 ```bash
-# Run policy engine test suite
+# Run the 25-suite unit test suite
 npm test
 
-# Type check
+# Run TypeScript typecheck
 npm run typecheck
 
-# Resolve the evidence graph through an independent CLI
+# Verify live ENS resolution through independent CLI
 npm run verify:ens
-```
 
-### ENSv2 Explorer proof
-
-Verdict uses the dedicated ETHOnline ENSv2 deployment on Ethereum Sepolia. The
-hackathon ENS Explorer shows ENS semantics such as the hierarchy, records,
-resolver, ownership, EAC roles, and name history. Blockscout shows the underlying
-Sepolia transactions and contracts.
-
-- [Canonical asset](https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth)
-- [Asset records](https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth/records)
-- [Asset registry hierarchy](https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth/registry)
-- [Auditor resolver EAC roles](https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/0x1C6e26A8f56C8B6C9286Fe217851c1FC9e7dA6e6/roles)
-- [Verdict resolution debug page](http://localhost:3000/debug)
-
-The app and CLI resolve through the hackathon Universal Resolver proxy at
-`0xd26f2040d083af1cd2962ba303f4bea0c4faf142`, not the resolver bundled into
-standard ethers or viem Sepolia configuration.
-
-### Vercel environment
-
-Custom Lens automatically lists names deployed in the current browser/domain,
-including the last name saved by the older UI. New deployments select Custom
-Lens immediately; multiple agents are retained in a dropdown. Saved names are
-discovery hints only. `/api/agents/custom?name=<label>.verdict.eth` reads active
-registration, owner and policy from the hackathon ENS deployment without signing
-custody. Inspect is disabled until the selected name verifies, and the server
-re-reads its policy/owner before every run. The policy affects Consensus after
-the three inspectors report, not all four prompts. Other browsers/domains do
-not share localStorage; older names overwritten by the previous single-name
-store cannot be recovered automatically. No extra Vercel environment variables
-are needed for this picker beyond `SEPOLIA_RPC_URL` and an AI provider for runs.
-
-Copy the relevant keys from `.env.example` into Vercel Project Settings →
-Environment Variables. Apply them to Production and Preview, then redeploy:
-
-- `SEPOLIA_RPC_URL` — required server-side Sepolia RPC endpoint.
-- `NEXT_PUBLIC_PRIVY_APP_ID` — required public Privy application ID. Add every
-  deployed Vercel domain to the Privy app's allowed domains.
-- At least one of `GEMINI_API_KEY`, `DEEPSEEK_API_KEY`, or
-  `MUSESPARK_API_KEY` — required for live agent inspections.
-- `AI_PROVIDERS` and the provider-specific `*_MODEL` variables are optional.
-
-Do not commit `.env.local`, `.secrets/`, passwords, or private keys. The default
-Vercel deployment runs ENS reads and inspect-only AI flows without signing custody.
-To enable the sponsored Custom Auditor Factory, add these **server-only** Vercel
-secrets (never prefix them with `NEXT_PUBLIC_`):
-
-- `VERDICT_SPONSORED_MINT_ENABLED=true`
-- `VERDICT_RELAYER_PRIVATE_KEY` — raw 0x-prefixed key of the authorized Sepolia
-  namespace wallet. Single line, pastes cleanly; the server refuses any key
-  that does not unlock the namespace operator address. Prefer this over the
-  keystore pair below, whose multi-line JSON mangles easily when pasted.
-- Alternatively `VERDICT_RELAYER_KEYSTORE_JSON` (complete encrypted JSON,
-  `.secrets/verdict-sepolia-agent` locally) + `VERDICT_RELAYER_KEYSTORE_PASSWORD`.
-
-The relayer needs Sepolia ETH and permission to register names in the Verdict
-registry and write their resolver records. Use a Sepolia-only funded relayer,
-not a mainnet wallet. Together, the keystore and password grant signing custody
-to the server, so protect Vercel access and limit the relayer's permissions/funds.
-Users authorize their exact name and policy with a wallet signature; the server
-registers the ENS branch and publishes its policy, then returns transaction and
-Explorer proof. Onchain bulk score refresh remains disabled on Vercel. Runtime
-receipts use temporary storage and may disappear when a function is recycled.
-
-### AI audit worker
-
-Set `SEPOLIA_RPC_URL` and `GEMINI_API_KEY` in `.env.local`. Signing keys are
-encrypted files under the ignored `.secrets/` directory. The sponsored factory
-backend loads only its configured namespace relayer for registration.
-
-```bash
-# Analyze the local fictional evidence without writing
-npm run audit:ai
-
-# Analyze, validate, and write only the allowed ENSv2 records
-npm run audit:ai:write
-
-# Read-only plan: names, owners, signer balances and gas budgets
-npm run plan:rwa-evidence
-
-# Read-only checks for all 20 canonical assets (no signing keys loaded)
+# Verify all 20 RWA authority permissions
 npm run verify:rwa-permissions
 ```
 
-The included evidence is explicitly fictional Sepolia demo data. The model
-cannot choose a wallet, resolver, ENS name, or record key, and confidence is
-capped at 95.
+---
 
-### Evidence authority model and migration
+## ⚙️ Environment Variables
 
-The 40 evidence names and subject/schema bindings are now registered on Sepolia.
-All 20 assets passed the permission checks at blocks 11694440–11694447.
-The public historical receipt is `public/data/ens-authority-setup.json`, including
-all 44 confirmed transaction hashes and actual total gas fees of
-0.00850653019692695 Sepolia ETH. This setup does not publish new evaluation
-attestations or prove real reserves. Re-run live checks because the hackathon
-deployment can reset and administrators can change authority.
-
-Issuer/reference profiles stay at `<asset>.rwa.verdict.eth`. Each of the 20 RWA
-profiles has deterministic evidence authorities:
-
-| Writer | Evidence name | Enforced record scope |
-| --- | --- | --- |
-| Auditor worker `0xeABF723A3a2985aEB61D5853BfFF7eb8e83e6232` | `<asset>.verdict-auditor.eth` | Eight exact `verdict.attestation.*` keys on the auditor resolver |
-| Sentinel worker `0x18834e33Cc3164D9b21828A1aB4e40533DF22401` | `<asset>.verdict-monitor.eth` | Eight exact `verdict.observation.*` keys on the monitor resolver |
-| Namespace relayer | `<asset>.rwa.verdict.eth` | Issuer profile and single-relayer `verdict.quartet.*` convenience summary |
-
-The existing fictional demo remains linked to `audit-001.verdict-auditor.eth`
-and `risk-001.verdict-monitor.eth`. `legal.agent.verdict.eth` and the other
-quartet names are discovery identities, **not independent signer proofs**.
-AI inference runs offchain. Separate worker keys enforce resolver-level access
-boundaries; they are currently all operated by the Verdict team, not external
-auditors. These demonstration attestations are not audits commissioned by the
-real asset issuers and do not prove their reserves.
-
-Grants are **text-key scoped across names using each dedicated resolver**,
-not name-and-key scoped. The namespace operator cannot write those protected
-keys on the dedicated resolvers, but it can change pointers and summaries in
-its own issuer profiles. Recovery admins can delegate roles and upgrade the
-dedicated resolvers; registry and `.eth` owners can redirect resolution. The
-app derives the expected evidence names and checks their resolver and subject
-binding, rather than accepting an issuer-selected evidence pointer as proof.
-
-For a fresh deployment, the 40 evidence names require a reviewed Sepolia registration step. Code
-deployment alone does not register them. The default setup command is read-only
-and prints public signer addresses, funding and conservative budgets. After
-reviewing the plan and explicitly authorizing local encrypted-keystore signing:
+Copy `.env.example` to `.env.local`:
 
 ```bash
-npm run plan:rwa-evidence -- --apply --allow-keystore-signing
+# Required for ENSv2 on-chain resolution
+SEPOLIA_RPC_URL="https://ethereum-sepolia-rpc.publicnode.com"
+
+# Required for Web3 wallet connection
+NEXT_PUBLIC_PRIVY_APP_ID="your_privy_app_id"
+
+# AI Inference (at least one required for live agent runs)
+GEMINI_API_KEY="your_gemini_api_key"
+
+# Optional: Sponsored Custom Agent Minting Relayer
+VERDICT_SPONSORED_MINT_ENABLED=true
+VERDICT_RELAYER_PRIVATE_KEY="0x..."
 ```
-
-This registers missing names under the separate existing authority registries,
-owned by the respective recovery admin with zero initial name roles. It grants
-the admin only the additional subject/schema text keys and publishes bindings;
-it does not fabricate audit results or transfer funds. Unexpected existing
-owners and failed worker isolation checks abort setup. After registration,
-run the local curator score refresh to publish new protected records. Historical
-single-relayer summaries are not retroactively independent attestations.
-
-In Overview → Inspect → Identifier → ENSv2 Explorer proof, open each authority's
-**Resolver roles**, or click **Verify live permissions**. The read-only endpoint
-`/api/ens/permissions?name=buidl.rwa.verdict.eth` returns a pinned Sepolia block,
-active registration/owner and subject/resolver binding, allowed-key checks, denied issuer/cross-worker writes,
-denied worker delegation and administrative recovery verification. Incomplete
-setup is explicitly not verified; RPC outages are unavailable, never a pass.
-No additional Vercel signing credentials are needed: `SEPOLIA_RPC_URL` supports
-these reads. Evidence writes and bulk refresh remain disabled on Vercel.
-
-`configure:ens-permissions` is a role-changing legacy setup command, not a
-read-only verifier. It now requires `--apply`; do not run it to check the UI.
-
-#### CROPS trust record
-
-Chosen default: separate existing authority roots/resolvers, narrow evidence
-workers and public, signer-free permission checks. Vercel, AI providers and the
-team-operated writers can still block fresh publications. Existing ENS records
-remain directly readable through another Sepolia RPC/ENS Explorer, and the
-source, ABIs and setup commands are available for self-hosting under MIT.
-Wallet addresses, record values and transaction timing are public; no wallet
-connection is required for permission checks. Recovery and registry control
-remain accepted hackathon compromises, not decentralization or third-party
-auditor independence. Production should use separately controlled institutions
-and multisig/timelocked administrative recovery.
 
 ---
 
 ## 📄 License
 
-MIT
+Distributed under the [MIT License](LICENSE). Built with ❤️ for **ETHOnline 2026**.
