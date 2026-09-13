@@ -265,9 +265,15 @@ export default function AgentFactory({
         // Sponsored path down (e.g. broken relayer keystore on a hosted
         // deployment) — fall back to the user's own wallet paying gas.
         if (sponsoredUnavailable(failure, response.status)) {
+          const sponsoredReason = failure.message;
           onNotify?.('info', 'Sponsored relayer unavailable', 'Trying the direct wallet path…');
-          await deploySelfPay(wallet, owner, cleanPolicy);
-          return;
+          try {
+            await deploySelfPay(wallet, owner, cleanPolicy);
+            return;
+          } catch (fallbackErr) {
+            const fallbackReason = fallbackErr instanceof Error ? fallbackErr.message : 'Direct wallet path failed.';
+            throw new Error(`Sponsored mint failed: ${sponsoredReason} Direct wallet path also blocked: ${fallbackReason}`);
+          }
         }
         throw failure;
       }

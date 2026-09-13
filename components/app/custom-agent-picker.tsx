@@ -6,6 +6,13 @@ import { AgentIdentityProof } from '@/components/app/agent-identity-proof';
 
 export type VerifiedCustomAgent = { name: string; owner: string; policy: string; context: string; sourceBlock: number };
 
+/**
+ * Showcase lens deployed onchain. Shown to every visitor (fresh browsers,
+ * judges) after live verification — selecting one runs the same colab flow
+ * as a self-deployed agent. Kept to names confirmed live with owner+policy.
+ */
+const FEATURED_CUSTOM_AGENTS = ['kahfajask.verdict.eth'];
+
 export function CustomAgentPicker({ names, selected, running, onSelect, onVerified }: {
   names: string[]; selected: string; running: boolean;
   onSelect: (name: string) => void; onVerified: (agent: VerifiedCustomAgent | null) => void;
@@ -14,6 +21,24 @@ export function CustomAgentPicker({ names, selected, running, onSelect, onVerifi
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [featured, setFeatured] = useState<VerifiedCustomAgent[]>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      const out: VerifiedCustomAgent[] = [];
+      for (const name of FEATURED_CUSTOM_AGENTS) {
+        try {
+          const response = await fetch(`/api/agents/custom?name=${encodeURIComponent(name)}`, { cache: 'no-store', signal: controller.signal });
+          const result = await response.json();
+          if (response.ok && result.ok && result.agent?.name === name && result.agent.policy) out.push(result.agent);
+        } catch {
+          // Unverifiable featured names stay hidden — never offer a dead lens.
+        }
+      }
+      if (!controller.signal.aborted) setFeatured(out);
+    })();
+    return () => controller.abort();
+  }, []);
   useEffect(() => {
     const controller = new AbortController();
     setAgent(null); setError(''); onVerified(null);
@@ -33,6 +58,30 @@ export function CustomAgentPicker({ names, selected, running, onSelect, onVerifi
     return () => controller.abort();
   }, [selected, retry, onVerified]);
   return <div>
+    {featured.filter((f) => f.name !== selected).length > 0 && (
+      <div style={{ marginBottom: 12 }}>
+        <label>Demo lens · verified live on ENS</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+          {featured.filter((f) => f.name !== selected).map((f) => (
+            <div key={f.name}>
+              <AgentIdentityProof subname={f.name} owner={f.owner} compact />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, opacity: 0.75 }}>Public demo policy · ENS block {f.sourceBlock}</span>
+                <button
+                  type="button"
+                  className="v-btn v-btn-secondary"
+                  style={{ padding: '4px 12px', fontSize: 12, height: 'auto' }}
+                  onClick={() => onSelect(f.name)}
+                  disabled={running}
+                >
+                  Use this lens
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
     <label htmlFor="custom-agent-picker">Deployed custom agent</label>
     <select id="custom-agent-picker" value={selected} onChange={(event) => onSelect(event.target.value)} disabled={running || !names.length}>
       {!names.length && <option value="">No saved agents — deploy one above</option>}
