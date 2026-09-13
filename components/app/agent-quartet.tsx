@@ -265,10 +265,10 @@ export default function AgentQuartet() {
         id,
         type: "agentTerminal",
         position: narrow
-          ? { x: 20, y: i * 390 + 30 }
+          ? { x: 20, y: i * 480 + 30 }
           : {
-              x: id === "consensus" ? 405 : 25 + i * 380,
-              y: id === "consensus" ? 435 : 35,
+              x: id === "consensus" ? 425 : 25 + i * 400,
+              y: id === "consensus" ? 600 : 35,
             },
         data: {
           ...definitions[id],
@@ -541,7 +541,7 @@ export default function AgentQuartet() {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          fitViewOptions={{ padding: 0.03 }}
+          fitViewOptions={{ padding: 0.04 }}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
@@ -553,7 +553,7 @@ export default function AgentQuartet() {
           minZoom={0.1}
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={28} size={1} color="#284058" />
+          <Background gap={28} size={1} color="rgba(140, 185, 225, 0.12)" />
         </ReactFlow>
         <div className={s.canvasFooter}>
           <ShieldCheck size={14} />

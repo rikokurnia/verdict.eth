@@ -1,8 +1,8 @@
 .inspectionSection,
 .factory {
-  --fleet-bg: #07121f;
-  --fleet-panel: #0b1b2c;
-  --fleet-line: rgba(154, 192, 226, 0.2);
+  --fleet-bg: rgba(7, 18, 31, 0.35);
+  --fleet-panel: rgba(11, 27, 44, 0.45);
+  --fleet-line: rgba(154, 192, 226, 0.22);
   --fleet-muted: #a7b9ca;
   --fleet-accent: #b6dcff;
   --fleet-live: #64dce7;
@@ -67,14 +67,16 @@
   gap: 16px;
   align-items: center;
   padding: 16px;
-  background: rgba(11, 27, 44, 0.94);
+  background: rgba(10, 24, 40, 0.52);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--fleet-line);
   border-radius: 14px 14px 0 0;
 }
 .modeSwitch {
   display: flex;
   padding: 4px;
-  background: #07121f;
+  background: rgba(7, 18, 31, 0.5);
   border: 1px solid var(--fleet-line);
   border-radius: 8px;
 }
@@ -152,27 +154,33 @@
   align-items: center;
   gap: 20px;
   padding: 16px;
-  background: var(--fleet-panel);
+  background: rgba(10, 24, 40, 0.52);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   font-size: 13px;
 }
 .customLens input {
   flex: 1;
   padding: 12px;
-  background: var(--fleet-bg);
+  background: rgba(7, 18, 31, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: inherit;
   border: 1px solid var(--fleet-line);
   border-radius: 6px;
 }
 .flowShell {
   position: relative;
-  height: 810px;
+  height: 980px;
   background:
     radial-gradient(
-      ellipse at 50% 55%,
-      rgba(29, 66, 96, 0.26),
-      transparent 65%
+      ellipse at 50% 50%,
+      rgba(35, 78, 120, 0.16),
+      transparent 70%
     ),
-    #07121f;
+    rgba(5, 14, 26, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--fleet-line);
   border-top: 0;
   overflow: hidden;
@@ -257,13 +265,20 @@
   padding: 20px;
   background: linear-gradient(
     150deg,
-    rgba(18, 37, 55, 0.98),
-    rgba(7, 19, 31, 0.98)
+    rgba(12, 28, 46, 0.42),
+    rgba(6, 17, 30, 0.32)
   );
-  border: 1px solid #3b5165;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(154, 192, 226, 0.24);
   border-radius: 3px 22px 3px 22px;
   color: #eaf4ff;
-  box-shadow: 0 12px 30px #0003;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: border-color 0.24s ease, box-shadow 0.24s ease;
+}
+.agentNode:hover {
+  border-color: rgba(182, 220, 255, 0.45);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.48), 0 0 24px rgba(100, 220, 231, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 .nodeScanline {
   position: absolute;
@@ -462,51 +477,65 @@
   color: #ffada8;
 }
 .flowHandle {
-  width: 7px !important;
-  height: 7px !important;
-  border: 1px solid #8fb9d8 !important;
-  background: #182e40 !important;
+  width: 9px !important;
+  height: 9px !important;
+  border: 1.5px solid #8ce0b5 !important;
+  background: #0b1e30 !important;
+  box-shadow: 0 0 8px rgba(140, 224, 181, 0.5);
+  border-radius: 50% !important;
 }
 .edge {
   fill: none;
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 .edgeTrack {
-  stroke: #59758d;
+  stroke: rgba(140, 185, 225, 0.38);
+  stroke-dasharray: 6 4;
 }
 .edgeSignal {
-  stroke: #678293;
+  stroke: #7db0d5;
+  stroke-width: 2.2;
   opacity: 0;
 }
 .edge_completed .edgeSignal {
   stroke: var(--fleet-pass);
+  stroke-width: 2.5;
   opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(140, 224, 181, 0.6));
 }
 .edge_flagged .edgeSignal {
   stroke: var(--fleet-risk);
+  stroke-width: 2.5;
   opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 189, 139, 0.6));
 }
 .edge_error .edgeSignal {
   stroke: #ffada8;
+  stroke-width: 2.5;
   opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(255, 173, 168, 0.6));
 }
 .edge_running .edgeSignal {
   stroke: var(--fleet-live);
-  opacity: 0.6;
+  stroke-width: 2;
+  opacity: 0.85;
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 8px rgba(100, 220, 231, 0.7));
 }
 .edgePacket {
   stroke: #bcfcff;
-  stroke-width: 2.5;
-  stroke-dasharray: 0.035 0.15;
-  filter: drop-shadow(0 0 4px #64dce7);
+  stroke-width: 3;
+  stroke-dasharray: 0.04 0.16;
+  filter: drop-shadow(0 0 8px #64dce7);
 }
 .telemetryStrip {
   display: flex;
   align-items: center;
   gap: 20px;
-  background: #0b1b2c;
+  background: rgba(10, 24, 40, 0.52);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--fleet-line);
   border-top: 0;
   border-radius: 0 0 12px 12px;
@@ -1035,12 +1064,12 @@
     flex: 0 0 auto;
   }
   .flowShell {
-    height: 700px;
+    height: 940px;
   }
 }
 @media (max-width: 850px) {
   .flowNarrow {
-    height: 1470px;
+    height: 1950px;
   }
   .flowLegend > span:last-child {
     display: none;
@@ -1086,7 +1115,7 @@
     padding: 4px;
   }
   .flowNarrow {
-    height: 1370px;
+    height: 1880px;
   }
   .canvasFooter {
     font-size: 9px;
@@ -1140,7 +1169,7 @@
 }
 @media (max-width: 850px) {
   .flowNarrow {
-    height: 1560px;
+    height: 1950px;
   }
   .factoryVisual {
     display: grid;
