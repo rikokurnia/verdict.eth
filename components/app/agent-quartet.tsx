@@ -81,14 +81,11 @@ const definitions = {
     ],
   },
 };
-const options = [
-  { value: ENS.names.asset, label: "USDY-001 · USD Yield 001", logo: "/icon.svg" },
-  ...DEMO_ASSETS.filter((a) => a.marketId).map((a) => ({
-    value: a.marketId!,
-    label: `${a.ticker} · ${a.title}`,
-    logo: a.logo,
-  })),
-];
+const options = DEMO_ASSETS.filter((a) => a.marketId).map((a) => ({
+  value: a.marketId!,
+  label: `${a.ticker} · ${a.title}`,
+  logo: a.logo,
+}));
 type Frame = {
   kind: string;
   label?: string;

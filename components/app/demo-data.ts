@@ -43,15 +43,6 @@ const NO_POLICY = 'No Verdict policy';
  */
 export const DEMO_ASSETS: DemoAsset[] = [
   {
-    id: 'verdict-usdy-001', title: 'USD Yield 001', name: 'usd-yield-001.acme.verdict.eth', ticker: 'USDY-001',
-    assetClass: 'ENS Verified', issuer: 'ACME demo issuer', state: 'POLICY_PASS', coverage: 'POLICY_VERIFIED',
-    description: 'Fictional Sepolia asset used to prove independent issuer, AI auditor, and risk-monitor permissions end to end.',
-    logo: '/icon.svg', networks: ['sepolia'], network: 'Ethereum Sepolia',
-    contracts: { sepolia: '0xcbfd80f74375c54e545af34788ff465f96f66f05' },
-    sourceLabel: 'ENSv2 evidence graph', sourceUrl: 'https://hackathon-deployment-portal-app.ens-cf.workers.dev/usd-yield-001.acme.verdict.eth',
-    snapshot: 'AI evidence verified', snapshotAsOf: 'Live Sepolia state', auditNote: 'Active', riskNote: 'Fresh', heartbeat: 'Resolving…',
-  },
-  {
     id: 'blackrock-buidl', title: 'BlackRock USD Institutional Digital Liquidity Fund', name: 'buidl.rwa.verdict.eth', ticker: 'BUIDL',
     assetClass: 'Treasury', issuer: 'BlackRock / Securitize', state: 'UNAVAILABLE', coverage: 'CONSENSUS_SCORED',
     description: "BlackRock's tokenized short-term Treasury liquidity fund for qualified purchasers, administered by Securitize with a $1 NAV target.",

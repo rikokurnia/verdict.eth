@@ -151,12 +151,9 @@ export function resolveNetworkContract(
   profile?: EnsProfile | null,
   liveDeployment?: string | null,
 ): string | null {
-  // 1. Sepolia demo asset or live deployment
+  // 1. Sepolia live deployment
   if (network === 'sepolia') {
     if (liveDeployment && liveDeployment.startsWith('0x')) return liveDeployment;
-    if (asset.id === 'verdict-usdy-001' || asset.name === 'usd-yield-001.acme.verdict.eth') {
-      return ENSV2_SEPOLIA.contracts.mockUsdc;
-    }
   }
 
   // 2. Read from live ENS profile records (e.g. contract.ethereum, contract.polygon, etc.)

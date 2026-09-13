@@ -420,20 +420,8 @@ export default function DashboardPage() {
     // Prefer the live CoinGecko CDN image returned by /api/market so photos
     // stay fresh; fall back to the verified catalog image when offline.
     const liveImage = asset.marketId ? quotes[asset.marketId]?.image : undefined;
-    const withLiveImage = liveImage ? { ...asset, logo: liveImage } : asset;
-    if (withLiveImage.coverage !== 'POLICY_VERIFIED' || !live?.asset) return withLiveImage;
-    const elapsed = Math.max(0, live.evaluatedAt - (live.observation?.observedAt ?? live.evaluatedAt));
-    return {
-      ...withLiveImage,
-      title: live.asset.displayName,
-      ticker: live.asset.ticker,
-      issuer: live.asset.issuer,
-      state: live.state,
-      auditNote: live.audit ? `${live.audit.status} · ${live.evidence.daysRemaining}d` : 'Unavailable',
-      riskNote: live.observation?.severity ?? 'Unavailable',
-      heartbeat: elapsed < 60 ? `${elapsed}s ago` : `${Math.floor(elapsed / 60)}m ago`,
-    };
-  }), [live, quotes]);
+    return liveImage ? { ...asset, logo: liveImage } : asset;
+  }), [quotes]);
 
   const classes = useMemo(() => [...new Set(assets.map((asset) => asset.assetClass))].sort(), [assets]);
   const verdictOf = (asset: DemoAsset): UnifiedVerdict =>
