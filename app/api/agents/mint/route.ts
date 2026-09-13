@@ -101,7 +101,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Auditor mint failed', error);
     const messageText = error instanceof Error ? error.message : 'Mint failed.';
-    const status = /available|Signature|configured|secret/i.test(messageText) ? 400 : 502;
+    const status = /available|Signature|configur|secret|decrypt|keystore|relayer/i.test(messageText) ? 400 : 502;
     return NextResponse.json({ ok: false, error: messageText }, { status });
   }
 }

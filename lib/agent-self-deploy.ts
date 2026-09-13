@@ -37,13 +37,20 @@ const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
 /**
  * Bring the wallet onto Sepolia without making the user dig through network
  * settings: request a programmatic switch, adding the chain first when the
- * wallet reports it unknown (EIP-3326 error 4902).
+ * wallet reports it unknown (EIP-3326 error 4902). Returns true when a switch
+ * was attempted — the caller must then drop the pre-switch provider, because
+ * ethers caches the old chain on it and every later call throws NETWORK_ERROR
+ * (event="changed").
  */
 async function ensureSepolia(
   provider: BrowserProvider,
   onPhase: (phase: SelfDeployPhase) => void,
-) {
-  if (Number((await provider.getNetwork()).chainId) === ENSV2_SEPOLIA.chainId) return;
+): Promise<boolean> {
+  try {
+    if (Number((await provider.getNetwork()).chainId) === ENSV2_SEPOLIA.chainId) return false;
+  } catch {
+    // Detection itself failed — attempt the switch anyway.
+  }
   onPhase('switching-network');
   try {
     await provider.send('wallet_switchEthereumChain', [{ chainId: SEPOLIA_CHAIN_ID_HEX }]);
@@ -61,9 +68,7 @@ async function ensureSepolia(
       throw error;
     }
   }
-  if (Number((await provider.getNetwork()).chainId) !== ENSV2_SEPOLIA.chainId) {
-    throw new Error('Switch your wallet to the Sepolia network, then deploy again.');
-  }
+  return true;
 }
 
 function friendly(error: unknown): Error {
@@ -73,6 +78,9 @@ function friendly(error: unknown): Error {
   }
   if (/switch.*not supported|method not found|unsupported method|not support switching/i.test(message)) {
     return new Error('Your wallet could not switch networks automatically. Switch to Sepolia manually, then deploy again.');
+  }
+  if (/network changed|NETWORK_ERROR|underlying network changed/i.test(message)) {
+    return new Error('Wallet network changed mid-deploy. Make sure you are on Sepolia, then deploy again — nothing was published.');
   }
   if (/insufficient funds|insufficient balance|gas required exceeds/i.test(message)) {
     return new Error('Your wallet needs Sepolia ETH for gas. Fund it from a Sepolia faucet, then try again.');
@@ -97,8 +105,26 @@ export async function selfDeployAuditorBranch(
   const subname = `${label}.verdict.eth`;
   try {
     onPhase('checking-wallet');
-    const provider = new BrowserProvider(ethereumProvider);
-    await ensureSepolia(provider, onPhase);
+    let provider = new BrowserProvider(ethereumProvider);
+    if (await ensureSepolia(provider, onPhase)) {
+      // The pre-switch instance cached the old chain: every later call on it
+      // throws NETWORK_ERROR (event="changed"). Start over on Sepolia.
+      try {
+        await (provider as unknown as { destroy?: () => unknown }).destroy?.();
+      } catch {
+        // Older ethers without destroy — the fresh instance below is enough.
+      }
+      provider = new BrowserProvider(ethereumProvider);
+      let onSepolia = false;
+      try {
+        onSepolia = Number((await provider.getNetwork()).chainId) === ENSV2_SEPOLIA.chainId;
+      } catch {
+        onSepolia = false;
+      }
+      if (!onSepolia) {
+        throw new Error('Switch your wallet to the Sepolia network, then deploy again.');
+      }
+    }
     const signer = await provider.getSigner(owner);
     const signerAddress = await signer.getAddress();
     if (signerAddress.toLowerCase() !== owner.toLowerCase()) {

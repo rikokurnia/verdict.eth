@@ -58,7 +58,9 @@ export async function namespaceWallet(provider: JsonRpcProvider) {
   if (json || secret) {
     if (!json || !secret) throw new Error('Relayer keystore and password must both be configured.');
     try {
-      return (await Wallet.fromEncryptedJson(json, secret)).connect(provider);
+      // Vercel env values often pick up pasted whitespace; the local
+      // .secrets file path already trims, so trim here too.
+      return (await Wallet.fromEncryptedJson(json.trim(), secret.trim())).connect(provider);
     } catch {
       throw new Error('Relayer keystore could not be decrypted. Check server configuration.');
     }
