@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Check, ShieldCheck, Wallet } from "lucide-react";
+import { Check, ShieldCheck, Wallet } from "lucide-react";
 import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
 import { signAgentDeployment } from "@/lib/agent-wallet-signing";
@@ -11,10 +11,7 @@ import type { ToastKind } from "@/components/app/toast";
 import { AgentIdentityProof } from "@/components/app/agent-identity-proof";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
-import { ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
 import { loadDeployments, rememberCustomAgent, rememberDeployment, type DeploymentRecord } from '@/lib/custom-agent-store';
-
-const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
 const PRESETS = [
   {
@@ -595,77 +592,24 @@ export default function AgentFactory({
 
         {confirmation && (
           <div
-            className="v-verification-panel is-verified"
+            className="v-verification-panel"
             style={{ marginTop: 14 }}
             aria-live="polite"
           >
-            <div>
-              <div className="v-label">
-                Deployed · {deployMode === 'sponsored' ? 'gas sponsored' : 'self-paid'} · proof below
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0 4px' }}>
-                <span className={s.deploySuccess} aria-hidden="true">
-                  <Check size={22} />
-                </span>
-                <h3 style={{ margin: 0 }}>{confirmation.subname}</h3>
-              </div>
-              <div style={{ margin: '10px 0' }}>
-                <AgentIdentityProof
-                  subname={confirmation.subname}
-                  owner={confirmation.owner}
-                  registerTx={confirmation.transactions.register}
-                  recordsTx={confirmation.transactions.records}
-                />
-              </div>
-              <dl className="v-kv" style={{ marginTop: 10 }}>
-                <dt>Deployed subname</dt>
-                <dd className="v-mono">{confirmation.subname}</dd>
-                <dt>Verified owner</dt>
-                <dd className="v-mono">
-                  {confirmation.owner}
-                  {confirmation.owner.toLowerCase() === account.toLowerCase()
-                    ? " ✓ you"
-                    : ""}
-                </dd>
-                <dt>EAC permission</dt>
-                <dd className="v-mono">{confirmation.roles}</dd>
-                <dt>Role bitmap</dt>
-                <dd className="v-mono">{confirmation.roleBitmap}</dd>
-                <dt>Register tx</dt>
-                <dd className="v-mono">
-                  <a
-                    href={`${ETHERSCAN_TX}/${confirmation.transactions.register.hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {shortHash(confirmation.transactions.register.hash)} ↗
-                  </a>{" "}
-                  · block {confirmation.transactions.register.blockNumber}
-                </dd>
-                <dt>Records tx</dt>
-                <dd className="v-mono">
-                  <a
-                    href={`${ETHERSCAN_TX}/${confirmation.transactions.records.hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {shortHash(confirmation.transactions.records.hash)} ↗
-                  </a>{" "}
-                  · block {confirmation.transactions.records.blockNumber}
-                </dd>
-                <dt>agent.policy</dt>
-                <dd style={{ fontSize: 13 }}>“{confirmation.policy}”</dd>
-              </dl>
-              <div className="v-dialog-actions" style={{ marginTop: 10 }}>
-                <a
-                  className="v-btn v-btn-secondary"
-                  href={ENS_EXPLORER_NAME_URL(confirmation.subname)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View ENS agent proof
-                  <ArrowUpRight size={14} aria-hidden="true" />
-                </a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span className={s.deploySuccess} aria-hidden="true">
+                <Check size={22} />
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <div className="v-label">
+                  Deployed · {deployMode === 'sponsored' ? 'gas sponsored' : 'self-paid'}
+                </div>
+                <div className="v-mono" style={{ fontSize: 15, overflowWrap: 'anywhere' }}>
+                  {confirmation.subname}
+                </div>
+                <div className="v-cell-sub" style={{ marginTop: 2 }}>
+                  Proof saved in Your agents below — no need to fill the form again.
+                </div>
               </div>
             </div>
           </div>

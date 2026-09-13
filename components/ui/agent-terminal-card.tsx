@@ -9,7 +9,7 @@ import { EnsLogo } from "@/components/app/asset-identity";
 import { ENS_EXPLORER_NAME_URL, ENS_NAME_RECORDS_URL, ENS_NAME_RESOLVER_URL, ENS_RESOLVER_ROLES_URL } from "@/lib/ensv2-config";
 import styles from "@/components/app/agent-orchestra.module.css";
 
-export type AgentId = "legal" | "custody" | "technical" | "consensus";
+export type AgentId = "legal" | "custody" | "technical" | "consensus" | "custom";
 export type AgentVisualState =
   "idle" | "running" | "completed" | "flagged" | "error";
 

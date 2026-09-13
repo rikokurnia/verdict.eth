@@ -37,7 +37,7 @@ import s from "./agent-orchestra.module.css";
 import { CUSTOM_AGENT_EVENT, CUSTOM_AGENTS_KEY, LEGACY_CUSTOM_AGENT_KEY, loadCustomAgents, validCustomAgentName } from '@/lib/custom-agent-store';
 import { CustomAgentPicker, type VerifiedCustomAgent } from './custom-agent-picker';
 
-const ids: AgentId[] = ["legal", "custody", "technical", "consensus"];
+const ids = ["legal", "custody", "technical", "consensus"] as const;
 const definitions = {
   legal: {
     name: "Legal & Compliance",
@@ -114,6 +114,7 @@ const idle = (): Record<AgentId, AgentVisualState> => ({
   custody: "idle",
   technical: "idle",
   consensus: "idle",
+  custom: "idle",
 });
 const time = (value: string) =>
   new Date(value).toLocaleTimeString([], { hour12: false });
@@ -293,10 +294,16 @@ export default function AgentQuartet() {
     };
   }, [pickerOpen]);
   const activeRun = run && run.subject === subject ? run : null;
+  // Custom lens card: shown when Custom lens mode has a real agent selected.
+  // Layout becomes 1 (lens) - 3 (inspectors) - 1 (consensus), lens wired in.
+  const customShown = mode === "custom" && validCustomAgentName(custom);
+  const customActive = activeRun && activeRun.mode === "custom" && activeRun.customPolicy?.subname === custom ? activeRun : null;
+  const customState: AgentVisualState = customActive ? "completed" : states["custom"];
+  const customDone: string | undefined = customActive ? customActive.finishedAt : completed["custom"];
 
   const nodes = useMemo<AgentFlowNode[]>(
-    () =>
-      ids.map((id, i) => {
+    () => {
+      const base: AgentFlowNode[] = ids.map((id, i) => {
         const state = activeRun
           ? resultState(id === "consensus" ? activeRun.synthesis.verdict : activeRun.reports[id].status)
           : states[id];
@@ -341,7 +348,7 @@ export default function AgentQuartet() {
           id,
           type: "agentTerminal",
           position: narrow
-            ? { x: 20, y: i * 520 + 30 }
+            ? { x: 20, y: (customShown ? i + 1 : i) * 520 + 30 }
             : {
                 x: id === "consensus" ? 425 : 25 + i * 400,
                 y: id === "consensus" ? 640 : 35,
@@ -371,25 +378,80 @@ export default function AgentQuartet() {
             cognitive,
           },
         };
-      }),
-    [states, completed, liveScores, liveReports, liveTokens, liveLatency, liveRationale, activeRun, narrow, lastFrame],
+      });
+      if (!customShown) return base;
+      const customNode: AgentFlowNode = {
+        id: "custom",
+        type: "agentTerminal",
+        position: narrow ? { x: 20, y: 30 } : { x: 425, y: -570 },
+        data: {
+          name: "Custom Auditor",
+          ensName: custom,
+          address: ENS.proxies.namespaceResolver,
+          avatarUrl: "/assets/agent-assets/plane1.png",
+          agentId: "custom",
+          eyebrow: "05 / CUSTOM LENS",
+          state: customState,
+          score: undefined,
+          steps: [
+            "Read owner & policy live from ENS",
+            "Apply lens after three inspectors",
+            "Co-sign consensus verdict",
+          ].map((label, step) => ({
+            label,
+            status: customDone
+              ? "completed"
+              : customState === "running"
+                ? step === 1
+                  ? "running"
+                  : step === 0
+                    ? "completed"
+                    : "idle"
+                : customState,
+            time: customDone ? time(customDone) : undefined,
+          })),
+          cognitive: {
+            scope: "Operator-authored audit policy applied as an extra lens on the synthesizer.",
+            liveActivity: customState === "running" ? "Applying custom lens to inspector reports..." : undefined,
+            findings: verifiedCustom
+              ? [`Owner ${verifiedCustom.owner}`, `Policy verified at ENS block ${verifiedCustom.sourceBlock}`]
+              : [],
+            rationale: verifiedCustom ? verifiedCustom.policy.slice(0, 280) : undefined,
+            telemetry: undefined,
+          },
+        },
+      };
+      return [customNode, ...base];
+    },
+    [states, completed, liveScores, liveReports, liveTokens, liveLatency, liveRationale, activeRun, narrow, lastFrame, mode, custom, verifiedCustom, customShown, customState, customDone],
   );
 
-  const edges = ids
-    .slice(0, 3)
-    .map((id, index) => ({
-      id,
-      source: id,
-      target: "consensus",
-      type: "telemetry",
-      data: {
-        state: activeRun && id !== "consensus"
-          ? resultState(activeRun.reports[id].status)
-          : states[id],
-        narrow,
-        lane: index,
-      },
-    }));
+  const edges = [
+    ...ids
+      .slice(0, 3)
+      .map((id, index) => ({
+        id,
+        source: id,
+        target: "consensus",
+        type: "telemetry",
+        data: {
+          state: activeRun && id !== "consensus"
+            ? resultState(activeRun.reports[id].status)
+            : states[id],
+          narrow,
+          lane: index,
+        },
+      })),
+    ...(customShown
+      ? [{
+          id: "custom-lens",
+          source: "custom",
+          target: "consensus",
+          type: "telemetry",
+          data: { state: customState, narrow, lane: 3 },
+        }]
+      : []),
+  ];
   function start() {
     if (running) return;
     if (
@@ -425,7 +487,7 @@ export default function AgentQuartet() {
       setStates(
         (prev) =>
           Object.fromEntries(
-            ids.map((id) => [id, prev[id] === "running" ? "error" : prev[id]]),
+            ([...ids, "custom"] as AgentId[]).map((id) => [id, prev[id] === "running" ? "error" : prev[id]]),
           ) as Record<AgentId, AgentVisualState>,
       );
     };
@@ -463,13 +525,14 @@ export default function AgentQuartet() {
           }
         }
         if (frame.kind === "synthesis-start")
-          setStates((prev) => ({ ...prev, consensus: "running" }));
+          setStates((prev) => ({ ...prev, consensus: "running", ...(mode === "custom" ? { custom: "running" as const } : {}) }));
         if (frame.kind === "synthesis-ok") {
           setStates((prev) => ({
             ...prev,
             consensus: frame.label?.includes("PASS") ? "completed" : "flagged",
+            ...(mode === "custom" ? { custom: "completed" as const } : {}),
           }));
-          setCompleted((prev) => ({ ...prev, consensus: frame.t }));
+          setCompleted((prev) => ({ ...prev, consensus: frame.t, ...(mode === "custom" ? { custom: frame.t } : {}) }));
           if (frame.synthesis) {
             setLiveScores((prev) => ({ ...prev, consensus: frame.synthesis!.overall_score }));
             setLiveRationale(
@@ -498,12 +561,19 @@ export default function AgentQuartet() {
           // their history, inspect page, and score list without affecting
           // anyone else.
           saveSessionRun(result);
-          setCompleted((previous) => Object.fromEntries(ids.map((id) => [id, previous[id] ?? result.finishedAt])));
+          setCompleted((previous) => {
+            const next: Partial<Record<AgentId, string>> = Object.fromEntries(
+              ids.map((id) => [id, previous[id] ?? result.finishedAt]),
+            );
+            if (result.mode === "custom") next["custom"] = previous["custom"] ?? result.finishedAt;
+            return next;
+          });
           setStates({
             legal: resultState(result.reports.legal.status),
             custody: resultState(result.reports.custody.status),
             technical: resultState(result.reports.technical.status),
             consensus: resultState(result.synthesis.verdict),
+            custom: result.mode === "custom" ? "completed" : "idle",
           });
           setHistory((prev) => [
             { file: result.id, recordedAt: result.finishedAt, run: result },
@@ -543,7 +613,7 @@ export default function AgentQuartet() {
         <div className={s.headingStamp}>
           <Radio size={19} />
           <span>
-            INSPECTION NETWORK<strong>3 inspectors + 1 synthesizer</strong>
+            INSPECTION NETWORK<strong>{customShown ? "3 inspectors + 1 lens + 1 synthesizer" : "3 inspectors + 1 synthesizer"}</strong>
           </span>
         </div>
       </div>

@@ -43,10 +43,10 @@ export function AgentIdentityProof({
       <img
         src={avatar}
         alt=""
-        width={compact ? 26 : 34}
-        height={compact ? 26 : 34}
+        width={compact ? 30 : 38}
+        height={compact ? 30 : 38}
         loading="lazy"
-        style={{ borderRadius: '50%', flexShrink: 0 }}
+        style={{ borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
       />
       <span
         className="v-mono"
