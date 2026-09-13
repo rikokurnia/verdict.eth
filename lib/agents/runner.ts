@@ -150,7 +150,7 @@ async function loadWallet(name: string, provider: JsonRpcProvider) {
  * Write a mapped demo evaluation through dedicated scoped workers. Canonical
  * evidence names, bindings and permissions must pass live checks first.
  */
-async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint: string, engineModel: string, assetName = DEMO_ASSET as string) {
+async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint: string, engineModel: string, assetName = DEMO_ASSET as string, quartet?: Pick<QuartetRun, 'reports' | 'synthesis' | 'engines' | 'startedAt'>) {
   if (process.env.VERCEL) throw new Error('Protected evidence writes are local-operator only; this deployment is inspect-only.');
   const file = loadEnvFile();
   const rpcUrl = process.env.SEPOLIA_RPC_URL || file.SEPOLIA_RPC_URL;
@@ -158,7 +158,13 @@ async function writeDemoAssetDecision(synthesis: Synthesis, evidenceFingerprint:
   const provider = new JsonRpcProvider(rpcUrl);
   try {
     if (Number((await provider.getNetwork()).chainId) !== ENSV2_SEPOLIA.chainId) throw new Error('Evidence RPC must be Sepolia.');
-    return await publishEvidence(provider, synthesis, evidenceFingerprint, engineModel, assetName);
+    if (!quartet) throw new Error('Original quartet reports are required for protected publication.');
+    const { publishQuartetReports } = await import('./quartet-publication');
+    // Check legacy authority bindings before sending any of the four reports.
+    if (!(await verifyAssetPermissions(provider, assetName)).verified) throw new Error('Protected evidence names/permissions are not ready.');
+    const agents = await publishQuartetReports(provider, assetName, quartet, evidenceFingerprint);
+    try { return { ...await publishEvidence(provider, synthesis, evidenceFingerprint, engineModel, assetName), agents }; }
+    catch { throw new Error(`Quartet reports confirmed: ${JSON.stringify(agents)}. Mapped auditor/monitor publication failed; no combined summary published. Reconcile explicitly.`); }
   } finally { provider.destroy(); }
 }
 
@@ -317,11 +323,11 @@ export async function runQuartetStream(subject: string, write: boolean, emit: Qu
 
   if (write && isDemoAsset) {
     try {
-      const fingerprint = JSON.stringify({ subject: pack.subject, builtAt: pack.builtAt, reports });
-      const transactions = await writeDemoAssetDecision(synthesis, fingerprint, synthEngine.model);
+      const fingerprint = JSON.stringify({ subject: pack.subject, builtAt: pack.builtAt, reports, synthesis, engines });
+      const transactions = await writeDemoAssetDecision(synthesis, fingerprint, synthEngine.model, DEMO_ASSET, run);
       run.write.transactions = transactions;
       run.write.performed = true;
-      run.write.reason = 'Mapped decision written through scoped auditor/monitor wallets.';
+      run.write.reason = 'Four original reports published through separate scoped workers, followed by mapped auditor/monitor evidence.';
       emit({ kind: 'write', label: 'chain write ✓ demo asset', detail: transactions.audit.hash.slice(0, 18) });
     } catch (error) {
       run.write.reason = error instanceof Error ? error.message : 'Onchain write failed';
@@ -360,7 +366,7 @@ const QUARTET_RESOLVER_ABI = [
  * then a convenience summary through the issuer namespace relayer. The summary
  * is explicitly NOT a four-signer attestation or a protected authority record.
  */
-export async function writeQuartetSnapshot(marketId: string, synthesis: Synthesis, evidenceFingerprint?: string, engineModel = 'unspecified') {
+export async function writeQuartetSnapshot(marketId: string, synthesis: Synthesis, evidenceFingerprint?: string, engineModel = 'unspecified', quartet?: Pick<QuartetRun, 'reports' | 'synthesis' | 'engines' | 'startedAt'>) {
   if (process.env.VERCEL) throw new Error('Onchain score refresh is disabled on this deployment.');
   const { DEMO_ASSETS } = await import('@/components/app/demo-data');
   const asset = DEMO_ASSETS.find((a) => a.marketId === marketId);
@@ -372,17 +378,17 @@ export async function writeQuartetSnapshot(marketId: string, synthesis: Synthesi
   const provider = new JsonRpcProvider(rpcUrl);
   try {
     if (Number((await provider.getNetwork()).chainId) !== ENSV2_SEPOLIA.chainId) throw new Error('Summary RPC must be Sepolia.');
-    return await publishQuartetSummary(provider, asset.name, synthesis, fingerprint, engineModel);
+    return await publishQuartetSummary(provider, asset.name, synthesis, fingerprint, engineModel, quartet);
   } finally { provider.destroy(); }
 }
 
-async function publishQuartetSummary(provider: JsonRpcProvider, assetName: string, synthesis: Synthesis, fingerprint: string, engineModel: string) {
+async function publishQuartetSummary(provider: JsonRpcProvider, assetName: string, synthesis: Synthesis, fingerprint: string, engineModel: string, quartet?: Pick<QuartetRun, 'reports' | 'synthesis' | 'engines' | 'startedAt'>) {
   const { namespaceWallet } = await import('./factory');
   const wallet = await namespaceWallet(provider);
   if (wallet.address.toLowerCase() !== ENSV2_SEPOLIA.actors.namespaceOperator.toLowerCase()) throw new Error('Summary relayer does not match the namespace operator.');
   if ((await provider.getBalance(wallet.address)) === BigInt(0)) throw new Error('Summary relayer needs Sepolia ETH.');
   const authorities = evidenceAuthorities(assetName);
-  const evidenceTransactions = await writeDemoAssetDecision(synthesis, fingerprint, engineModel, assetName);
+  const evidenceTransactions = await writeDemoAssetDecision(synthesis, fingerprint, engineModel, assetName, quartet);
   const now = Math.floor(Date.now() / 1000);
   const sourceHash = keccak256(toUtf8Bytes(fingerprint));
   const records = {
@@ -399,6 +405,11 @@ async function publishQuartetSummary(provider: JsonRpcProvider, assetName: strin
     'verdict.asset.observation': authorities.monitor.name,
     'verdict.quartet.auditTx': evidenceTransactions.audit.hash,
     'verdict.quartet.observationTx': evidenceTransactions.risk.hash,
+    'verdict.quartet.legalTx': evidenceTransactions.agents.legal.hash,
+    'verdict.quartet.custodyTx': evidenceTransactions.agents.custody.hash,
+    'verdict.quartet.technicalTx': evidenceTransactions.agents.technical.hash,
+    'verdict.quartet.consensusTx': evidenceTransactions.agents.consensus.hash,
+    'verdict.quartet.workerPublicationMode': 'four-team-operated-scoped-workers',
   };
   const contract = new Contract(ENSV2_SEPOLIA.proxies.namespaceResolver, QUARTET_RESOLVER_ABI, wallet);
   const iface = new Interface(QUARTET_RESOLVER_ABI);

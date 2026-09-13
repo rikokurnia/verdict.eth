@@ -24,6 +24,20 @@ const iface = new Interface(RESOLVER_ABI);
 const state = existsSync(STATE) ? JSON.parse(readFileSync(STATE, 'utf8')) : { spentWei: '0', roles: {}, transactions: [] };
 const save = () => writeFileSync(STATE, JSON.stringify(state, null, 2), { mode: 0o600 });
 const same = (a, b) => a.toLowerCase() === b.toLowerCase();
+async function metadataForRole(provider, a, role) {
+  const text = new Interface(['function text(bytes32 node,string key) view returns(string)']);
+  const original = new Contract(ENS.proxies.namespaceResolver, ['function resolve(bytes name,bytes data) view returns(bytes result)'], provider);
+  const metadata = { 'verdict.schema': 'agent-report/1', 'verdict.agent.role': role,
+    'verdict.agent.worker': a.worker, 'verdict.agent.publicationMode': 'offchain-ai-dedicated-worker' };
+  // Copy existing discovery content from its original resolver, even after the
+  // pointer has changed. Do not carry the old nonexistent verdict.network endpoints.
+  for (const key of ['name', 'description', 'agent-context', 'verdict.profile.authority']) {
+    const raw = await original.resolve(dnsEncode(a.name), text.encodeFunctionData('text', ['0x' + '00'.repeat(32), key]));
+    const value = String(text.decodeFunctionResult('text', raw)[0]);
+    if (value) metadata[key] = value;
+  }
+  return metadata;
+}
 function env() {
   return Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/)
     .filter((line) => !line.trimStart().startsWith('#') && line.includes('='))
@@ -49,9 +63,9 @@ async function verify(provider, role, authorities) {
     const [, resource] = await contract.decodeSetter(setter);
     checks[key] = await contract.hasRoles(resource, SET_TEXT, a.worker);
     if (await blocked(provider, a.worker, a.resolver, setter)) throw new Error(`${role}: allowed report write rejected`);
-    for (const other of [ENS.actors.namespaceOperator, ...QUARTET_ROLES.filter((r) => r !== role).map((r) => authorities[r].worker)]) {
-      if (!await blocked(provider, other, a.resolver, setter)) throw new Error(`${role}: issuer/cross-worker write not isolated`);
-    }
+    const denied = await Promise.all([ENS.actors.namespaceOperator, ...QUARTET_ROLES.filter((r) => r !== role).map((r) => authorities[r].worker)]
+      .map((other) => blocked(provider, other, a.resolver, setter)));
+    if (denied.some((value) => !value)) throw new Error(`${role}: issuer/cross-worker write not isolated`);
   }
   for (const bit of [SET_TEXT, SET_TEXT_ADMIN, UPGRADE, UPGRADE << 128n, 1n << 28n, 1n << 156n]) {
     if (await contract.hasRootRoles(bit, a.worker)) throw new Error(`${role}: dangerous worker root permission`);
@@ -132,7 +146,7 @@ async function main() {
       // Initializer bypass applies to record setters, not EAC grant authorization.
       // Grant worker keys afterwards through the recovery admin, never via deployer.
       const calls = [];
-      const metadata = { 'verdict.schema': 'agent-report/1', 'verdict.agent.role': role, 'verdict.agent.worker': a.worker, 'verdict.agent.publicationMode': 'offchain-ai-dedicated-worker' };
+      const metadata = await metadataForRole(provider, a, role);
       calls.push(...Object.entries(metadata).map(([key, value]) => iface.encodeFunctionData('setText', [dnsEncode(a.name), key, value])));
       const init = iface.encodeFunctionData('initialize', [[[a.admin, SET_TEXT_ADMIN | UPGRADE | (UPGRADE << 128n)]], calls]);
       const salt = BigInt(keccak256(toUtf8Bytes(`Verdict:quartet:${role}:scoped-v1`)));
@@ -160,13 +174,16 @@ async function main() {
           if (!await resolver.hasRoles(resource, SET_TEXT, account)) calls.push(iface.encodeFunctionData('grantSetterRoles', [setter, account]));
         }
       }
-      const metadata = { 'verdict.schema': 'agent-report/1', 'verdict.agent.role': role, 'verdict.agent.worker': a.worker, 'verdict.agent.publicationMode': 'offchain-ai-dedicated-worker' };
+      const metadata = await metadataForRole(provider, a, role);
       calls.push(...Object.entries(metadata).map(([key, value]) => iface.encodeFunctionData('setText', [dnsEncode(a.name), key, value])));
       await send(admin, a.resolver, iface.encodeFunctionData('multicall', [calls]), `${role}-scoped-report-grants-and-metadata`);
     }
     // Verify isolation first; only then change the four resolver pointers.
     const proofs = {};
-    for (const role of QUARTET_ROLES) proofs[role] = await verify(provider, role, authorities);
+    for (const role of QUARTET_ROLES) {
+      proofs[role] = await verify(provider, role, authorities);
+      console.log(JSON.stringify({ phase: 'before-pointer-update', verifiedRole: role }));
+    }
     for (const role of QUARTET_ROLES) {
       if (!same(await registry.getResolver(role), authorities[role].resolver)) {
         await send(namespace, ENS.proxies.agentRegistry, registry.interface.encodeFunctionData('setResolver', [BigInt(keccak256(toUtf8Bytes(role))), authorities[role].resolver]), `point-${role}-identity`);
@@ -175,6 +192,7 @@ async function main() {
     for (const role of QUARTET_ROLES) {
       if (!same(await registry.getResolver(role), authorities[role].resolver)) throw new Error(`${role}: resolver pointer readback failed`);
       proofs[role] = await verify(provider, role, authorities);
+      console.log(JSON.stringify({ phase: 'after-pointer-update', verifiedRole: role }));
     }
     const artifact = { chainId: ENS.chainId, block: await provider.getBlockNumber(), authorities, proofs,
       disclosure: QUARTET_DISCLOSURE, spentETH: formatEther(BigInt(state.spentWei)), transactions: state.transactions,

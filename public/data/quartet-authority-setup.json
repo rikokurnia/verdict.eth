@@ -1,0 +1,231 @@
+{
+  "chainId": 11155111,
+  "block": 11694665,
+  "authorities": {
+    "legal": {
+      "name": "legal.agent.verdict.eth",
+      "resolver": "0x1C6e26A8f56C8B6C9286Fe217851c1FC9e7dA6e6",
+      "worker": "0xeABF723A3a2985aEB61D5853BfFF7eb8e83e6232",
+      "admin": "0x234114B7589a73d4D0316B6ab480AEB0c0379026"
+    },
+    "custody": {
+      "name": "custody.agent.verdict.eth",
+      "resolver": "0x6592566d7185bbf811D2508683e4a545297A7C13",
+      "worker": "0x18834e33Cc3164D9b21828A1aB4e40533DF22401",
+      "admin": "0x429a3Ddd334cE659316B195390bee559736987d4"
+    },
+    "technical": {
+      "name": "technical.agent.verdict.eth",
+      "resolver": "0x518dA35a61ea0d1D660C79a3439FE13CAeDC317c",
+      "worker": "0x1698af071dCb256B1d954501D18072354F175E0e",
+      "admin": "0x234114B7589a73d4D0316B6ab480AEB0c0379026"
+    },
+    "consensus": {
+      "name": "consensus.agent.verdict.eth",
+      "resolver": "0x3eD916E05eD700715785E0774730cD874CADa7F2",
+      "worker": "0xd677BC549f6f071c0392cE0d75a9C8F44f26BD9e",
+      "admin": "0x429a3Ddd334cE659316B195390bee559736987d4"
+    }
+  },
+  "proofs": {
+    "legal": {
+      "verified": true,
+      "reportKeys": [
+        "verdict.agent.report.demo",
+        "verdict.agent.report.buidl",
+        "verdict.agent.report.usyc",
+        "verdict.agent.report.usdy",
+        "verdict.agent.report.ousg",
+        "verdict.agent.report.benji",
+        "verdict.agent.report.ustb",
+        "verdict.agent.report.jtrsy",
+        "verdict.agent.report.eutbl",
+        "verdict.agent.report.spiko-eur",
+        "verdict.agent.report.jaaa",
+        "verdict.agent.report.ylds",
+        "verdict.agent.report.xaut",
+        "verdict.agent.report.paxg",
+        "verdict.agent.report.kau",
+        "verdict.agent.report.nvdax",
+        "verdict.agent.report.tslax",
+        "verdict.agent.report.syrup",
+        "verdict.agent.report.figr-heloc",
+        "verdict.agent.report.bcap",
+        "verdict.agent.report.onyc"
+      ],
+      "scope": "text-key across this resolver instance",
+      "issuerAndCrossWorkerWritesBlocked": true,
+      "workerRootWriteAdminUpgradeLinkAbsent": true,
+      "arbitraryKeyBlocked": true,
+      "workerGrantBlocked": true
+    },
+    "custody": {
+      "verified": true,
+      "reportKeys": [
+        "verdict.agent.report.demo",
+        "verdict.agent.report.buidl",
+        "verdict.agent.report.usyc",
+        "verdict.agent.report.usdy",
+        "verdict.agent.report.ousg",
+        "verdict.agent.report.benji",
+        "verdict.agent.report.ustb",
+        "verdict.agent.report.jtrsy",
+        "verdict.agent.report.eutbl",
+        "verdict.agent.report.spiko-eur",
+        "verdict.agent.report.jaaa",
+        "verdict.agent.report.ylds",
+        "verdict.agent.report.xaut",
+        "verdict.agent.report.paxg",
+        "verdict.agent.report.kau",
+        "verdict.agent.report.nvdax",
+        "verdict.agent.report.tslax",
+        "verdict.agent.report.syrup",
+        "verdict.agent.report.figr-heloc",
+        "verdict.agent.report.bcap",
+        "verdict.agent.report.onyc"
+      ],
+      "scope": "text-key across this resolver instance",
+      "issuerAndCrossWorkerWritesBlocked": true,
+      "workerRootWriteAdminUpgradeLinkAbsent": true,
+      "arbitraryKeyBlocked": true,
+      "workerGrantBlocked": true
+    },
+    "technical": {
+      "verified": true,
+      "reportKeys": [
+        "verdict.agent.report.demo",
+        "verdict.agent.report.buidl",
+        "verdict.agent.report.usyc",
+        "verdict.agent.report.usdy",
+        "verdict.agent.report.ousg",
+        "verdict.agent.report.benji",
+        "verdict.agent.report.ustb",
+        "verdict.agent.report.jtrsy",
+        "verdict.agent.report.eutbl",
+        "verdict.agent.report.spiko-eur",
+        "verdict.agent.report.jaaa",
+        "verdict.agent.report.ylds",
+        "verdict.agent.report.xaut",
+        "verdict.agent.report.paxg",
+        "verdict.agent.report.kau",
+        "verdict.agent.report.nvdax",
+        "verdict.agent.report.tslax",
+        "verdict.agent.report.syrup",
+        "verdict.agent.report.figr-heloc",
+        "verdict.agent.report.bcap",
+        "verdict.agent.report.onyc"
+      ],
+      "scope": "text-key across this resolver instance",
+      "issuerAndCrossWorkerWritesBlocked": true,
+      "workerRootWriteAdminUpgradeLinkAbsent": true,
+      "arbitraryKeyBlocked": true,
+      "workerGrantBlocked": true
+    },
+    "consensus": {
+      "verified": true,
+      "reportKeys": [
+        "verdict.agent.report.demo",
+        "verdict.agent.report.buidl",
+        "verdict.agent.report.usyc",
+        "verdict.agent.report.usdy",
+        "verdict.agent.report.ousg",
+        "verdict.agent.report.benji",
+        "verdict.agent.report.ustb",
+        "verdict.agent.report.jtrsy",
+        "verdict.agent.report.eutbl",
+        "verdict.agent.report.spiko-eur",
+        "verdict.agent.report.jaaa",
+        "verdict.agent.report.ylds",
+        "verdict.agent.report.xaut",
+        "verdict.agent.report.paxg",
+        "verdict.agent.report.kau",
+        "verdict.agent.report.nvdax",
+        "verdict.agent.report.tslax",
+        "verdict.agent.report.syrup",
+        "verdict.agent.report.figr-heloc",
+        "verdict.agent.report.bcap",
+        "verdict.agent.report.onyc"
+      ],
+      "scope": "text-key across this resolver instance",
+      "issuerAndCrossWorkerWritesBlocked": true,
+      "workerRootWriteAdminUpgradeLinkAbsent": true,
+      "arbitraryKeyBlocked": true,
+      "workerGrantBlocked": true
+    }
+  },
+  "disclosure": "AI runs offchain. Four team-operated worker wallets publish separate reports. Recovery admins can grant writes/upgrade resolvers, and registry owners retain resolver-redirection powers. This is not externally independent institutional auditing.",
+  "spentETH": "0.007728739426120252",
+  "transactions": [
+    {
+      "action": "deploy-technical-resolver",
+      "hash": "0x41575ea558a7e5a3e59a2ce1d4274d357d1f640f3663e3da74d6c41eee10cd44",
+      "block": 11694621,
+      "feeWei": "418567722328904",
+      "status": 1
+    },
+    {
+      "action": "deploy-consensus-resolver",
+      "hash": "0xabff384c88018676303b9f9253e0e49741b4b17783207dd0a355abebc99a6166",
+      "block": 11694623,
+      "feeWei": "441174517147000",
+      "status": 1
+    },
+    {
+      "action": "legal-scoped-report-grants-and-metadata",
+      "hash": "0x78d37fc91b0979e49f803d7e9cb60b484f6fd471516210290b5dd3900aa24033",
+      "block": 11694625,
+      "feeWei": "1566327506658774",
+      "status": 1
+    },
+    {
+      "action": "custody-scoped-report-grants-and-metadata",
+      "hash": "0xdac7099c379b8596b3f382195382f65a8cc3d7d6b6115a80a17d5ee07a24e478",
+      "block": 11694627,
+      "feeWei": "1678972707148818",
+      "status": 1
+    },
+    {
+      "action": "technical-scoped-report-grants-and-metadata",
+      "hash": "0x669928d443994ceee7deff27d8bd0a971092afc78d99ab54e2b97616f8b9dd1d",
+      "block": 11694629,
+      "feeWei": "1693316640962520",
+      "status": 1
+    },
+    {
+      "action": "consensus-scoped-report-grants-and-metadata",
+      "hash": "0xb0c89e0504e025d76eb655e8b67ac0999e180a92ba9a1978fc8581c754441462",
+      "block": 11694632,
+      "feeWei": "1726721665067756",
+      "status": 1
+    },
+    {
+      "action": "point-legal-identity",
+      "hash": "0x05ad1ab2038a64de02ec51adc47c39975913e36234eec0c8576d9bcfae6e61ab",
+      "block": 11694646,
+      "feeWei": "48738199343240",
+      "status": 1
+    },
+    {
+      "action": "point-custody-identity",
+      "hash": "0xeb704735049e6cc09cf9e71c67b149dd9b04b132668630d2962182538678bcfb",
+      "block": 11694648,
+      "feeWei": "50675117643720",
+      "status": 1
+    },
+    {
+      "action": "point-technical-identity",
+      "hash": "0xe1db20f60ce4c5988404f82c64927106e907af925fc97e893379f422b792f052",
+      "block": 11694650,
+      "feeWei": "53769481238360",
+      "status": 1
+    },
+    {
+      "action": "point-consensus-identity",
+      "hash": "0xa5ec60260ff7fcea130054c0ee115151eb3cdec4026bf71e5b8e6bcfcdf9c539",
+      "block": 11694651,
+      "feeWei": "50475868581160",
+      "status": 1
+    }
+  ],
+  "publicationStatus": "Permissions provisioned; no evaluations fabricated or published by migration."
+}

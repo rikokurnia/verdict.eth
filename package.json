@@ -15,6 +15,7 @@
     "plan:rwa-evidence": "node --experimental-strip-types scripts/setup-rwa-evidence.mjs",
     "verify:rwa-permissions": "node --experimental-strip-types scripts/setup-rwa-evidence.mjs --verify",
     "verify:ens": "node scripts/read-verdict.mjs",
+    "verify:quartet": "node --experimental-strip-types scripts/verify-quartet-authorities.mjs",
     "sync:runs": "node scripts/sync-bundled-runs.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test lib/*.test.ts"

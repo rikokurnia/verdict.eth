@@ -41,7 +41,7 @@ const definitions = {
   legal: {
     name: "Legal & Compliance",
     ensName: ENS.names.agents.legal,
-    address: ENS.proxies.namespaceResolver,
+    address: ENS.proxies.auditorResolver,
     avatarUrl: "/assets/agent-assets/satelit1.png",
     labels: [
       "Resolve authority & registry",
@@ -52,7 +52,7 @@ const definitions = {
   custody: {
     name: "Custody & Backing",
     ensName: ENS.names.agents.custody,
-    address: ENS.proxies.namespaceResolver,
+    address: ENS.proxies.monitorResolver,
     avatarUrl: "/assets/agent-assets/plane2.png",
     labels: [
       "Receive shared evidence",
@@ -63,7 +63,7 @@ const definitions = {
   technical: {
     name: "Smart Contract Tech",
     ensName: ENS.names.agents.technical,
-    address: ENS.proxies.namespaceResolver,
+    address: ENS.proxies.technicalResolver,
     avatarUrl: "/assets/agent-assets/drone.png",
     labels: [
       "Receive contract evidence",
@@ -74,7 +74,7 @@ const definitions = {
   consensus: {
     name: "Consensus Synthesizer",
     ensName: ENS.names.agents.consensus,
-    address: ENS.proxies.namespaceResolver,
+    address: ENS.proxies.consensusResolver,
     avatarUrl: "/assets/agent-assets/satelit2.png",
     labels: [
       "Ingest three inspector reports",
@@ -436,6 +436,12 @@ export default function AgentQuartet() {
           <p>
             Legal, custody, and code. Three parallel investigations converge
             into a single evidence-backed decision.
+          </p>
+          <p>
+            AI runs offchain. Report writers are key-scoped and team-operated;
+            recovery admins and name owners retain control. Hosted inspections
+            do not publish transactions.{' '}
+            <a href="/api/agents/permissions" target="_blank" rel="noopener noreferrer">Live permission proof ↗</a>
           </p>
         </div>
         <div className={s.headingStamp}>

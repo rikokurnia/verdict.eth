@@ -196,7 +196,11 @@ export default function RunDetails({ run }: { run: QuartetRun }) {
             ? "Onchain write recorded"
             : "Inspect-only · no transaction emitted"}
         </span>
-        {Object.entries(run.write.transactions ?? {}).map(([name, tx]) => (
+        {Object.entries({
+          ...(run.write.transactions?.audit ? { audit: run.write.transactions.audit } : {}),
+          ...(run.write.transactions?.risk ? { risk: run.write.transactions.risk } : {}),
+          ...run.write.transactions?.agents,
+        }).map(([name, tx]) => (
           <a
             key={name}
             href={`${ENS.explorer}/tx/${tx.hash}`}

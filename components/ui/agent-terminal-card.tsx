@@ -6,7 +6,7 @@ import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { Check, CircleDashed, ExternalLink, Minus, X } from "lucide-react";
 import { EnsLogo } from "@/components/app/asset-identity";
-import { ENS_EXPLORER_NAME_URL, ENS_NAME_RECORDS_URL, ENS_NAME_RESOLVER_URL } from "@/lib/ensv2-config";
+import { ENS_EXPLORER_NAME_URL, ENS_NAME_RECORDS_URL, ENS_NAME_RESOLVER_URL, ENS_RESOLVER_ROLES_URL } from "@/lib/ensv2-config";
 import styles from "@/components/app/agent-orchestra.module.css";
 
 export type AgentId = "legal" | "custody" | "technical" | "consensus";
@@ -116,6 +116,7 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
               <span className={styles.explorerProofLinks}>
                 <a href={ENS_NAME_RECORDS_URL(data.ensName)} target="_blank" rel="noopener noreferrer" aria-label={`Inspect ${data.ensName} records`}>Records ↗</a>
                 <a href={ENS_NAME_RESOLVER_URL(data.ensName)} target="_blank" rel="noopener noreferrer" aria-label={`Inspect ${data.ensName} resolver permissions`}>Resolver ↗</a>
+                <a href={ENS_RESOLVER_ROLES_URL(data.address)} target="_blank" rel="noopener noreferrer" aria-label={`Inspect ${data.ensName} scoped writer roles`}>Roles ↗</a>
               </span>
             </div>
           ) : null}

@@ -127,6 +127,7 @@ export type QuartetRun = {
     transactions?: {
       audit?: { hash: string; blockNumber: number };
       risk?: { hash: string; blockNumber: number };
+      agents?: Record<'legal' | 'custody' | 'technical' | 'consensus', { hash: string; blockNumber: number; name: string; key: string }>;
     };
   };
 };

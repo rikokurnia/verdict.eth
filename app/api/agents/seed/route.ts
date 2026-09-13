@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     try {
       const run = await runQuartet(asset.marketId, false);
       const tx = await writeQuartetSnapshot(asset.marketId, run.synthesis,
-        JSON.stringify({ subject: run.subject, startedAt: run.startedAt, reports: run.reports, synthesis: run.synthesis }), run.model);
+        JSON.stringify({ subject: run.subject, startedAt: run.startedAt, reports: run.reports, synthesis: run.synthesis }), run.model, run);
       results.push({
         marketId: asset.marketId,
         name: asset.name,

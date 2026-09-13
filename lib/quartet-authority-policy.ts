@@ -20,5 +20,6 @@ export const QUARTET_REPORT_KEYS = [
 ];
 export const QUARTET_METADATA_KEYS = [
   'verdict.schema', 'verdict.agent.role', 'verdict.agent.worker', 'verdict.agent.publicationMode',
+  'name', 'description', 'agent-context', 'verdict.profile.authority',
 ] as const;
-export const QUARTET_DISCLOSURE = 'AI runs offchain. Four team-operated worker wallets publish separate reports. Recovery admins can grant writes/upgrade resolvers, and registry owners retain resolver-redirection powers. This is not externally independent institutional auditing.';
+export const QUARTET_DISCLOSURE = 'AI runs offchain. Four team-operated worker wallets are configured to publish separate reports. Recovery admins can grant writes/upgrade resolvers, and registry owners retain resolver-redirection powers. This is not externally independent institutional auditing.';
