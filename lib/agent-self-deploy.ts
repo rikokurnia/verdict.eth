@@ -35,6 +35,24 @@ export type SelfDeployResult = {
 const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
 
 /**
+ * Selector the verdict subname registry reverts with when the caller may not
+ * register. Verified live: a random wallet reverts with it, the namespace
+ * operator static-calls clean — registration is operator-only, so only the
+ * sponsored relayer can mint auditor branches.
+ */
+const REGISTER_UNAUTHORIZED_SELECTOR = '0x4b27a133';
+
+function revertData(error: unknown): string {
+  const data = (error as { data?: unknown; error?: { data?: unknown } })?.data
+    ?? (error as { error?: { data?: unknown } })?.error?.data;
+  return typeof data === 'string' ? data.toLowerCase() : '';
+}
+
+export function isOperatorOnlyRevert(error: unknown) {
+  return revertData(error).startsWith(REGISTER_UNAUTHORIZED_SELECTOR);
+}
+
+/**
  * Bring the wallet onto Sepolia without making the user dig through network
  * settings: request a programmatic switch, adding the chain first when the
  * wallet reports it unknown (EIP-3326 error 4902). Returns true when a switch
@@ -81,6 +99,9 @@ function friendly(error: unknown): Error {
   }
   if (/network changed|NETWORK_ERROR|underlying network changed/i.test(message)) {
     return new Error('Wallet network changed mid-deploy. Make sure you are on Sepolia, then deploy again — nothing was published.');
+  }
+  if (isOperatorOnlyRevert(error)) {
+    return new Error('This registry only lets the Verdict relayer register subnames — your wallet cannot register directly, so no gas was spent. Sponsored deployment is currently unavailable on this server; try again later.');
   }
   if (/insufficient funds|insufficient balance|gas required exceeds/i.test(message)) {
     return new Error('Your wallet needs Sepolia ETH for gas. Fund it from a Sepolia faucet, then try again.');
@@ -143,7 +164,14 @@ export async function selfDeployAuditorBranch(
     onPhase('registering');
     const expiry = BigInt(Math.floor(Date.now() / 1000)) + SUBNAME_LIFETIME_SECONDS;
     const registerArgs = [label, owner, ZERO_ADDRESS, ENSV2_SEPOLIA.proxies.namespaceResolver, AUDITOR_BRANCH_BITMAP, expiry] as const;
-    await registry.register.staticCall(...registerArgs);
+    try {
+      await registry.register.staticCall(...registerArgs);
+    } catch (error) {
+      // Preflight: reverts cost zero gas. An operator-only revert means the
+      // direct path is impossible — say so instead of sending a doomed tx.
+      if (isOperatorOnlyRevert(error)) throw friendly(error);
+      throw error;
+    }
     const registerTx = await registry.register(...registerArgs);
     const registerReceipt = await registerTx.wait(1);
     if (!registerReceipt || registerReceipt.status !== 1) {

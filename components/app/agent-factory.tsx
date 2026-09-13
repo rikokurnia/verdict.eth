@@ -268,7 +268,7 @@ export default function AgentFactory({
         // Sponsored path down (e.g. broken relayer keystore on a hosted
         // deployment) — fall back to the user's own wallet paying gas.
         if (sponsoredUnavailable(failure, response.status)) {
-          onNotify?.('info', 'Sponsored relayer unavailable', 'Falling back to your wallet — you pay Sepolia gas, same onchain result.');
+          onNotify?.('info', 'Sponsored relayer unavailable', 'Trying the direct wallet path…');
           await deploySelfPay(wallet, owner, cleanPolicy);
           return;
         }
