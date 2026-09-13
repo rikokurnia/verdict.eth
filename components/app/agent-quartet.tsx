@@ -6,6 +6,9 @@ import {
   ReactFlow,
   Background,
   getBezierPath,
+  getNodesBounds,
+  useNodes,
+  useReactFlow,
   type EdgeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -148,6 +151,51 @@ function DataEdge(props: EdgeProps) {
 const nodeTypes = { agentTerminal: AgentTerminalCard };
 const edgeTypes = { telemetry: DataEdge };
 
+/**
+ * Sizes the canvas to its content at zoom 1 and pins the viewport, so the
+ * page itself scrolls normally — no shrink-to-fit, no drag-to-pan tricks.
+ * Runs inside <ReactFlow> to reach the flow store.
+ */
+function CanvasFit({
+  shellRef,
+  onHeight,
+}: {
+  shellRef: { current: HTMLDivElement | null };
+  onHeight: (height: number) => void;
+}) {
+  const rf = useReactFlow();
+  const nodes = useNodes();
+  const [tick, setTick] = useState(0);
+  const applied = useRef("");
+  useEffect(() => {
+    const el = shellRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setTick((t) => t + 1));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [shellRef]);
+  useEffect(() => {
+    if (!nodes.length) return;
+    const bounds = getNodesBounds(nodes);
+    if (!bounds.width || !bounds.height) return;
+    const shellWidth = shellRef.current?.clientWidth || bounds.width;
+    const topPad = 24;
+    const bottomPad = 48;
+    const height = Math.ceil(bounds.height + topPad + bottomPad);
+    const viewport = {
+      x: Math.round((shellWidth - bounds.width) / 2 - bounds.x),
+      y: Math.round(topPad - bounds.y),
+      zoom: 1,
+    };
+    const key = `${height}|${viewport.x}|${viewport.y}`;
+    if (applied.current === key) return;
+    applied.current = key;
+    onHeight(height);
+    void rf.setViewport(viewport);
+  }, [nodes, tick, rf, shellRef, onHeight]);
+  return null;
+}
+
 export default function AgentQuartet() {
   const [subject, setSubject] = useState<string>(options[0].value);
   const [mode, setMode] = useState("official");
@@ -174,6 +222,11 @@ export default function AgentQuartet() {
   const [narrow, setNarrow] = useState(false);
   const source = useRef<EventSource | null>(null);
   const reduce = useReducedMotion();
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [canvasHeight, setCanvasHeight] = useState(1600);
+  const handleCanvasHeight = useCallback((height: number) => {
+    setCanvasHeight((prev) => (prev === height ? prev : height));
+  }, []);
   const loadHistory = useCallback(async () => {
     setHistoryStatus("loading");
     try {
@@ -697,7 +750,7 @@ export default function AgentQuartet() {
             onSelect={(name) => { if (name !== custom) setVerifiedCustom(null); setCustom(name); }} onVerified={setVerifiedCustom} />
         </div>
       )}
-      <div className={`${s.flowShell} ${narrow ? s.flowNarrow : ""}`}>
+      <div ref={shellRef} className={`${s.flowShell} ${narrow ? s.flowNarrow : ""}`} style={{ height: canvasHeight }}>
         <div className={s.flowLegend}>
           <span>
             <i />
@@ -730,20 +783,20 @@ export default function AgentQuartet() {
           edges={edges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.04 }}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
-          panOnDrag={true}
+          panOnDrag={false}
           zoomOnScroll={false}
           zoomOnDoubleClick={false}
           zoomOnPinch={false}
           preventScrolling={false}
-          minZoom={0.85}
+          minZoom={1}
+          maxZoom={1}
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={28} size={1} color="rgba(140, 185, 225, 0.12)" />
+          <CanvasFit shellRef={shellRef} onHeight={handleCanvasHeight} />
         </ReactFlow>
         <div className={s.canvasFooter}>
           <ShieldCheck size={14} />
