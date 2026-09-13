@@ -2,13 +2,14 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowUpRight, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ExternalLink, FileText, ShieldCheck } from 'lucide-react';
 import { PageHead } from '@/components/app/app-shell';
-import { AssetLogo, CoverageBadge, EnsLogo } from '@/components/app/asset-identity';
+import { AssetLogo, CoverageBadge, EnsLogo, OfficialDeployments } from '@/components/app/asset-identity';
 import { ColoredScore } from '@/components/app/status-badge';
 import RunDetails from '@/components/app/run-details';
 import { DEMO_ASSETS } from '@/components/app/demo-data';
 import { ENSV2_SEPOLIA, ENS_EXPLORER_NAME_URL } from '@/lib/ensv2-config';
+import type { EnsProfile } from '@/lib/ens-profile';
 import type { QuartetRun } from '@/lib/agents/types';
 import {
   SESSION_RUN_EVENT,
@@ -30,7 +31,22 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
   const [run, setRun] = useState<QuartetRun | null>(null);
   const [isSessionRun, setIsSessionRun] = useState(false);
   const [tx, setTx] = useState<SeedTx | null>(null);
-  const [snapshot, setSnapshot] = useState<{ status: string; score: number | null; reason: string; summary: string; runAt: number | null; underlying: string; standard: string; eligibility: string; custodian: string; docs: string } | null>(null);
+  const [snapshot, setSnapshot] = useState<{
+    status: string;
+    score: number | null;
+    reason: string;
+    summary: string;
+    runAt: number | null;
+    underlying: string;
+    standard: string;
+    eligibility: string;
+    custodian: string;
+    fundAdmin: string;
+    auditor: string;
+    oracleFeed: string;
+    docs: string;
+  } | null>(null);
+  const [ensProfile, setEnsProfile] = useState<EnsProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,21 +114,25 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
           }
         }
         if (profileRes && profileRes.ok) {
-          const profile = (await profileRes.json()) as { ok: boolean; records: Record<string, string> };
+          const profile = (await profileRes.json()) as EnsProfile;
           if (profile.ok) {
-            const score = Number(profile.records['verdict.quartet.score']);
-            const runAt = Number(profile.records['verdict.quartet.runAt']);
+            setEnsProfile(profile);
+            const score = Number(profile.records?.['verdict.quartet.score']);
+            const runAt = Number(profile.records?.['verdict.quartet.runAt']);
             setSnapshot({
-              status: profile.records['verdict.quartet.status'] || '—',
+              status: profile.records?.['verdict.quartet.status'] || '—',
               score: Number.isFinite(score) ? score : null,
-              reason: profile.records['verdict.quartet.reason'] || '',
-              summary: profile.records['verdict.quartet.summary'] || '',
+              reason: profile.records?.['verdict.quartet.reason'] || '',
+              summary: profile.records?.['verdict.quartet.summary'] || '',
               runAt: Number.isFinite(runAt) && runAt > 0 ? runAt : null,
-              underlying: profile.records['asset.underlying'] || '',
-              standard: profile.records['token.standard'] || '',
-              eligibility: profile.records['investor.eligibility'] || '',
-              custodian: profile.records['provider.custodian'] || '',
-              docs: profile.records['docs.official'] || '',
+              underlying: profile.records?.['asset.underlying'] || '',
+              standard: profile.records?.['token.standard'] || '',
+              eligibility: profile.records?.['investor.eligibility'] || '',
+              custodian: profile.records?.['provider.custodian'] || '',
+              fundAdmin: profile.records?.['provider.fundadmin'] || profile.records?.['provider.transfer_agent'] || '',
+              auditor: profile.records?.['provider.auditor'] || '',
+              oracleFeed: profile.records?.['oracle.feed'] || profile.records?.['oracle.por'] || '',
+              docs: profile.records?.['docs.official'] || '',
             });
           }
         }
@@ -131,6 +151,15 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
       window.removeEventListener('storage', applySession);
     };
   }, [marketId, asset]);
+
+  const underlying = snapshot?.underlying || asset?.underlying;
+  const standard = snapshot?.standard || asset?.tokenStandard;
+  const eligibility = snapshot?.eligibility || asset?.investorEligibility;
+  const custodian = snapshot?.custodian || asset?.custodian;
+  const fundAdmin = snapshot?.fundAdmin || asset?.fundAdmin;
+  const auditor = snapshot?.auditor || asset?.auditor;
+  const oracleFeed = snapshot?.oracleFeed || asset?.oracleFeed;
+  const docs = snapshot?.docs || asset?.officialDocsUrl;
 
   return (
     <div className="v-page v-inspect-page">
@@ -179,20 +208,116 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
                 </div>
               </div>
             </div>
+            <p className="v-asset-description" style={{ marginTop: 12 }}>{asset.description}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+              <span className="v-source-snapshot">{asset.snapshot}</span>
+              <span className="v-cell-sub">· {asset.snapshotAsOf}</span>
+            </div>
           </div>
 
-          {snapshot && (snapshot.docs || snapshot.underlying || snapshot.standard || snapshot.eligibility || snapshot.custodian) && (
-            <div className="v-card" style={{ marginTop: 16 }}>
-              <div className="v-label">Documentation & provenance · live ENS records</div>
-              <dl className="v-kv" style={{ marginTop: 10 }}>
-                {snapshot.underlying && (<><dt>Underlying</dt><dd>{snapshot.underlying}</dd></>)}
-                {snapshot.standard && (<><dt>Token standard</dt><dd className="v-mono">{snapshot.standard}</dd></>)}
-                {snapshot.eligibility && (<><dt>Eligibility</dt><dd>{snapshot.eligibility}</dd></>)}
-                {snapshot.custodian && (<><dt>Custodian</dt><dd>{snapshot.custodian}</dd></>)}
-                {snapshot.docs && (<><dt>Official docs</dt><dd><a href={snapshot.docs} target="_blank" rel="noreferrer">{snapshot.docs.replace(/^https?:\/\//, '').split('/')[0]} ↗</a></dd></>)}
+          <div className="v-matrix-grid">
+            <div className="v-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div className="v-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ShieldCheck size={14} style={{ color: 'var(--accent-cyan, #38bdf8)' }} />
+                  <span>Institutional Service Provider Matrix</span>
+                </div>
+                <span className="v-badge-pill" style={{ textTransform: 'uppercase', fontSize: 10 }}>ENS Registry Layer</span>
+              </div>
+              <p className="v-muted" style={{ fontSize: 12, marginBottom: 14 }}>
+                Trust anchors and institutional roles anchored to ENS subname identity per the ENS tokenized assets standard.
+              </p>
+              <dl className="v-kv">
+                <dt>Custodian</dt>
+                <dd>
+                  <strong>{custodian || 'Independent Qualified Custodian'}</strong>
+                  <div style={{ fontSize: 11, color: '#7995ab' }}>Bankruptcy-remote asset safekeeping & segregation</div>
+                </dd>
+                <dt>Fund Admin / Agent</dt>
+                <dd>
+                  <strong>{fundAdmin || 'Regulated Transfer Agent'}</strong>
+                  <div style={{ fontSize: 11, color: '#7995ab' }}>Cap-table, mint/burn permissions & investor registry</div>
+                </dd>
+                <dt>Independent Auditor</dt>
+                <dd>
+                  <strong>{auditor || 'Independent Certified Auditor'}</strong>
+                  <div style={{ fontSize: 11, color: '#7995ab' }}>Third-party reserve attestations & periodic audit</div>
+                </dd>
+                <dt>Oracle Feed</dt>
+                <dd>
+                  <strong>{oracleFeed || 'Onchain NAV / PoR Oracle'}</strong>
+                  <div style={{ fontSize: 11, color: '#7995ab' }}>Automated proof-of-reserve & pricing feed</div>
+                </dd>
               </dl>
             </div>
-          )}
+
+            <div className="v-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div className="v-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FileText size={14} style={{ color: 'var(--accent-blue, #60a5fa)' }} />
+                  <span>Structure & Compliance Specification</span>
+                </div>
+                <span className="v-badge-pill" style={{ textTransform: 'uppercase', fontSize: 10 }}>Specification</span>
+              </div>
+              <p className="v-muted" style={{ fontSize: 12, marginBottom: 14 }}>
+                Underlying collateral allocation, token standard, and regulatory investor eligibility.
+              </p>
+              <dl className="v-kv">
+                <dt>Underlying Collateral</dt>
+                <dd>{underlying || 'Disclosed institutional collateral'}</dd>
+                <dt>Token Standard</dt>
+                <dd className="v-mono">{standard || 'ERC-20'}</dd>
+                <dt>Investor Eligibility</dt>
+                <dd>{eligibility || 'Qualified / Accredited holders'}</dd>
+                <dt>Primary Issuance</dt>
+                <dd>{asset.network}</dd>
+                <dt>Deployments</dt>
+                <dd>
+                  <OfficialDeployments
+                    asset={asset}
+                    profile={ensProfile}
+                  />
+                </dd>
+              </dl>
+            </div>
+          </div>
+
+          <div className="v-card" style={{ marginTop: 16 }}>
+            <div className="v-label" style={{ marginBottom: 10 }}>Documentation & Provenance Proofs</div>
+            <dl className="v-kv">
+              {docs && (
+                <>
+                  <dt>Official Disclosures</dt>
+                  <dd>
+                    <a
+                      href={docs}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#38bdf8' }}
+                    >
+                      <span>Prospectus & Terms of Issuance ({docs.replace(/^https?:\/\//, '').split('/')[0]})</span>
+                      <ArrowUpRight size={13} aria-hidden="true" />
+                    </a>
+                  </dd>
+                </>
+              )}
+              <dt>ENSv2 Verification</dt>
+              <dd>
+                <a
+                  href={ENS_EXPLORER_NAME_URL(asset.name)}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#38bdf8' }}
+                >
+                  <img src="/assets/ens-explorer-logo.png" alt="" width="14" height="14" />
+                  <span>Inspect {asset.name} on ENSv2 Explorer</span>
+                  <ExternalLink size={12} aria-hidden="true" />
+                </a>
+              </dd>
+              <dt>Issuer & Source</dt>
+              <dd>{asset.sourceLabel} · <a href={asset.sourceUrl} target="_blank" rel="noreferrer">{asset.sourceUrl} ↗</a></dd>
+            </dl>
+          </div>
 
           {run ? (
             <div style={{ marginTop: 16 }}>

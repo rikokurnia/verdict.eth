@@ -148,6 +148,13 @@ function AssetDialog({
   const verified = asset.coverage === 'POLICY_VERIFIED';
   const scored = asset.coverage === 'CONSENSUS_SCORED' && score?.score !== null && score?.score !== undefined;
   const isRwaAsset = asset.name.endsWith('.rwa.verdict.eth');
+  const underlying = profile?.records?.['asset.underlying'] || asset.underlying;
+  const standard = profile?.records?.['token.standard'] || asset.tokenStandard;
+  const eligibility = profile?.records?.['investor.eligibility'] || asset.investorEligibility;
+  const custodian = profile?.records?.['provider.custodian'] || asset.custodian;
+  const auditor = profile?.records?.['provider.auditor'] || asset.auditor;
+  const oracleFeed = profile?.records?.['oracle.feed'] || profile?.records?.['oracle.por'] || asset.oracleFeed;
+  const docs = profile?.records?.['docs.official'] || asset.officialDocsUrl;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -222,13 +229,78 @@ function AssetDialog({
               </dl>
             </section>
 
-            <section className="v-modal-subcard" aria-labelledby="market-profile-heading">
-              <div id="market-profile-heading" className="v-label">Market and issuer snapshot</div>
-              <div className="v-dialog-price">{quote ? formatUsd(quote.usd) : 'No unified market quote'}</div>
-              {quote && <div className={`v-market-change ${quote.change24h !== null && quote.change24h < 0 ? 'is-down' : 'is-up'}`}>{quote.change24h === null ? '24h change unavailable' : `${quote.change24h >= 0 ? '+' : ''}${quote.change24h.toFixed(2)}% over 24h`} · {formatUpdated(quote.updatedAt)}</div>}
-              <p className="v-source-snapshot">{asset.snapshot}</p>
-              <span className="v-cell-sub">{asset.snapshotAsOf}</span>
-            </section>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <section className="v-modal-subcard" aria-labelledby="market-profile-heading">
+                <div id="market-profile-heading" className="v-label">Market and issuer snapshot</div>
+                <div className="v-dialog-price">{quote ? formatUsd(quote.usd) : 'No unified market quote'}</div>
+                {quote && <div className={`v-market-change ${quote.change24h !== null && quote.change24h < 0 ? 'is-down' : 'is-up'}`}>{quote.change24h === null ? '24h change unavailable' : `${quote.change24h >= 0 ? '+' : ''}${quote.change24h.toFixed(2)}% over 24h`} · {formatUpdated(quote.updatedAt)}</div>}
+                <p className="v-source-snapshot">{asset.snapshot}</p>
+                <span className="v-cell-sub">{asset.snapshotAsOf}</span>
+              </section>
+
+              {(underlying || standard || eligibility || custodian || auditor || oracleFeed) && (
+                <section className="v-modal-subcard" aria-labelledby="rwa-compliance-heading">
+                  <div id="rwa-compliance-heading" className="v-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>Institutional Registry · ENS</span>
+                    <span style={{ fontSize: 9, color: 'var(--accent-cyan, #38bdf8)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RWA Standard</span>
+                  </div>
+                  <dl className="v-kv" style={{ marginTop: 10 }}>
+                    {underlying && (
+                      <>
+                        <dt>Underlying</dt>
+                        <dd>{underlying}</dd>
+                      </>
+                    )}
+                    {standard && (
+                      <>
+                        <dt>Standard</dt>
+                        <dd className="v-mono">{standard}</dd>
+                      </>
+                    )}
+                    {eligibility && (
+                      <>
+                        <dt>Eligibility</dt>
+                        <dd>{eligibility}</dd>
+                      </>
+                    )}
+                    {custodian && (
+                      <>
+                        <dt>Custodian</dt>
+                        <dd>{custodian}</dd>
+                      </>
+                    )}
+                    {auditor && (
+                      <>
+                        <dt>Auditor</dt>
+                        <dd>{auditor}</dd>
+                      </>
+                    )}
+                    {oracleFeed && (
+                      <>
+                        <dt>Oracle Feed</dt>
+                        <dd>{oracleFeed}</dd>
+                      </>
+                    )}
+                    {docs && (
+                      <>
+                        <dt>Prospectus</dt>
+                        <dd>
+                          <a
+                            href={docs}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#38bdf8' }}
+                          >
+                            <span>Official Disclosures</span>
+                            <ArrowUpRight size={12} aria-hidden="true" />
+                          </a>
+                        </dd>
+                      </>
+                    )}
+                  </dl>
+                </section>
+              )}
+            </div>
           </div>
 
           <section className={`v-verification-panel ${verified || scored ? 'is-verified' : ''}`} aria-labelledby="coverage-heading">

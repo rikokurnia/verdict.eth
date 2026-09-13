@@ -6,7 +6,7 @@ import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import { motion, useReducedMotion } from "motion/react";
 import { Check, CircleDashed, ExternalLink, Minus, X } from "lucide-react";
 import { EnsLogo } from "@/components/app/asset-identity";
-import { ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
+import { ENS_EXPLORER_NAME_URL, ENS_NAME_RECORDS_URL, ENS_NAME_RESOLVER_URL } from "@/lib/ensv2-config";
 import styles from "@/components/app/agent-orchestra.module.css";
 
 export type AgentId = "legal" | "custody" | "technical" | "consensus";
@@ -102,6 +102,23 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
             <span>{data.ensName}</span>
             <ExternalLink size={11} className={styles.ensLinkIcon} aria-hidden="true" />
           </a>
+          {data.ensName.endsWith(".eth") ? (
+            <div
+              className={`${styles.explorerProof} nodrag nopan`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className={styles.explorerProofLabel}>
+                <img src="/assets/ens-explorer-logo.png" width={13} height={13} alt="" />
+                ENSv2 Explorer proof:
+              </span>
+              <span className={styles.explorerProofLinks}>
+                <a href={ENS_NAME_RECORDS_URL(data.ensName)} target="_blank" rel="noopener noreferrer" aria-label={`Inspect ${data.ensName} records`}>Records ↗</a>
+                <a href={ENS_NAME_RESOLVER_URL(data.ensName)} target="_blank" rel="noopener noreferrer" aria-label={`Inspect ${data.ensName} resolver permissions`}>Resolver ↗</a>
+              </span>
+            </div>
+          ) : null}
         </div>
         {typeof data.score === "number" ? (
           <div

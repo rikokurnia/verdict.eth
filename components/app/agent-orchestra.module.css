@@ -323,6 +323,40 @@
   height: 88px;
   filter: drop-shadow(0 8px 12px #0008);
 }
+.explorerProof {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 7px;
+  font-size: 10px;
+}
+
+.explorerProofLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #a9c4da;
+}
+
+.explorerProofLabel img {
+  object-fit: contain;
+}
+
+.explorerProofLinks {
+  display: flex;
+  gap: 12px;
+}
+
+.explorerProofLinks a {
+  color: #b9dcf5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.explorerProofLinks a:hover {
+  color: white;
+}
+
 .nodeIdentity {
   flex: 1;
   min-width: 0;
