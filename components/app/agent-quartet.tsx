@@ -40,6 +40,9 @@ import s from "./agent-orchestra.module.css";
 import { CUSTOM_AGENT_EVENT, CUSTOM_AGENTS_KEY, LEGACY_CUSTOM_AGENT_KEY, loadCustomAgents, validCustomAgentName } from '@/lib/custom-agent-store';
 import { CustomAgentPicker, type VerifiedCustomAgent } from './custom-agent-picker';
 
+const NODE_WIDTH = 340;
+const NODE_HEIGHT = 580;
+const COL_STEP = 364;
 const ids = ["legal", "custody", "technical", "consensus"] as const;
 const definitions = {
   legal: {
@@ -179,12 +182,18 @@ function CanvasFit({
     const bounds = getNodesBounds(nodes);
     if (!bounds.width || !bounds.height) return;
     const shellWidth = shellRef.current?.clientWidth || bounds.width;
-    const topPad = 24;
-    const bottomPad = 48;
-    const height = Math.ceil(bounds.height + topPad + bottomPad);
+    const topPad = 32;
+    const bottomPad = 64;
+    // 120px accounts for .react-flow top: 48px offset, calc(100% - 90px) height, and footer clearance
+    const height = Math.max(980, Math.ceil(bounds.height + topPad + bottomPad + 120));
+    const viewportX =
+      shellWidth >= bounds.width
+        ? Math.round((shellWidth - bounds.width) / 2 - bounds.x)
+        : Math.round(16 - bounds.x);
+    const viewportY = Math.round(topPad - bounds.y);
     const viewport = {
-      x: Math.round((shellWidth - bounds.width) / 2 - bounds.x),
-      y: Math.round(topPad - bounds.y),
+      x: viewportX,
+      y: viewportY,
       zoom: 1,
     };
     const key = `${height}|${viewport.x}|${viewport.y}`;
@@ -223,7 +232,7 @@ export default function AgentQuartet() {
   const source = useRef<EventSource | null>(null);
   const reduce = useReducedMotion();
   const shellRef = useRef<HTMLDivElement>(null);
-  const [canvasHeight, setCanvasHeight] = useState(1600);
+  const [canvasHeight, setCanvasHeight] = useState(1700);
   const handleCanvasHeight = useCallback((height: number) => {
     setCanvasHeight((prev) => (prev === height ? prev : height));
   }, []);
@@ -278,7 +287,7 @@ export default function AgentQuartet() {
         setSubject(deepSubject);
       }
     } catch {}
-    const media = matchMedia("(max-width: 850px)");
+    const media = matchMedia("(max-width: 1100px)");
     const resize = () => setNarrow(media.matches);
     resize();
     media.addEventListener("change", resize);
@@ -400,11 +409,15 @@ export default function AgentQuartet() {
         return {
           id,
           type: "agentTerminal",
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+          initialWidth: NODE_WIDTH,
+          initialHeight: NODE_HEIGHT,
           position: narrow
-            ? { x: 20, y: (customShown ? i + 1 : i) * 520 + 30 }
+            ? { x: 0, y: (customShown ? i + 1 : i) * 620 + 35 }
             : {
-                x: id === "consensus" ? 425 : 25 + i * 400,
-                y: id === "consensus" ? 640 : 35,
+                x: id === "consensus" ? COL_STEP : i * COL_STEP,
+                y: id === "consensus" ? 720 : 35,
               },
           data: {
             ...definitions[id],
@@ -436,7 +449,11 @@ export default function AgentQuartet() {
       const customNode: AgentFlowNode = {
         id: "custom",
         type: "agentTerminal",
-        position: narrow ? { x: 20, y: 30 } : { x: 425, y: -600 },
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        initialWidth: NODE_WIDTH,
+        initialHeight: NODE_HEIGHT,
+        position: narrow ? { x: 0, y: 35 } : { x: COL_STEP, y: -640 },
         data: {
           name: "Custom Auditor",
           ensName: custom,

@@ -293,14 +293,16 @@ export default function AgentFactory({
     <section className={s.factory}>
       <aside className={s.factoryVisual} aria-label="Custom auditor flagship">
         <span className={s.kicker}>COMMANDER / CUSTOM AUTHORITY</span>
-        <Image
-          src="/assets/agent-assets/plane1.png"
-          alt="Custom auditor command starship"
-          width={400}
-          height={300}
-          className={s.factoryShip}
-          priority
-        />
+        <div className={s.factoryShipStage}>
+          <Image
+            src="/assets/agent-assets/plane1.png"
+            alt="Custom auditor command starship"
+            width={400}
+            height={300}
+            className={s.factoryShip}
+            priority
+          />
+        </div>
         <div>
           <h3>
             Your rules.
