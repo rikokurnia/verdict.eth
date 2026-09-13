@@ -383,7 +383,7 @@ export default function AgentQuartet() {
       const customNode: AgentFlowNode = {
         id: "custom",
         type: "agentTerminal",
-        position: narrow ? { x: 20, y: 30 } : { x: 425, y: -570 },
+        position: narrow ? { x: 20, y: 30 } : { x: 425, y: -600 },
         data: {
           name: "Custom Auditor",
           ensName: custom,
@@ -735,12 +735,12 @@ export default function AgentQuartet() {
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
-          panOnDrag={false}
+          panOnDrag={true}
           zoomOnScroll={false}
           zoomOnDoubleClick={false}
           zoomOnPinch={false}
           preventScrolling={false}
-          minZoom={0.1}
+          minZoom={0.85}
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={28} size={1} color="rgba(140, 185, 225, 0.12)" />

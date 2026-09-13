@@ -50,9 +50,6 @@ export function CustomAgentPicker({ names, selected, running, onSelect, onVerifi
         recordsTx={findDeployment(agent.name)?.records ?? null}
         compact
       />
-      <p style={{ marginTop: 8 }}>Policy: {agent.policy}</p>
-      <p>This lens applies to Consensus after the three inspectors report. Owner and policy are re-read before every run.</p>
     </div>}
-    <p style={{ fontSize: 11, opacity: 0.7 }}>Saved names are browser- and domain-local, not chain verification. A different browser/domain won’t share this list. Policies are public ENS records.</p>
   </div>;
 }
