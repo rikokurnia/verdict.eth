@@ -137,9 +137,18 @@ const resultState = (value: string): AgentVisualState =>
 function DataEdge(props: EdgeProps) {
   const [curve] = getBezierPath(props);
   const lane = props.sourceX - 185 - Number(props.data?.lane ?? 0) * 9;
-  const path = props.data?.narrow
-    ? `M${props.sourceX},${props.sourceY} Q${props.sourceX},${props.sourceY + 15} ${lane},${props.sourceY + 15} L${lane},${props.targetY - 20} Q${lane},${props.targetY - 8} ${props.targetX},${props.targetY - 8} L${props.targetX},${props.targetY}`
-    : curve;
+  let path = curve;
+  if (props.data?.narrow) {
+    path = `M${props.sourceX},${props.sourceY} Q${props.sourceX},${props.sourceY + 15} ${lane},${props.sourceY + 15} L${lane},${props.targetY - 20} Q${lane},${props.targetY - 8} ${props.targetX},${props.targetY - 8} L${props.targetX},${props.targetY}`;
+  } else if (
+    props.id === "custom-lens" ||
+    (props.sourceX === props.targetX && props.targetY - props.sourceY > 500)
+  ) {
+    // Desktop route: bypass center inspector card (Custody & Backing) via the telemetry corridor
+    // between Custody (364..704) and Technical (728..1068) at x = 716
+    const corridorX = props.sourceX + 182;
+    path = `M${props.sourceX},${props.sourceY} C${props.sourceX},${props.sourceY + 45} ${corridorX},${Math.min(props.sourceY + 65, 0)} ${corridorX},35 L${corridorX},635 C${corridorX},685 ${props.targetX},675 ${props.targetX},${props.targetY}`;
+  }
   const state = String(props.data?.state ?? "idle");
   return (
     <g className={`${s.edge} ${s[`edge_${state}`]}`}>

@@ -211,6 +211,10 @@
 }
 .flowShell :global(.react-flow__node) {
   pointer-events: auto !important;
+  z-index: 5 !important;
+}
+.flowShell :global(.react-flow__edges) {
+  z-index: 1 !important;
 }
 /* The landing-page media reset otherwise collapses React Flow's edge SVGs to zero width. */
 .flowShell :global(.react-flow__edges svg) {
@@ -270,8 +274,8 @@
   padding: 20px;
   background: linear-gradient(
     150deg,
-    rgba(12, 28, 46, 0.42),
-    rgba(6, 17, 30, 0.32)
+    rgba(11, 25, 42, 0.94),
+    rgba(6, 17, 30, 0.96)
   );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
