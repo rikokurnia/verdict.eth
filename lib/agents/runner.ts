@@ -239,6 +239,9 @@ export type QuartetEvent = {
   label: string;
   detail?: string;
   ms?: number;
+  report?: InspectorReport;
+  synthesis?: Synthesis;
+  usage?: QuartetRun['usage'];
 };
 export type QuartetEmit = (event: Omit<QuartetEvent, 't'>) => void;
 
@@ -276,27 +279,38 @@ export async function runQuartetStream(subject: string, write: boolean, emit: Qu
         emit({ kind: 'evidence', label: `evidence · ${step.key}`, detail: step.detail, ms: step.ms }));
 
   const ids: InspectorId[] = ['legal', 'custody', 'technical'];
-  for (const id of ids) emit({ kind: 'inspector-start', label: `inspector → ${id}`, detail: 'running in parallel' });
-  const timedInspector = (id: InspectorId) => {
+  const reports = {} as Record<InspectorId, InspectorReport>;
+  const engines = {} as QuartetRun['engines'];
+
+  for (const id of ids) {
+    emit({ kind: 'inspector-start', label: `inspector → ${id}`, detail: `Evaluating ${id} authority evidence` });
     const t0 = Date.now();
-    return runInspector(ctx, id, pack).then(({ report, engine }) => {
-      emit({ kind: 'inspector-ok', label: `inspector ✓ ${id}`, detail: `${report.status} · ${report.score}/100 · via ${engine.provider}`, ms: Date.now() - t0 });
-      return { id, report, engine };
+    const { report, engine } = await runInspector(ctx, id, pack);
+    reports[id] = report;
+    engines[id] = engine;
+    const callUsage = ctx.usage.filter((u) => u.call === id);
+    emit({
+      kind: 'inspector-ok',
+      label: `inspector ✓ ${id}`,
+      detail: `${report.status} · ${report.score}/100 · via ${engine.provider}`,
+      ms: Date.now() - t0,
+      report,
+      usage: callUsage,
     });
-  };
-  const settled = await Promise.all(ids.map(timedInspector));
-  const reports = Object.fromEntries(settled.map(({ id, report }) => [id, report])) as Record<InspectorId, InspectorReport>;
-  const engines = Object.fromEntries(settled.map(({ id, engine }) => [id, engine])) as QuartetRun['engines'];
+  }
 
   emit({ kind: 'synthesis-start', label: customPolicy ? `synthesizer → consensus + ${customPolicy.subname} lens` : 'synthesizer → consensus', detail: 'weights legal 30 · custody 40 · technical 30' });
   const synthT0 = Date.now();
   const { synthesis, engine: synthEngine } = await runSynthesizer(ctx, pack, reports, customPolicy);
   engines.synthesis = synthEngine;
+  const synthUsage = ctx.usage.filter((u) => u.call === 'synthesis');
   emit({
     kind: 'synthesis-ok',
     label: `consensus ✓ ${synthesis.verdict}`,
     detail: `${synthesis.overall_score}/100 → ${synthesis.policy_state} · via ${synthEngine.provider}`,
     ms: Date.now() - synthT0,
+    synthesis,
+    usage: synthUsage,
   });
 
   const run: QuartetRun = {

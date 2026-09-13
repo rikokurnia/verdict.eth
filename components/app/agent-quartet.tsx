@@ -27,7 +27,7 @@ import AgentTerminalCard, {
 } from "@/components/ui/agent-terminal-card";
 import { ENSV2_SEPOLIA as ENS } from "@/lib/ensv2-config";
 import { DEMO_ASSETS } from "./demo-data";
-import type { QuartetRun } from "@/lib/agents/types";
+import type { QuartetRun, InspectorReport, Synthesis } from "@/lib/agents/types";
 import {
   SESSION_RUN_EVENT,
   loadSessionRuns,
@@ -103,6 +103,10 @@ type Frame = {
   detail?: string;
   t?: string;
   run?: QuartetRun;
+  report?: InspectorReport;
+  synthesis?: Synthesis;
+  usage?: QuartetRun['usage'];
+  ms?: number;
 };
 type Entry = { file: string; recordedAt: string; run: QuartetRun };
 const idle = (): Record<AgentId, AgentVisualState> => ({
@@ -155,6 +159,11 @@ export default function AgentQuartet() {
     {},
   );
   const [run, setRun] = useState<QuartetRun | null>(null);
+  const [liveReports, setLiveReports] = useState<Partial<Record<AgentId, InspectorReport>>>({});
+  const [liveScores, setLiveScores] = useState<Partial<Record<AgentId, number>>>({});
+  const [liveTokens, setLiveTokens] = useState<Partial<Record<AgentId, number>>>({});
+  const [liveLatency, setLiveLatency] = useState<Partial<Record<AgentId, number>>>({});
+  const [liveRationale, setLiveRationale] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [history, setHistory] = useState<Entry[]>([]);
   const [historyStatus, setHistoryStatus] = useState("loading");
@@ -283,57 +292,39 @@ export default function AgentQuartet() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [pickerOpen]);
-  const activeRun = useMemo(() => {
-    if (running) return null;
-    if (run && run.subject === subject) return run;
-    return history.find((e) => e.run.subject === subject)?.run ?? null;
-  }, [running, run, history, subject]);
-
-  const activeStates = useMemo<Record<AgentId, AgentVisualState>>(() => {
-    if (running) return states;
-    if (activeRun) {
-      return {
-        legal: resultState(activeRun.reports.legal.status),
-        custody: resultState(activeRun.reports.custody.status),
-        technical: resultState(activeRun.reports.technical.status),
-        consensus: resultState(activeRun.synthesis.verdict),
-      };
-    }
-    return states;
-  }, [running, states, activeRun]);
-
-  const activeCompleted = useMemo<Partial<Record<AgentId, string>>>(() => {
-    if (running) return completed;
-    if (activeRun) {
-      return {
-        legal: activeRun.finishedAt,
-        custody: activeRun.finishedAt,
-        technical: activeRun.finishedAt,
-        consensus: activeRun.finishedAt,
-      };
-    }
-    return completed;
-  }, [running, completed, activeRun]);
+  const activeRun = run && run.subject === subject ? run : null;
 
   const nodes = useMemo<AgentFlowNode[]>(
     () =>
       ids.map((id, i) => {
-        const state = activeStates[id];
-        const isDone = activeCompleted[id];
-        const report = activeRun && id !== "consensus" ? activeRun.reports[id] : null;
-        const synthesis = activeRun && id === "consensus" ? activeRun.synthesis : null;
+        const state = activeRun
+          ? resultState(id === "consensus" ? activeRun.synthesis.verdict : activeRun.reports[id].status)
+          : states[id];
+        const isDone = activeRun ? activeRun.finishedAt : completed[id];
+        const report = activeRun && id !== "consensus"
+          ? activeRun.reports[id]
+          : liveReports[id] ?? null;
+        const synthesis = activeRun && id === "consensus"
+          ? activeRun.synthesis
+          : null;
 
-        // Compute telemetry for this agent call
+        const score = activeRun
+          ? (id === "consensus" ? activeRun.synthesis.overall_score : activeRun.reports[id]?.score)
+          : liveScores[id];
+
         const callKey = id === "consensus" ? "synthesis" : id;
-        const usageItem = activeRun?.usage?.find((u) => u.call === callKey);
-        const tokens = usageItem
-          ? (usageItem.inputTokens ?? 0) + (usageItem.outputTokens ?? 0)
-          : null;
-        const latencyMs = activeRun?.durationMs
-          ? id === "consensus"
-            ? Math.round(activeRun.durationMs * 0.35)
-            : Math.round((activeRun.durationMs * 0.65) / 3)
-          : null;
+        const tokenCount = activeRun
+          ? (() => {
+              const u = activeRun.usage?.find((item) => item.call === callKey);
+              return u ? (u.inputTokens ?? 0) + (u.outputTokens ?? 0) : null;
+            })()
+          : liveTokens[id] ?? null;
+
+        const latencyMs = activeRun
+          ? (activeRun.durationMs
+              ? (id === "consensus" ? Math.round(activeRun.durationMs * 0.35) : Math.round((activeRun.durationMs * 0.65) / 3))
+              : null)
+          : liveLatency[id] ?? null;
 
         const cognitive: AgentCognitiveData = {
           scope: definitions[id].scope,
@@ -342,8 +333,8 @@ export default function AgentQuartet() {
               ? lastFrame.detail
               : definitions[id].runningTelemetry,
           findings: report?.findings ?? [],
-          rationale: synthesis?.mapped?.rationale || synthesis?.reasoning_summary,
-          telemetry: activeRun ? { tokens, latencyMs } : undefined,
+          rationale: synthesis?.mapped?.rationale || synthesis?.reasoning_summary || (id === "consensus" ? liveRationale ?? undefined : undefined),
+          telemetry: (tokenCount || latencyMs) ? { tokens: tokenCount, latencyMs } : undefined,
         };
 
         return {
@@ -360,11 +351,7 @@ export default function AgentQuartet() {
             agentId: id,
             eyebrow: i === 3 ? "04 / SYNTHESIS CORE" : `0${i + 1} / INSPECTOR`,
             state,
-            score: activeRun
-              ? id === "consensus"
-                ? activeRun.synthesis.overall_score
-                : activeRun.reports[id].score
-              : undefined,
+            score,
             steps: definitions[id].labels.map((label, step) => ({
               label,
               // Execution progress, not risk: once the agent finished
@@ -385,8 +372,9 @@ export default function AgentQuartet() {
           },
         };
       }),
-    [activeStates, activeCompleted, activeRun, narrow, lastFrame],
+    [states, completed, liveScores, liveReports, liveTokens, liveLatency, liveRationale, activeRun, narrow, lastFrame],
   );
+
   const edges = ids
     .slice(0, 3)
     .map((id, index) => ({
@@ -394,7 +382,13 @@ export default function AgentQuartet() {
       source: id,
       target: "consensus",
       type: "telemetry",
-      data: { state: activeStates[id], narrow, lane: index },
+      data: {
+        state: activeRun && id !== "consensus"
+          ? resultState(activeRun.reports[id].status)
+          : states[id],
+        narrow,
+        lane: index,
+      },
     }));
   function start() {
     if (running) return;
@@ -409,6 +403,11 @@ export default function AgentQuartet() {
     setRun(null);
     setStates(idle());
     setCompleted({});
+    setLiveReports({});
+    setLiveScores({});
+    setLiveTokens({});
+    setLiveLatency({});
+    setLiveRationale(null);
     setRunning(true);
     setLastFrame({
       kind: "preparing",
@@ -445,11 +444,23 @@ export default function AgentQuartet() {
         if (frame.kind === "inspector-start" && id)
           setStates((prev) => ({ ...prev, [id]: "running" }));
         if (frame.kind === "inspector-ok" && id) {
+          const status = frame.detail?.split(" ")[0] ?? "WARN";
           setStates((prev) => ({
             ...prev,
-            [id]: resultState(frame.detail?.split(" ")[0] ?? "WARN"),
+            [id]: resultState(status),
           }));
           setCompleted((prev) => ({ ...prev, [id]: frame.t }));
+          if (frame.report) {
+            setLiveReports((prev) => ({ ...prev, [id]: frame.report! }));
+            setLiveScores((prev) => ({ ...prev, [id]: frame.report!.score }));
+          }
+          if (frame.usage && frame.usage.length > 0) {
+            const total = (frame.usage[0].inputTokens ?? 0) + (frame.usage[0].outputTokens ?? 0);
+            setLiveTokens((prev) => ({ ...prev, [id]: total }));
+          }
+          if (frame.ms) {
+            setLiveLatency((prev) => ({ ...prev, [id]: frame.ms }));
+          }
         }
         if (frame.kind === "synthesis-start")
           setStates((prev) => ({ ...prev, consensus: "running" }));
@@ -459,6 +470,19 @@ export default function AgentQuartet() {
             consensus: frame.label?.includes("PASS") ? "completed" : "flagged",
           }));
           setCompleted((prev) => ({ ...prev, consensus: frame.t }));
+          if (frame.synthesis) {
+            setLiveScores((prev) => ({ ...prev, consensus: frame.synthesis!.overall_score }));
+            setLiveRationale(
+              frame.synthesis.mapped?.rationale || frame.synthesis.reasoning_summary,
+            );
+          }
+          if (frame.usage && frame.usage.length > 0) {
+            const total = (frame.usage[0].inputTokens ?? 0) + (frame.usage[0].outputTokens ?? 0);
+            setLiveTokens((prev) => ({ ...prev, consensus: total }));
+          }
+          if (frame.ms) {
+            setLiveLatency((prev) => ({ ...prev, consensus: frame.ms }));
+          }
         }
         if (frame.kind === "result" && frame.run) {
           const result = frame.run;
@@ -569,6 +593,14 @@ export default function AgentQuartet() {
                     onClick={() => {
                       setSubject(option.value);
                       setRun(null);
+                      setStates(idle());
+                      setCompleted({});
+                      setLiveReports({});
+                      setLiveScores({});
+                      setLiveTokens({});
+                      setLiveLatency({});
+                      setLiveRationale(null);
+                      setLastFrame(null);
                       setPickerOpen(false);
                     }}
                   >
@@ -654,7 +686,7 @@ export default function AgentQuartet() {
           {lastFrame?.label ??
             (activeRun
               ? `Analysis on record · Overall Score: ${activeRun.synthesis.overall_score}/100 (${getUnifiedVerdict(activeRun.synthesis.policy_state)})`
-              : "Fleet ready. Select an asset to begin inspection.")}
+              : "Fleet ready. Select an asset and launch inspection.")}
         </span>
         {lastFrame?.t ? (
           <time>{time(lastFrame.t)}</time>
