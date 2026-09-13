@@ -14,3 +14,16 @@ test('Vercel sponsored mint requires explicit enablement and both server secrets
   assert.equal(sponsoredMintEnabled({}), true);
   assert.equal(sponsoredMintEnabled({ VERDICT_SPONSORED_MINT_ENABLED: 'false' }), false);
 });
+
+test('Vercel sponsored mint also accepts a private-key credential with explicit enablement', () => {
+  const key = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+  assert.equal(sponsoredMintEnabled({ VERCEL: '1', VERDICT_RELAYER_PRIVATE_KEY: key }), false);
+  assert.equal(
+    sponsoredMintEnabled({ VERCEL: '1', VERDICT_SPONSORED_MINT_ENABLED: 'true', VERDICT_RELAYER_PRIVATE_KEY: key }),
+    true,
+  );
+  assert.equal(
+    sponsoredMintEnabled({ VERCEL: '1', VERDICT_SPONSORED_MINT_ENABLED: 'true', VERDICT_RELAYER_PRIVATE_KEY: '   ' }),
+    false,
+  );
+});

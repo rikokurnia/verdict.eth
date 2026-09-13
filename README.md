@@ -131,9 +131,12 @@ To enable the sponsored Custom Auditor Factory, add these **server-only** Vercel
 secrets (never prefix them with `NEXT_PUBLIC_`):
 
 - `VERDICT_SPONSORED_MINT_ENABLED=true`
-- `VERDICT_RELAYER_KEYSTORE_JSON` — complete encrypted JSON from the authorized
-  Sepolia namespace wallet (`.secrets/verdict-sepolia-agent` locally).
-- `VERDICT_RELAYER_KEYSTORE_PASSWORD` — that keystore's password.
+- `VERDICT_RELAYER_PRIVATE_KEY` — raw 0x-prefixed key of the authorized Sepolia
+  namespace wallet. Single line, pastes cleanly; the server refuses any key
+  that does not unlock the namespace operator address. Prefer this over the
+  keystore pair below, whose multi-line JSON mangles easily when pasted.
+- Alternatively `VERDICT_RELAYER_KEYSTORE_JSON` (complete encrypted JSON,
+  `.secrets/verdict-sepolia-agent` locally) + `VERDICT_RELAYER_KEYSTORE_PASSWORD`.
 
 The relayer needs Sepolia ETH and permission to register names in the Verdict
 registry and write their resolver records. Use a Sepolia-only funded relayer,

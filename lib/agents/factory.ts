@@ -53,6 +53,21 @@ function rpc() {
 }
 
 export async function namespaceWallet(provider: JsonRpcProvider) {
+  const operator = ENSV2_SEPOLIA.actors.namespaceOperator;
+  // Single-line alternative to the keystore pair: far harder to mangle when
+  // pasting into hosted env vars. The derived address is checked against the
+  // namespace operator so a wrong key fails loudly instead of mysteriously.
+  const privateKey = (process.env.VERDICT_RELAYER_PRIVATE_KEY || '').trim();
+  if (privateKey) {
+    if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) {
+      throw new Error('Relayer private key is malformed. Paste a 0x-prefixed 64-hex-character key.');
+    }
+    const wallet = new Wallet(privateKey).connect(provider);
+    if (wallet.address.toLowerCase() !== operator.toLowerCase()) {
+      throw new Error(`Relayer private key unlocks ${wallet.address}, expected operator ${operator}. Wrong key pasted.`);
+    }
+    return wallet;
+  }
   const json = process.env.VERDICT_RELAYER_KEYSTORE_JSON;
   const secret = process.env.VERDICT_RELAYER_KEYSTORE_PASSWORD;
   if (json || secret) {
