@@ -18,6 +18,18 @@ export type AgentStep = {
   status: AgentVisualState;
   time?: string;
 };
+
+export type AgentCognitiveData = {
+  scope: string;
+  liveActivity?: string;
+  findings?: string[];
+  rationale?: string;
+  telemetry?: {
+    tokens?: number | null;
+    latencyMs?: number | null;
+  };
+};
+
 export type AgentNodeData = {
   agentId: AgentId;
   eyebrow: string;
@@ -28,6 +40,7 @@ export type AgentNodeData = {
   state: AgentVisualState;
   score?: number;
   steps: AgentStep[];
+  cognitive?: AgentCognitiveData;
 };
 export type AgentFlowNode = Node<AgentNodeData, "agentTerminal">;
 
@@ -153,6 +166,69 @@ function AgentTerminalCard({ data }: NodeProps<AgentFlowNode>) {
           </li>
         ))}
       </ol>
+      {data.cognitive ? (
+        <div className={styles.cognitiveSection}>
+          <div className={styles.cognitiveHeader}>
+            <span className={styles.cognitiveKicker}>
+              {data.state === "running"
+                ? "EVALUATING STREAM"
+                : data.state === "completed" || data.state === "flagged"
+                  ? data.agentId === "consensus"
+                    ? "SYNTHESIZED RATIONALE"
+                    : "AI EVALUATION"
+                  : "AUDIT SCOPE"}
+            </span>
+            {data.state === "running" && (
+              <span className={styles.pulseBeacon} aria-hidden="true" />
+            )}
+          </div>
+
+          {data.state === "running" ? (
+            <div className={styles.cognitiveBodyRunning}>
+              <span className={styles.streamCursor}>_</span>
+              <span>{data.cognitive.liveActivity || "Processing live evidence and authority contracts..."}</span>
+            </div>
+          ) : (data.state === "completed" || data.state === "flagged") ? (
+            <div className={styles.cognitiveBody}>
+              {data.agentId === "consensus" && data.cognitive.rationale ? (
+                <p className={styles.cognitiveRationale}>
+                  &ldquo;{data.cognitive.rationale}&rdquo;
+                </p>
+              ) : data.cognitive.findings && data.cognitive.findings.length > 0 ? (
+                <ul className={styles.cognitiveFindings}>
+                  {data.cognitive.findings.slice(0, 2).map((finding, idx) => (
+                    <li key={idx}>
+                      <span className={styles.findingBullet}>•</span>
+                      <span>{finding}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.cognitiveScopeText}>Evaluation concluded without flags.</p>
+              )}
+              {data.cognitive.telemetry ? (
+                <div className={styles.cognitiveTelemetry}>
+                  <span>TELEMETRY</span>
+                  <span className={styles.telemetryDot}>·</span>
+                  <span>{data.cognitive.telemetry.tokens ? `${data.cognitive.telemetry.tokens.toLocaleString()} TOKENS` : "ONCHAIN BINDING"}</span>
+                  {data.cognitive.telemetry.latencyMs ? (
+                    <>
+                      <span className={styles.telemetryDot}>·</span>
+                      <span>{(data.cognitive.telemetry.latencyMs / 1000).toFixed(1)}S</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className={styles.cognitiveBody}>
+              <p className={styles.cognitiveScopeText}>
+                {data.cognitive.scope || "Awaiting target asset telemetry."}
+              </p>
+            </div>
+          )}
+        </div>
+      ) : null}
       {data.agentId !== "consensus" ? (
         <Handle
           className={styles.flowHandle}

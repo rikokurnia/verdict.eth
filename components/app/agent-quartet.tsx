@@ -20,6 +20,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import AgentTerminalCard, {
+  type AgentCognitiveData,
   type AgentFlowNode,
   type AgentId,
   type AgentVisualState,
@@ -43,6 +44,8 @@ const definitions = {
     ensName: ENS.names.agents.legal,
     address: ENS.proxies.auditorResolver,
     avatarUrl: "/assets/agent-assets/satelit1.png",
+    scope: "SPV corporate structure, regulatory jurisdiction, offering exemption & investor eligibility whitelist.",
+    runningTelemetry: "Resolving authority nodes & verifying issuer legal disclosures...",
     labels: [
       "Resolve authority & registry",
       "Assess ownership & compliance",
@@ -54,6 +57,8 @@ const definitions = {
     ensName: ENS.names.agents.custody,
     address: ENS.proxies.monitorResolver,
     avatarUrl: "/assets/agent-assets/plane2.png",
+    scope: "Independent custodian verification, bankruptcy-remoteness & reserve collateralization match.",
+    runningTelemetry: "Checking custodian omnibus accounts & Proof-of-Reserve attestations...",
     labels: [
       "Receive shared evidence",
       "Assess reserves & collateral",
@@ -65,6 +70,8 @@ const definitions = {
     ensName: ENS.names.agents.technical,
     address: ENS.proxies.technicalResolver,
     avatarUrl: "/assets/agent-assets/drone.png",
+    scope: "Smart contract bytecode, proxy admin controls, blacklist/freeze functions & security audits.",
+    runningTelemetry: "Decompiling contract bytecode & checking admin multisig timelock...",
     labels: [
       "Receive contract evidence",
       "Assess bytecode & access roles",
@@ -76,6 +83,8 @@ const definitions = {
     ensName: ENS.names.agents.consensus,
     address: ENS.proxies.consensusResolver,
     avatarUrl: "/assets/agent-assets/satelit2.png",
+    scope: "30/40/30 weighted synthesis, multi-agent conflict resolution & Sepolia ENS record generation.",
+    runningTelemetry: "Synthesizing inspector reports & mapping cryptographic verdict...",
     labels: [
       "Ingest three inspector reports",
       "Compute weighted risk matrix",
@@ -274,46 +283,109 @@ export default function AgentQuartet() {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [pickerOpen]);
+  const activeRun = useMemo(() => {
+    if (running) return null;
+    if (run && run.subject === subject) return run;
+    return history.find((e) => e.run.subject === subject)?.run ?? null;
+  }, [running, run, history, subject]);
+
+  const activeStates = useMemo<Record<AgentId, AgentVisualState>>(() => {
+    if (running) return states;
+    if (activeRun) {
+      return {
+        legal: resultState(activeRun.reports.legal.status),
+        custody: resultState(activeRun.reports.custody.status),
+        technical: resultState(activeRun.reports.technical.status),
+        consensus: resultState(activeRun.synthesis.verdict),
+      };
+    }
+    return states;
+  }, [running, states, activeRun]);
+
+  const activeCompleted = useMemo<Partial<Record<AgentId, string>>>(() => {
+    if (running) return completed;
+    if (activeRun) {
+      return {
+        legal: activeRun.finishedAt,
+        custody: activeRun.finishedAt,
+        technical: activeRun.finishedAt,
+        consensus: activeRun.finishedAt,
+      };
+    }
+    return completed;
+  }, [running, completed, activeRun]);
+
   const nodes = useMemo<AgentFlowNode[]>(
     () =>
-      ids.map((id, i) => ({
-        id,
-        type: "agentTerminal",
-        position: narrow
-          ? { x: 20, y: i * 480 + 30 }
-          : {
-              x: id === "consensus" ? 425 : 25 + i * 400,
-              y: id === "consensus" ? 600 : 35,
-            },
-        data: {
-          ...definitions[id],
-          agentId: id,
-          eyebrow: i === 3 ? "04 / SYNTHESIS CORE" : `0${i + 1} / INSPECTOR`,
-          state: states[id],
-          score: run
-            ? id === "consensus"
-              ? run.synthesis.overall_score
-              : run.reports[id].score
-            : undefined,
-          steps: definitions[id].labels.map((label, step) => ({
-            label,
-            // Execution progress, not risk: once the agent finished
-            // (completed[id] set), every step ran — checks all the way.
-            // Risk stays on the node header ("Risk flagged") + score.
-            status: completed[id]
-              ? "completed"
-              : states[id] === "running"
-                ? step === 1
-                  ? "running"
-                  : step === 0
-                    ? "completed"
-                    : "idle"
-                : states[id],
-            time: completed[id] ? time(completed[id]!) : undefined,
-          })),
-        },
-      })),
-    [states, completed, run, narrow],
+      ids.map((id, i) => {
+        const state = activeStates[id];
+        const isDone = activeCompleted[id];
+        const report = activeRun && id !== "consensus" ? activeRun.reports[id] : null;
+        const synthesis = activeRun && id === "consensus" ? activeRun.synthesis : null;
+
+        // Compute telemetry for this agent call
+        const callKey = id === "consensus" ? "synthesis" : id;
+        const usageItem = activeRun?.usage?.find((u) => u.call === callKey);
+        const tokens = usageItem
+          ? (usageItem.inputTokens ?? 0) + (usageItem.outputTokens ?? 0)
+          : null;
+        const latencyMs = activeRun?.durationMs
+          ? id === "consensus"
+            ? Math.round(activeRun.durationMs * 0.35)
+            : Math.round((activeRun.durationMs * 0.65) / 3)
+          : null;
+
+        const cognitive: AgentCognitiveData = {
+          scope: definitions[id].scope,
+          liveActivity:
+            lastFrame && lastFrame.label?.includes(id) && lastFrame.detail
+              ? lastFrame.detail
+              : definitions[id].runningTelemetry,
+          findings: report?.findings ?? [],
+          rationale: synthesis?.mapped?.rationale || synthesis?.reasoning_summary,
+          telemetry: activeRun ? { tokens, latencyMs } : undefined,
+        };
+
+        return {
+          id,
+          type: "agentTerminal",
+          position: narrow
+            ? { x: 20, y: i * 520 + 30 }
+            : {
+                x: id === "consensus" ? 425 : 25 + i * 400,
+                y: id === "consensus" ? 640 : 35,
+              },
+          data: {
+            ...definitions[id],
+            agentId: id,
+            eyebrow: i === 3 ? "04 / SYNTHESIS CORE" : `0${i + 1} / INSPECTOR`,
+            state,
+            score: activeRun
+              ? id === "consensus"
+                ? activeRun.synthesis.overall_score
+                : activeRun.reports[id].score
+              : undefined,
+            steps: definitions[id].labels.map((label, step) => ({
+              label,
+              // Execution progress, not risk: once the agent finished
+              // (isDone set), every step ran — checks all the way.
+              // Risk stays on the node header ("Risk flagged") + score.
+              status: isDone
+                ? "completed"
+                : state === "running"
+                  ? step === 1
+                    ? "running"
+                    : step === 0
+                      ? "completed"
+                      : "idle"
+                  : state,
+              time: isDone ? time(isDone) : undefined,
+            })),
+            cognitive,
+          },
+        };
+      }),
+    [activeStates, activeCompleted, activeRun, narrow, lastFrame],
   );
   const edges = ids
     .slice(0, 3)
@@ -322,7 +394,7 @@ export default function AgentQuartet() {
       source: id,
       target: "consensus",
       type: "telemetry",
-      data: { state: states[id], narrow, lane: index },
+      data: { state: activeStates[id], narrow, lane: index },
     }));
   function start() {
     if (running) return;
@@ -496,6 +568,7 @@ export default function AgentQuartet() {
                     aria-selected={option.value === subject}
                     onClick={() => {
                       setSubject(option.value);
+                      setRun(null);
                       setPickerOpen(false);
                     }}
                   >
@@ -508,12 +581,12 @@ export default function AgentQuartet() {
           )}
         </div>
         <button className={s.runButton} onClick={start} disabled={running || (mode === 'custom' && verifiedCustom?.name !== custom)}>
-          {run ? (
+          {run || activeRun ? (
             <RotateCcw size={16} />
           ) : (
             <Play size={16} fill="currentColor" />
           )}
-          {running ? "Inspecting…" : "Run inspection"}
+          {running ? "Inspecting…" : activeRun ? "Re-inspect fleet" : "Run inspection"}
         </button>
       </div>
       {mode === "custom" && (
@@ -526,7 +599,7 @@ export default function AgentQuartet() {
         <div className={s.flowLegend}>
           <span>
             <i />
-            {running ? "LIVE TELEMETRY" : run ? "INSPECTION COMPLETE" : "FLEET STANDBY"}
+            {running ? "LIVE TELEMETRY" : activeRun ? "VERIFIED TELEMETRY" : "FLEET STANDBY"}
           </span>
           <span>LEGAL 30% / CUSTODY 40% / TECH 30%</span>
         </div>
@@ -579,9 +652,15 @@ export default function AgentQuartet() {
         <span className={s.kicker}>MISSION LOG</span>
         <span>
           {lastFrame?.label ??
-            "Fleet ready. Select an asset to begin inspection."}
+            (activeRun
+              ? `Analysis on record · Overall Score: ${activeRun.synthesis.overall_score}/100 (${getUnifiedVerdict(activeRun.synthesis.policy_state)})`
+              : "Fleet ready. Select an asset to begin inspection.")}
         </span>
-        {lastFrame?.t && <time>{time(lastFrame.t)}</time>}
+        {lastFrame?.t ? (
+          <time>{time(lastFrame.t)}</time>
+        ) : activeRun?.finishedAt ? (
+          <time>{time(activeRun.finishedAt)}</time>
+        ) : null}
       </div>
       {error && (
         <div className={s.errorBanner} role="alert">

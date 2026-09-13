@@ -514,6 +514,125 @@
 .step_error {
   color: #ffada8;
 }
+
+.cognitiveSection {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(154, 192, 226, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cognitiveHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cognitiveKicker {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7ca5cb;
+}
+.pulseBeacon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: beaconPulse 1.4s infinite ease-in-out;
+}
+.cognitiveBodyRunning {
+  color: #93c5fd;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1.45;
+  min-height: 44px;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 8px;
+  background: rgba(10, 26, 44, 0.45);
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.streamCursor {
+  color: #38bdf8;
+  font-weight: bold;
+  animation: cursorBlink 0.8s infinite step-start;
+}
+.cognitiveBody {
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cognitiveFindings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #d0e4f7;
+}
+.cognitiveFindings li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.findingBullet {
+  color: #38bdf8;
+  flex-shrink: 0;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.cognitiveRationale {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #d0e4f7;
+  font-style: italic;
+  padding: 6px 8px;
+  background: rgba(10, 26, 44, 0.4);
+  border-radius: 4px;
+  border-left: 2px solid #38bdf8;
+}
+.cognitiveScopeText {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #7995ab;
+}
+.cognitiveTelemetry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #6486a4;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.telemetryDot {
+  color: #436582;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes beaconPulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
 .flowHandle {
   width: 9px !important;
   height: 9px !important;
