@@ -115,7 +115,8 @@ export async function POST(request: Request) {
   for (const asset of queue.slice(0, limit)) {
     try {
       const run = await runQuartet(asset.marketId, false);
-      const tx = await writeQuartetSnapshot(asset.marketId, run.synthesis);
+      const tx = await writeQuartetSnapshot(asset.marketId, run.synthesis,
+        JSON.stringify({ subject: run.subject, startedAt: run.startedAt, reports: run.reports, synthesis: run.synthesis }), run.model);
       results.push({
         marketId: asset.marketId,
         name: asset.name,

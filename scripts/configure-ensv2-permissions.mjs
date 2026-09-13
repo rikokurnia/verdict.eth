@@ -181,6 +181,10 @@ async function configure(target, provider) {
 }
 
 async function main() {
+  if (!process.argv.includes('--apply')) {
+    console.log('No transactions sent. This command changes roles; use --apply only after reviewing the targets. For read-only RWA checks use npm run verify:rwa-permissions.');
+    return;
+  }
   const env = loadEnv(join(ROOT, '.env.local'));
   if (!env.SEPOLIA_RPC_URL) throw new Error('SEPOLIA_RPC_URL is missing from .env.local');
   const provider = new JsonRpcProvider(env.SEPOLIA_RPC_URL, CHAIN_ID, { staticNetwork: true });

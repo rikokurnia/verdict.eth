@@ -23,8 +23,9 @@ export const ENSV2_SEPOLIA = {
   },
   names: {
     asset: 'usd-yield-001.acme.verdict.eth',
-    audit: 'legal.agent.verdict.eth',
-    observation: 'custody.agent.verdict.eth',
+    // Evidence authorities are not the shared quartet discovery identities.
+    audit: 'audit-001.verdict-auditor.eth',
+    observation: 'risk-001.verdict-monitor.eth',
     technical: 'technical.agent.verdict.eth',
     consensus: 'consensus.agent.verdict.eth',
     agent: 'consensus.agent.verdict.eth',
@@ -39,6 +40,7 @@ export const ENSV2_SEPOLIA = {
     forever: 'genesis.acme.verdict.eth',
   },
   actors: {
+    namespaceOperator: '0x34a859252E1AFb1c45eE4d3293884c866a1d46f9',
     auditorWorker: '0xeABF723A3a2985aEB61D5853BfFF7eb8e83e6232',
     monitorWorker: '0x18834e33Cc3164D9b21828A1aB4e40533DF22401',
     auditorAdmin: '0x234114B7589a73d4D0316B6ab480AEB0c0379026',

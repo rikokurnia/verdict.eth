@@ -31,6 +31,7 @@ import type { EnsProfile } from '@/lib/ens-profile';
 import type { VerdictApiResponse } from '@/lib/verdict-types';
 import type { QuartetRun } from '@/lib/agents/types';
 import { SESSION_RUN_EVENT, loadSessionRuns } from '@/lib/session-runs';
+import { EvidencePermissions } from '@/components/app/evidence-permissions';
 
 type Quote = { usd: number; change24h: number | null; updatedAt: number | null; image?: string };
 type MarketResponse = { ok: boolean; source: string; stale?: boolean; savedAt?: string; quotes: Record<string, Quote> };
@@ -214,6 +215,7 @@ function AssetDialog({
                         <span>View in Explorer</span>
                         <ArrowUpRight size={13} aria-hidden="true" />
                       </a>
+                      <EvidencePermissions key={asset.name} name={asset.name} />
                     </dd>
                   </>
                 )}

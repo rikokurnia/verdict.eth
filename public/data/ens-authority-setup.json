@@ -1,0 +1,513 @@
+{
+  "kind": "historical-ensv2-authority-setup-receipt",
+  "chainId": 11155111,
+  "checkedAtUTC": "2026-09-13T07:27:53.540Z",
+  "assetCount": 20,
+  "allAssetsVerified": true,
+  "totalFeeETH": "0.00850653019692695",
+  "scope": "Text-key scoped across names using each dedicated resolver; not per-name grants.",
+  "adminDisclosure": "Recovery admins can grant roles and upgrade resolvers. Registry and .eth owners can redirect resolution. All demo keys are operated by the Verdict team, not external audit firms.",
+  "quartetDisclosure": "Offchain AI analysis; one namespace relayer publishes the quartet summary. Summary records are not independent auditor attestations.",
+  "publicationDisclosure": "Only registrations and subject/schema bindings were published. This is permission proof, not a reserve audit or new evaluation attestation.",
+  "checksRequired": [
+    "nameActive",
+    "ownerMatches",
+    "resolverMatches",
+    "subjectMatches",
+    "allKeysAllowed",
+    "noRootText",
+    "noRootTextAdmin",
+    "noUpgrade",
+    "noUpgradeAdmin",
+    "allowedWriteVerified",
+    "unrelatedWriteBlocked",
+    "issuerWriteBlocked",
+    "crossWorkerWriteBlocked",
+    "workerGrantBlocked",
+    "recoveryAdminVerified"
+  ],
+  "authorities": {
+    "auditor": {
+      "resolver": "0x1C6e26A8f56C8B6C9286Fe217851c1FC9e7dA6e6",
+      "registry": "0xc41926ea9855A291F8EdA917B064550f13F9dF08",
+      "worker": "0xeABF723A3a2985aEB61D5853BfFF7eb8e83e6232",
+      "admin": "0x234114B7589a73d4D0316B6ab480AEB0c0379026",
+      "allowedKeys": [
+        "verdict.attestation.documentHash",
+        "verdict.attestation.issuedAt",
+        "verdict.attestation.expiresAt",
+        "verdict.attestation.status",
+        "verdict.attestation.ai.model",
+        "verdict.attestation.ai.confidence",
+        "verdict.attestation.ai.rationale",
+        "verdict.attestation.ai.sourceHash"
+      ],
+      "rolesURL": "https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/0x1C6e26A8f56C8B6C9286Fe217851c1FC9e7dA6e6/roles"
+    },
+    "monitor": {
+      "resolver": "0x6592566d7185bbf811D2508683e4a545297A7C13",
+      "registry": "0x97BBD31Ee3B140f601eA7852B647255BCA6048C5",
+      "worker": "0x18834e33Cc3164D9b21828A1aB4e40533DF22401",
+      "admin": "0x429a3Ddd334cE659316B195390bee559736987d4",
+      "allowedKeys": [
+        "verdict.observation.observedAt",
+        "verdict.observation.severity",
+        "verdict.observation.reasonCode",
+        "verdict.observation.status",
+        "verdict.observation.ai.model",
+        "verdict.observation.ai.confidence",
+        "verdict.observation.ai.rationale",
+        "verdict.observation.ai.sourceHash"
+      ],
+      "rolesURL": "https://hackathon-deployment-portal-app.ens-cf.workers.dev/resolver/0x6592566d7185bbf811D2508683e4a545297A7C13/roles"
+    }
+  },
+  "assets": [
+    {
+      "name": "buidl.rwa.verdict.eth",
+      "sourceBlock": 11694440,
+      "verified": true,
+      "auditorName": "buidl.verdict-auditor.eth",
+      "monitorName": "buidl.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "usyc.rwa.verdict.eth",
+      "sourceBlock": 11694440,
+      "verified": true,
+      "auditorName": "usyc.verdict-auditor.eth",
+      "monitorName": "usyc.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "usdy.rwa.verdict.eth",
+      "sourceBlock": 11694441,
+      "verified": true,
+      "auditorName": "usdy.verdict-auditor.eth",
+      "monitorName": "usdy.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "ousg.rwa.verdict.eth",
+      "sourceBlock": 11694441,
+      "verified": true,
+      "auditorName": "ousg.verdict-auditor.eth",
+      "monitorName": "ousg.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "benji.rwa.verdict.eth",
+      "sourceBlock": 11694441,
+      "verified": true,
+      "auditorName": "benji.verdict-auditor.eth",
+      "monitorName": "benji.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "ustb.rwa.verdict.eth",
+      "sourceBlock": 11694442,
+      "verified": true,
+      "auditorName": "ustb.verdict-auditor.eth",
+      "monitorName": "ustb.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "jtrsy.rwa.verdict.eth",
+      "sourceBlock": 11694442,
+      "verified": true,
+      "auditorName": "jtrsy.verdict-auditor.eth",
+      "monitorName": "jtrsy.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "eutbl.rwa.verdict.eth",
+      "sourceBlock": 11694443,
+      "verified": true,
+      "auditorName": "eutbl.verdict-auditor.eth",
+      "monitorName": "eutbl.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "spiko-eur.rwa.verdict.eth",
+      "sourceBlock": 11694443,
+      "verified": true,
+      "auditorName": "spiko-eur.verdict-auditor.eth",
+      "monitorName": "spiko-eur.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "jaaa.rwa.verdict.eth",
+      "sourceBlock": 11694443,
+      "verified": true,
+      "auditorName": "jaaa.verdict-auditor.eth",
+      "monitorName": "jaaa.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "ylds.rwa.verdict.eth",
+      "sourceBlock": 11694444,
+      "verified": true,
+      "auditorName": "ylds.verdict-auditor.eth",
+      "monitorName": "ylds.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "xaut.rwa.verdict.eth",
+      "sourceBlock": 11694444,
+      "verified": true,
+      "auditorName": "xaut.verdict-auditor.eth",
+      "monitorName": "xaut.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "paxg.rwa.verdict.eth",
+      "sourceBlock": 11694444,
+      "verified": true,
+      "auditorName": "paxg.verdict-auditor.eth",
+      "monitorName": "paxg.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "kau.rwa.verdict.eth",
+      "sourceBlock": 11694445,
+      "verified": true,
+      "auditorName": "kau.verdict-auditor.eth",
+      "monitorName": "kau.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "nvdax.rwa.verdict.eth",
+      "sourceBlock": 11694445,
+      "verified": true,
+      "auditorName": "nvdax.verdict-auditor.eth",
+      "monitorName": "nvdax.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "tslax.rwa.verdict.eth",
+      "sourceBlock": 11694445,
+      "verified": true,
+      "auditorName": "tslax.verdict-auditor.eth",
+      "monitorName": "tslax.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "syrup.rwa.verdict.eth",
+      "sourceBlock": 11694446,
+      "verified": true,
+      "auditorName": "syrup.verdict-auditor.eth",
+      "monitorName": "syrup.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "figr-heloc.rwa.verdict.eth",
+      "sourceBlock": 11694446,
+      "verified": true,
+      "auditorName": "figr-heloc.verdict-auditor.eth",
+      "monitorName": "figr-heloc.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "bcap.rwa.verdict.eth",
+      "sourceBlock": 11694447,
+      "verified": true,
+      "auditorName": "bcap.verdict-auditor.eth",
+      "monitorName": "bcap.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    },
+    {
+      "name": "onyc.rwa.verdict.eth",
+      "sourceBlock": 11694447,
+      "verified": true,
+      "auditorName": "onyc.verdict-auditor.eth",
+      "monitorName": "onyc.verdict-monitor.eth",
+      "auditorVerified": true,
+      "monitorVerified": true
+    }
+  ],
+  "transactions": [
+    {
+      "action": "register-buidl.verdict-auditor.eth",
+      "hash": "0xb19e61158ea8c4379cb65d055b0c36e4af4723e322c14149a893af9cbe87ef6d",
+      "blockNumber": 11694379,
+      "feeWei": "114586921327800"
+    },
+    {
+      "action": "register-usyc.verdict-auditor.eth",
+      "hash": "0x7e32c4f0d2e24060bb90c58b80dcabc27042e2b1870cb2d0955c7a10ac70f1dd",
+      "blockNumber": 11694380,
+      "feeWei": "109039484406000"
+    },
+    {
+      "action": "register-usdy.verdict-auditor.eth",
+      "hash": "0x56dbdff24a7e95544cc0deb4934b5aaf4c11b6178570c6f787c5b28a17846659",
+      "blockNumber": 11694381,
+      "feeWei": "103961643269605"
+    },
+    {
+      "action": "register-ousg.verdict-auditor.eth",
+      "hash": "0x02764f90ba2ed6dfc965d6ad70a4aa89925992d7ca5930f5605cb027d2ab3410",
+      "blockNumber": 11694382,
+      "feeWei": "99048619154000"
+    },
+    {
+      "action": "register-benji.verdict-auditor.eth",
+      "hash": "0xe7bf6c7ee09e96c35c2e8195523eb7ba716f990d4c0cc2df78af5b6b487b6503",
+      "blockNumber": 11694384,
+      "feeWei": "111292250369316"
+    },
+    {
+      "action": "register-ustb.verdict-auditor.eth",
+      "hash": "0xbc5ffa34f44973947242b761170c1bf0beadf35338b78ddc7401212f31bf9192",
+      "blockNumber": 11694385,
+      "feeWei": "108072335191325"
+    },
+    {
+      "action": "register-jtrsy.verdict-auditor.eth",
+      "hash": "0x42d2423e56d9edad7911bc827545ea1d237409b46284ddd1407912703cfca07d",
+      "blockNumber": 11694387,
+      "feeWei": "113312926856229"
+    },
+    {
+      "action": "register-eutbl.verdict-auditor.eth",
+      "hash": "0xf0b9b604e68a494c4572897f0271be1d569f735f0f50408d90ed1420d0d7576c",
+      "blockNumber": 11694388,
+      "feeWei": "107746196262505"
+    },
+    {
+      "action": "register-spiko-eur.verdict-auditor.eth",
+      "hash": "0x71236b8c483da95b37da461ae91c02a9f650dd984fbb9f7977bb004090f10d7e",
+      "blockNumber": 11694390,
+      "feeWei": "111795788517315"
+    },
+    {
+      "action": "register-jaaa.verdict-auditor.eth",
+      "hash": "0xb13f6582861636f6af207728458c26ed7cb541469e32f032776bc0deefa77652",
+      "blockNumber": 11694391,
+      "feeWei": "104794072014525"
+    },
+    {
+      "action": "register-ylds.verdict-auditor.eth",
+      "hash": "0x454390d56661894dc7f3a3b3938d7ea3e9ebda96f668d1bff59e895bab4e934e",
+      "blockNumber": 11694393,
+      "feeWei": "108535149443925"
+    },
+    {
+      "action": "register-xaut.verdict-auditor.eth",
+      "hash": "0xebe5d7b193eb74dd267d20fb4e3fe9b08613c3c36aca6c94b30e999e453cab7d",
+      "blockNumber": 11694394,
+      "feeWei": "104454119070440"
+    },
+    {
+      "action": "register-paxg.verdict-auditor.eth",
+      "hash": "0xeb671c66e4b17248f5064d8cab61f9586cea40a31666f9c02a861edf0f738bd7",
+      "blockNumber": 11694396,
+      "feeWei": "108024660936345"
+    },
+    {
+      "action": "register-kau.verdict-auditor.eth",
+      "hash": "0x0019594994178650c8bfe7b61df8c52c626860e2d976949e78026fa8158cea14",
+      "blockNumber": 11694398,
+      "feeWei": "112847816585075"
+    },
+    {
+      "action": "register-nvdax.verdict-auditor.eth",
+      "hash": "0xfa1557593fbaaa7edabbdcd916b7d2eeaa55db1aa865b827085d00911b3c0aea",
+      "blockNumber": 11694399,
+      "feeWei": "108740303155935"
+    },
+    {
+      "action": "register-tslax.verdict-auditor.eth",
+      "hash": "0x966fa93247770d4b35e532ba5930aaf5ce46f3df35b88d91181cb177fe07b33a",
+      "blockNumber": 11694401,
+      "feeWei": "111922616679030"
+    },
+    {
+      "action": "register-syrup.verdict-auditor.eth",
+      "hash": "0xbbe082c8e505c763d04d0594697440502879b71440a14952beee36b35fde7802",
+      "blockNumber": 11694402,
+      "feeWei": "106422006856962"
+    },
+    {
+      "action": "register-figr-heloc.verdict-auditor.eth",
+      "hash": "0x96796e12d3880ba649e3a275f1323d2ab070f250463f34383bf7b6a65d37912e",
+      "blockNumber": 11694404,
+      "feeWei": "110407018005847"
+    },
+    {
+      "action": "register-bcap.verdict-auditor.eth",
+      "hash": "0x2f071aec54ac1d833848c838f4bee50588df56796b959e40f9ed5a9241047bc4",
+      "blockNumber": 11694405,
+      "feeWei": "105561040224885"
+    },
+    {
+      "action": "register-onyc.verdict-auditor.eth",
+      "hash": "0x1f416b9e177d915942ca5fa58f725c816a5fe9a1d8b96528f91de74277f00b89",
+      "blockNumber": 11694407,
+      "feeWei": "109055186673345"
+    },
+    {
+      "action": "auditor-metadata-role-grants",
+      "hash": "0xbec834fe455148ff8cab525316b6ccf76d7f8c6ef1abe72b3f7a65bf130dd61c",
+      "blockNumber": 11694408,
+      "feeWei": "150319132046720"
+    },
+    {
+      "action": "auditor-subjects-and-schemas",
+      "hash": "0x17e81f26cdc8eb0671462564a5fa76266d94c86ebff7bb3475fc23a1f0ca83e5",
+      "blockNumber": 11694409,
+      "feeWei": "1869849588228090"
+    },
+    {
+      "action": "register-buidl.verdict-monitor.eth",
+      "hash": "0xdbf9522efd987eec583740afef15b6263fc408ec2f9e67473cf90a8df55b1203",
+      "blockNumber": 11694410,
+      "feeWei": "105708981168904"
+    },
+    {
+      "action": "register-usyc.verdict-monitor.eth",
+      "hash": "0xf9428806e0ccada783385496ed02ff677560c60e1fe4718cc21533e3b8978f52",
+      "blockNumber": 11694412,
+      "feeWei": "109533105680010"
+    },
+    {
+      "action": "register-usdy.verdict-monitor.eth",
+      "hash": "0x21769d966d48fc6406349ff4b95fe5486d222a0260444a370968d7b57d490aaa",
+      "blockNumber": 11694413,
+      "feeWei": "106557589883520"
+    },
+    {
+      "action": "register-ousg.verdict-monitor.eth",
+      "hash": "0x932138a8a954bc9fc357d9d0a1f6bb9c94749fef5fca967724e63243d828cc45",
+      "blockNumber": 11694415,
+      "feeWei": "109785507847110"
+    },
+    {
+      "action": "register-benji.verdict-monitor.eth",
+      "hash": "0x13adca4c158dc3fcff83dc8c269d9fa281bd4afb60b109a552f1435921689269",
+      "blockNumber": 11694416,
+      "feeWei": "104689700263666"
+    },
+    {
+      "action": "register-ustb.verdict-monitor.eth",
+      "hash": "0xda2748bb3e68b1792e81a92f09e9c0cefba1a98cd830003f7a6d6b4676ac397a",
+      "blockNumber": 11694418,
+      "feeWei": "110652867624655"
+    },
+    {
+      "action": "register-jtrsy.verdict-monitor.eth",
+      "hash": "0xa0da363b0db0742969a04cb2da2d6411873a1d2396d60f157cf6119e427cdf6b",
+      "blockNumber": 11694419,
+      "feeWei": "106765078183991"
+    },
+    {
+      "action": "register-eutbl.verdict-monitor.eth",
+      "hash": "0x447bba67647376917819c6225b668aeae018a8aec5673ac7176687f1c1627bf4",
+      "blockNumber": 11694421,
+      "feeWei": "110945841544398"
+    },
+    {
+      "action": "register-spiko-eur.verdict-monitor.eth",
+      "hash": "0xfebb0453272ffb9ff3a597d43260f50a528adbe03d96c327e745e298e858836e",
+      "blockNumber": 11694422,
+      "feeWei": "105694532426000"
+    },
+    {
+      "action": "register-jaaa.verdict-monitor.eth",
+      "hash": "0x3b822eba8712dd41f8a43ef1b16cfeef4d19e70fe7dea24bcdbf24fd6fc7b572",
+      "blockNumber": 11694424,
+      "feeWei": "110220898661400"
+    },
+    {
+      "action": "register-ylds.verdict-monitor.eth",
+      "hash": "0x96a9f2309ae27baea73e18057b8c0fa44b40a446a5ec2d1d4a8a732482496e58",
+      "blockNumber": 11694425,
+      "feeWei": "104724556925565"
+    },
+    {
+      "action": "register-xaut.verdict-monitor.eth",
+      "hash": "0x9d7c3ba82f9f3877b82d638ae913d82c319e1fbb6614805197e68a613cb1efab",
+      "blockNumber": 11694427,
+      "feeWei": "110337082369150"
+    },
+    {
+      "action": "register-paxg.verdict-monitor.eth",
+      "hash": "0x6411a2ec97a91603e7c39b62f8a26ff4151214f183e25ff3809f5a01a6b57feb",
+      "blockNumber": 11694428,
+      "feeWei": "104737330721230"
+    },
+    {
+      "action": "register-kau.verdict-monitor.eth",
+      "hash": "0x23a97d3805cddfc1e2e9c094d31cb9fccbb43323411ee37d63c5c44c55f88131",
+      "blockNumber": 11694430,
+      "feeWei": "109959052017997"
+    },
+    {
+      "action": "register-nvdax.verdict-monitor.eth",
+      "hash": "0x74482580cd344c1a318d7d0949b7f379773e1c76c0521f6750c5e257a2487c7e",
+      "blockNumber": 11694431,
+      "feeWei": "105616941356013"
+    },
+    {
+      "action": "register-tslax.verdict-monitor.eth",
+      "hash": "0x04db77659ca6d309233efa1d0a6937ead8d3fdaadefedbdd02411fdfac9b411d",
+      "blockNumber": 11694432,
+      "feeWei": "100688198514749"
+    },
+    {
+      "action": "register-syrup.verdict-monitor.eth",
+      "hash": "0xb8f2b8163e5aa88b84b1bb8e82524509cd441837f567ce9fcda30bb4762309eb",
+      "blockNumber": 11694433,
+      "feeWei": "112151529304785"
+    },
+    {
+      "action": "register-figr-heloc.verdict-monitor.eth",
+      "hash": "0xb39a612789e93ff89923f42a782b9ada453a4db6d48757e61876c99641354b21",
+      "blockNumber": 11694434,
+      "feeWei": "104364868961877"
+    },
+    {
+      "action": "register-bcap.verdict-monitor.eth",
+      "hash": "0xf672d62329e67cdcebc906ee29961f2d90f17b4c5f8f2ed3f4a90bfd8dd2d406",
+      "blockNumber": 11694436,
+      "feeWei": "108281810687070"
+    },
+    {
+      "action": "register-onyc.verdict-monitor.eth",
+      "hash": "0x95b2790bb1e3e0ecb29b84ba338c2f4532721f6241c7d7ef2a0e5999f8f54dc0",
+      "blockNumber": 11694437,
+      "feeWei": "105193109316515"
+    },
+    {
+      "action": "monitor-metadata-role-grants",
+      "hash": "0x9d8782f097c5ecc51789d907633f04f2f31c071fd19c1dbaa68bbb52b6b777ea",
+      "blockNumber": 11694439,
+      "feeWei": "156096449326580"
+    },
+    {
+      "action": "monitor-subjects-and-schemas",
+      "hash": "0x633d8a3f72f6f2dfea91b5f470e481956723b0dcd15a904bb3982abd4caa33ba",
+      "blockNumber": 11694440,
+      "feeWei": "2014036288866546"
+    }
+  ]
+}

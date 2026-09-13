@@ -9,7 +9,7 @@ export default function AgentsPage() {
     <>
       <PageHead
         title="Agents"
-        sub="Commission your auditor. Watch independent agents turn evidence into a decision."
+        sub="Commission your auditor. Watch specialized offchain agents turn evidence into an onchain decision."
       />
 
       <AgentFactory

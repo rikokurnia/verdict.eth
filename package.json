@@ -12,6 +12,8 @@
     "audit:ai": "node scripts/run-ai-audit.mjs",
     "audit:ai:write": "node scripts/run-ai-audit.mjs --write",
     "configure:ens-permissions": "node scripts/configure-ensv2-permissions.mjs",
+    "plan:rwa-evidence": "node --experimental-strip-types scripts/setup-rwa-evidence.mjs",
+    "verify:rwa-permissions": "node --experimental-strip-types scripts/setup-rwa-evidence.mjs --verify",
     "verify:ens": "node scripts/read-verdict.mjs",
     "sync:runs": "node scripts/sync-bundled-runs.mjs",
     "typecheck": "tsc --noEmit",
