@@ -113,18 +113,30 @@ Environment Variables. Apply them to Production and Preview, then redeploy:
   `MUSESPARK_API_KEY` — required for live agent inspections.
 - `AI_PROVIDERS` and the provider-specific `*_MODEL` variables are optional.
 
-Do not upload `.env.local`, `.secrets/`, encrypted wallet files, passwords, or
-private keys to Vercel. Sponsored ENS writes remain an operator-only local task;
-the deployed app can resolve ENS records and run inspect-only AI flows without
-custody of a signing wallet. The sponsored-mint and onchain-refresh write routes
-return `503` on Vercel by design. Vercel runtime receipts use temporary storage
-and may disappear when a function instance is recycled.
+Do not commit `.env.local`, `.secrets/`, passwords, or private keys. The default
+Vercel deployment runs ENS reads and inspect-only AI flows without signing custody.
+To enable the sponsored Custom Auditor Factory, add these **server-only** Vercel
+secrets (never prefix them with `NEXT_PUBLIC_`):
+
+- `VERDICT_SPONSORED_MINT_ENABLED=true`
+- `VERDICT_RELAYER_KEYSTORE_JSON` — complete encrypted JSON from the authorized
+  Sepolia namespace wallet (`.secrets/verdict-sepolia-agent` locally).
+- `VERDICT_RELAYER_KEYSTORE_PASSWORD` — that keystore's password.
+
+The relayer needs Sepolia ETH and permission to register names in the Verdict
+registry and write their resolver records. Use a Sepolia-only funded relayer,
+not a mainnet wallet. Together, the keystore and password grant signing custody
+to the server, so protect Vercel access and limit the relayer's permissions/funds.
+Users authorize their exact name and policy with a wallet signature; the server
+registers the ENS branch and publishes its policy, then returns transaction and
+Explorer proof. Onchain bulk score refresh remains disabled on Vercel. Runtime
+receipts use temporary storage and may disappear when a function is recycled.
 
 ### AI audit worker
 
 Set `SEPOLIA_RPC_URL` and `GEMINI_API_KEY` in `.env.local`. Signing keys are
-encrypted files under the ignored `.secrets/` directory and are never loaded by
-the Next.js backend.
+encrypted files under the ignored `.secrets/` directory. The sponsored factory
+backend loads only its configured namespace relayer for registration.
 
 ```bash
 # Analyze the local fictional evidence without writing

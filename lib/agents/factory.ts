@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Contract, Interface, JsonRpcProvider, Wallet, dnsEncode, keccak256, namehash, toUtf8Bytes, verifyMessage } from 'ethers';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+export { validLabel, mintMessage, parseMintMessage } from '@/lib/agent-mint-request';
+export { sponsoredMintEnabled } from '@/lib/agent-relayer-config';
 
 /** Least-privilege auditor branch: owner may set text records on their own name, and delegate that. */
 export const AUDITOR_BRANCH_BITMAP = (BigInt(1) << BigInt(4)) | ((BigInt(1) << BigInt(4)) << BigInt(128));
@@ -24,23 +26,6 @@ const textInterface = new Interface(TEXT_ABI);
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const SUBNAME_LIFETIME = BigInt(180 * 86_400);
 const MAX_POLICY_CHARS = 2000;
-
-export function validLabel(label: string): boolean {
-  return /^[a-z0-9-]{1,32}$/.test(label) && !label.startsWith('-') && !label.endsWith('-');
-}
-
-export function mintMessage(label: string, address: string, timestamp: string) {
-  return [`Verdict Auditor Factory — claim ${label}.verdict.eth`, `Owner: ${address}`, `Timestamp: ${timestamp}`].join('\n');
-}
-
-export function parseMintMessage(message: string): { label: string; address: string; timestamp: string } | null {
-  const lines = message.trim().split('\n');
-  const label = /^Verdict Auditor Factory — claim ([a-z0-9-]{1,32})\.verdict\.eth$/.exec(lines[0] ?? '')?.[1];
-  const address = /^Owner: (0x[0-9a-fA-F]{40})$/.exec(lines[1] ?? '')?.[1];
-  const timestamp = /^Timestamp: (\S+)$/.exec(lines[2] ?? '')?.[1];
-  if (!label || !address || !timestamp) return null;
-  return { label, address, timestamp };
-}
 
 function loadEnvFile(): Record<string, string> {
   try {
@@ -65,6 +50,17 @@ function rpc() {
 }
 
 export async function namespaceWallet(provider: JsonRpcProvider) {
+  const json = process.env.VERDICT_RELAYER_KEYSTORE_JSON;
+  const secret = process.env.VERDICT_RELAYER_KEYSTORE_PASSWORD;
+  if (json || secret) {
+    if (!json || !secret) throw new Error('Relayer keystore and password must both be configured.');
+    try {
+      return (await Wallet.fromEncryptedJson(json, secret)).connect(provider);
+    } catch {
+      throw new Error('Relayer keystore could not be decrypted. Check server configuration.');
+    }
+  }
+  if (process.env.VERCEL) throw new Error('Sponsored ENS relayer is not configured.');
   const encrypted = readFileSync(join(process.cwd(), '.secrets', 'verdict-sepolia-agent'), 'utf8');
   const password = readFileSync(join(process.cwd(), '.secrets', 'verdict-sepolia-agent.password'), 'utf8').trim();
   return (await Wallet.fromEncryptedJson(encrypted, password)).connect(provider);
@@ -78,7 +74,7 @@ export async function subnameStatus(label: string): Promise<{ available: boolean
   try {
     status = Number(await registry.getStatus(id));
   } catch {
-    return { available: false, owner: null };
+    throw new Error('Registry status read failed.');
   }
   if (status !== 0 && status !== 2) return { available: status === 0, owner: null };
   if (status === 0) return { available: true, owner: null };
@@ -127,6 +123,9 @@ export async function mintAuditorBranch(label: string, owner: string, policy: st
   const cleanPolicy = policy.slice(0, MAX_POLICY_CHARS);
   const provider = rpc();
   const wallet = await namespaceWallet(provider);
+  if ((await provider.getBalance(wallet.address)) === BigInt(0)) {
+    throw new Error('The sponsored relayer needs Sepolia ETH. Please fund the operator wallet.');
+  }
   const subname = `${label}.verdict.eth`;
   const expiry = BigInt(Math.floor(Date.now() / 1000)) + SUBNAME_LIFETIME;
 
@@ -134,7 +133,9 @@ export async function mintAuditorBranch(label: string, owner: string, policy: st
   const id = BigInt(keccak256(toUtf8Bytes(label)));
   if (Number(await registry.getStatus(id)) !== 0) throw new Error('Subname is no longer available');
 
-  const registerTx = await registry.register(label, owner, ZERO_ADDRESS, ENSV2_SEPOLIA.proxies.namespaceResolver, AUDITOR_BRANCH_BITMAP, expiry);
+  const registerArgs = [label, owner, ZERO_ADDRESS, ENSV2_SEPOLIA.proxies.namespaceResolver, AUDITOR_BRANCH_BITMAP, expiry] as const;
+  await registry.register.staticCall(...registerArgs);
+  const registerTx = await registry.register(...registerArgs);
   const registerReceipt = await registerTx.wait(1);
   if (registerReceipt.status !== 1) throw new Error(`Registration reverted: ${registerTx.hash}`);
 
@@ -152,6 +153,7 @@ export async function mintAuditorBranch(label: string, owner: string, policy: st
 
   // Read back the live record as mint proof.
   const live = await readAgentBranch(subname);
+  if (live.owner.toLowerCase() !== owner.toLowerCase()) throw new Error('Owner read-back mismatch after mint');
   if (live.policy !== cleanPolicy) throw new Error('Policy read-back mismatch after mint');
 
   return {

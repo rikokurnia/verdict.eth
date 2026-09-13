@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Check, ShieldCheck, Wallet } from "lucide-react";
 import { useWallets } from "@privy-io/react-auth";
 import { useWallet } from "@/components/wallet-context";
+import { signAgentDeployment } from "@/lib/agent-wallet-signing";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
-import { ENSV2_SEPOLIA, ENS_REGISTRY_URL } from "@/lib/ensv2-config";
+import { ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
 
 const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
@@ -52,6 +53,9 @@ export default function AgentFactory({
     owner?: string;
   }>({ state: "idle" });
   const [deploying, setDeploying] = useState(false);
+  const [deploymentEnabled, setDeploymentEnabled] = useState(true);
+  const [deployPhase, setDeployPhase] = useState("Confirm in wallet…");
+  const deployLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<MintConfirmation | null>(
     null,
@@ -81,15 +85,14 @@ export default function AgentFactory({
         `/api/agents/mint?label=${encodeURIComponent(value)}`,
         { cache: "no-store" },
       );
-      const body = (await response.json()) as { ok: boolean; owner?: string };
+      const body = (await response.json()) as { ok: boolean; available: boolean; owner?: string; deploymentEnabled?: boolean };
       if (version !== availabilityVersion.current) return;
       if (!response.ok || !body.ok) {
         setAvailability({ state: "unavailable" });
         return;
       }
-      setAvailability(
-        body.owner ? { state: "taken", owner: body.owner } : { state: "free" },
-      );
+      setDeploymentEnabled(body.deploymentEnabled !== false);
+      setAvailability(body.available ? { state: "free" } : { state: "taken", owner: body.owner });
     } catch {
       if (version === availabilityVersion.current)
         setAvailability({ state: "unavailable" });
@@ -111,50 +114,40 @@ export default function AgentFactory({
   }, [clean, checkAvailability]);
 
   async function deploy() {
+    if (deployLock.current) return;
     setError(null);
     setConfirmation(null);
     if (!labelValid || policy.trim().length < 20) {
       setError("Enter a valid subname and a policy of at least 20 characters.");
       return;
     }
-    let owner = account;
-    let signMessage: ((message: string) => Promise<string>) | null = null;
-    if (isConnected && wallets.length > 0) {
-      owner = wallets[0].address;
-      const wallet = wallets[0] as unknown as {
-        signMessage?: (message: string) => Promise<string | Uint8Array>;
-      };
-      if (typeof wallet.signMessage === "function") {
-        signMessage = async (message: string) =>
-          String(await wallet.signMessage!(message));
-      }
-    }
-    if (!isConnected || !signMessage) {
+    const wallet = wallets.find((w) => w.address.toLowerCase() === account.toLowerCase());
+    if (!isConnected || !wallet) {
       try {
         connect();
       } catch {
         /* connect opens the wallet dialog */
       }
       setError(
-        "Connect a wallet first (injected wallet required for signing), then deploy again.",
+        "Connect an Ethereum wallet and wait for it to become ready, then deploy again.",
       );
       return;
     }
+    deployLock.current = true;
     setDeploying(true);
+    setDeployPhase("Confirm in wallet…");
     try {
-      const timestamp = new Date().toISOString();
-      const message = [
-        `Verdict Auditor Factory — claim ${clean}.verdict.eth`,
-        `Owner: ${owner}`,
-        `Timestamp: ${timestamp}`,
-      ].join("\n");
-      const signature = await signMessage(message);
+      const cleanPolicy = policy.trim();
+      const { owner, message, signature } = await signAgentDeployment(
+        await wallet.getEthereumProvider(), wallet.address, clean, cleanPolicy,
+      );
+      setDeployPhase("Registering ENS agent…");
       const response = await fetch("/api/agents/mint", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           label: clean,
-          policy: policy.trim(),
+          policy: cleanPolicy,
           address: owner,
           message,
           signature,
@@ -174,9 +167,11 @@ export default function AgentFactory({
         /* storage optional */
       }
       onMinted?.(body.mint.subname);
+      void checkAvailability(clean);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Mint failed");
     } finally {
+      deployLock.current = false;
       setDeploying(false);
     }
   }
@@ -214,8 +209,8 @@ export default function AgentFactory({
             <p className="v-muted">
               Claim <span className="v-mono">[name].verdict.eth</span> with your
               wallet as owner, publish your audit policy onchain, then run the
-              quartet through your lens. One free signature — the mint is
-              sponsored, no gas needed.
+              quartet through your lens. Confirm one signature in your wallet;
+              the relayer pays Sepolia gas to register ENS and publish your policy.
             </p>
           </div>
         </div>
@@ -397,6 +392,7 @@ export default function AgentFactory({
               onClick={() => void deploy()}
               disabled={
                 deploying ||
+                !deploymentEnabled ||
                 !labelValid ||
                 policy.trim().length < 20 ||
                 availability.state !== "free"
@@ -404,7 +400,7 @@ export default function AgentFactory({
               aria-busy={deploying}
             >
               {deploying ? (
-                "Deploying to ENSv2…"
+                deployPhase
               ) : (
                 <>
                   <Wallet
@@ -412,7 +408,7 @@ export default function AgentFactory({
                     aria-hidden="true"
                     style={{ marginRight: 6 }}
                   />
-                  Sign & Deploy Agent to ENSv2
+                  Deploy agent
                 </>
               )}
             </button>
@@ -434,6 +430,11 @@ export default function AgentFactory({
             </span>
           )}
         </div>
+        {!deploymentEnabled && (
+          <p className="v-block-t" role="status" style={{ marginTop: 8 }}>
+            Sponsored deployment is not configured on this server. The operator must enable the Vercel relayer.
+          </p>
+        )}
         {error && (
           <p className="v-block-t" role="alert" style={{ marginTop: 8 }}>
             {error}
@@ -498,11 +499,11 @@ export default function AgentFactory({
               <div className="v-dialog-actions" style={{ marginTop: 10 }}>
                 <a
                   className="v-btn v-btn-secondary"
-                  href={ENS_REGISTRY_URL(ENSV2_SEPOLIA.proxies.verdictRegistry)}
+                  href={ENS_EXPLORER_NAME_URL(confirmation.subname)}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Open registry
+                  View ENS agent proof
                   <ArrowUpRight size={14} aria-hidden="true" />
                 </a>
               </div>
