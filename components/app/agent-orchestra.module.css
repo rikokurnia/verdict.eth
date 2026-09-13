@@ -159,8 +159,11 @@
   -webkit-backdrop-filter: blur(16px);
   font-size: 13px;
 }
-.customLens input {
+.customLens > div { width: 100%; min-width: 0; }
+.customLens label { display: block; margin-bottom: 8px; }
+.customLens select {
   flex: 1;
+  width: 100%;
   padding: 12px;
   background: rgba(7, 18, 31, 0.5);
   backdrop-filter: blur(10px);
@@ -169,6 +172,7 @@
   border: 1px solid var(--fleet-line);
   border-radius: 6px;
 }
+.customLens select option { background: #07121f; }
 .flowShell {
   position: relative;
   height: 980px;

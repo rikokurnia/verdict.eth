@@ -33,6 +33,8 @@ import {
   saveSessionRun,
 } from "@/lib/session-runs";
 import s from "./agent-orchestra.module.css";
+import { CUSTOM_AGENT_EVENT, CUSTOM_AGENTS_KEY, LEGACY_CUSTOM_AGENT_KEY, loadCustomAgents, validCustomAgentName } from '@/lib/custom-agent-store';
+import { CustomAgentPicker, type VerifiedCustomAgent } from './custom-agent-picker';
 
 const ids: AgentId[] = ["legal", "custody", "technical", "consensus"];
 const definitions = {
@@ -136,6 +138,8 @@ export default function AgentQuartet() {
   const [subject, setSubject] = useState<string>(options[0].value);
   const [mode, setMode] = useState("official");
   const [custom, setCustom] = useState("");
+  const [customAgents, setCustomAgents] = useState<string[]>([]);
+  const [verifiedCustom, setVerifiedCustom] = useState<VerifiedCustomAgent | null>(null);
   const [running, setRunning] = useState(false);
   const [states, setStates] = useState(idle);
   const [completed, setCompleted] = useState<Partial<Record<AgentId, string>>>(
@@ -206,14 +210,24 @@ export default function AgentQuartet() {
     const resize = () => setNarrow(media.matches);
     resize();
     media.addEventListener("change", resize);
-    try {
-      setCustom(localStorage.getItem("verdict-custom-agent") ?? "");
-    } catch {}
+    const saved = loadCustomAgents();
+    setCustomAgents(saved);
+    setCustom(saved[0] || '');
     const minted = (e: Event) => {
-      setCustom((e as CustomEvent<string>).detail);
+      const name = (e as CustomEvent<string>).detail;
+      if (!validCustomAgentName(name || '')) return;
+      setCustomAgents(loadCustomAgents());
+      setCustom(name);
       setMode("custom");
     };
-    window.addEventListener("verdict:auditor-minted", minted);
+    const agentsChanged = (e: StorageEvent) => {
+      if (e.key !== null && e.key !== CUSTOM_AGENTS_KEY && e.key !== LEGACY_CUSTOM_AGENT_KEY) return;
+      const names = loadCustomAgents();
+      setCustomAgents(names);
+      setCustom((previous) => names.includes(previous) ? previous : names[0] || '');
+    };
+    window.addEventListener(CUSTOM_AGENT_EVENT, minted);
+    window.addEventListener('storage', agentsChanged);
     // A run finished in another tab shares this browser's session store —
     // pick it up without overwriting in-memory state.
     const sessionRun = (e: Event) => {
@@ -235,7 +249,8 @@ export default function AgentQuartet() {
     window.addEventListener("storage", sessionRun);
     return () => {
       media.removeEventListener("change", resize);
-      window.removeEventListener("verdict:auditor-minted", minted);
+      window.removeEventListener(CUSTOM_AGENT_EVENT, minted);
+      window.removeEventListener('storage', agentsChanged);
       window.removeEventListener(SESSION_RUN_EVENT, sessionRun);
       window.removeEventListener("storage", sessionRun);
       source.current?.close();
@@ -313,9 +328,9 @@ export default function AgentQuartet() {
     if (running) return;
     if (
       mode === "custom" &&
-      !/^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.eth$/.test(custom.trim())
+      (!validCustomAgentName(custom) || verifiedCustom?.name !== custom)
     ) {
-      setError("Enter a valid custom auditor ENS name.");
+      setError("Select a deployed custom agent and wait for ENS verification.");
       return;
     }
     setError("");
@@ -486,7 +501,7 @@ export default function AgentQuartet() {
             </ul>
           )}
         </div>
-        <button className={s.runButton} onClick={start} disabled={running}>
+        <button className={s.runButton} onClick={start} disabled={running || (mode === 'custom' && verifiedCustom?.name !== custom)}>
           {run ? (
             <RotateCcw size={16} />
           ) : (
@@ -496,16 +511,10 @@ export default function AgentQuartet() {
         </button>
       </div>
       {mode === "custom" && (
-        <label className={s.customLens}>
-          Auditor ENS identity
-          <input
-            value={custom}
-            onChange={(e) => setCustom(e.target.value.toLowerCase())}
-            placeholder="zero-risk.verdict.eth"
-            disabled={running}
-            autoComplete="off"
-          />
-        </label>
+        <div className={s.customLens}>
+          <CustomAgentPicker names={customAgents} selected={custom} running={running}
+            onSelect={(name) => { if (name !== custom) setVerifiedCustom(null); setCustom(name); }} onVerified={setVerifiedCustom} />
+        </div>
       )}
       <div className={`${s.flowShell} ${narrow ? s.flowNarrow : ""}`}>
         <div className={s.flowLegend}>

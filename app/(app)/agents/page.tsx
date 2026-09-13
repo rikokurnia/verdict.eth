@@ -12,15 +12,7 @@ export default function AgentsPage() {
         sub="Commission your auditor. Watch specialized offchain agents turn evidence into an onchain decision."
       />
 
-      <AgentFactory
-        onMinted={(subname) => {
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(
-              new CustomEvent("verdict:auditor-minted", { detail: subname }),
-            );
-          }
-        }}
-      />
+      <AgentFactory />
       <AgentQuartet />
     </>
   );

@@ -8,6 +8,7 @@ import { signAgentDeployment } from "@/lib/agent-wallet-signing";
 import Image from "next/image";
 import s from "./agent-orchestra.module.css";
 import { ENS_EXPLORER_NAME_URL } from "@/lib/ensv2-config";
+import { rememberCustomAgent } from '@/lib/custom-agent-store';
 
 const ETHERSCAN_TX = "https://eth-sepolia.blockscout.com/tx";
 
@@ -161,11 +162,7 @@ export default function AgentFactory({
       if (!response.ok || !body.ok || !body.mint)
         throw new Error(body.error ?? "Mint failed");
       setConfirmation(body.mint);
-      try {
-        localStorage.setItem("verdict-custom-agent", body.mint.subname);
-      } catch {
-        /* storage optional */
-      }
+      rememberCustomAgent(body.mint.subname);
       onMinted?.(body.mint.subname);
       void checkAvailability(clean);
     } catch (err) {

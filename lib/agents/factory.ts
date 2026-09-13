@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Contract, Interface, JsonRpcProvider, Wallet, dnsEncode, keccak256, namehash, toUtf8Bytes, verifyMessage } from 'ethers';
 import { ENSV2_SEPOLIA } from '@/lib/ensv2-config';
+import { validCustomAgentName } from '@/lib/custom-agent-store';
 export { validLabel, mintMessage, parseMintMessage } from '@/lib/agent-mint-request';
 export { sponsoredMintEnabled } from '@/lib/agent-relayer-config';
 
@@ -46,7 +47,7 @@ function rpc() {
   const file = loadEnvFile();
   const rpcUrl = process.env.SEPOLIA_RPC_URL || file.SEPOLIA_RPC_URL;
   if (!rpcUrl) throw new Error('SEPOLIA_RPC_URL is not configured');
-  return new JsonRpcProvider(rpcUrl, ENSV2_SEPOLIA.chainId, { staticNetwork: true });
+  return new JsonRpcProvider(rpcUrl, ENSV2_SEPOLIA.chainId);
 }
 
 export async function namespaceWallet(provider: JsonRpcProvider) {
@@ -87,26 +88,29 @@ export async function subnameStatus(label: string): Promise<{ available: boolean
   }
 }
 
-export async function readAgentBranch(subname: string): Promise<{ owner: string; policy: string; context: string }> {
+export async function readAgentBranch(subname: string): Promise<{ owner: string; policy: string; context: string; sourceBlock: number }> {
+  if (!validCustomAgentName(subname)) throw new Error('Expected a custom factory name directly under verdict.eth.');
   const provider = rpc();
-  const label = subname.split('.')[0];
-  const registry = new Contract(ENSV2_SEPOLIA.proxies.verdictRegistry, REGISTRY_ABI, provider);
-  const universal = new Contract(ENSV2_SEPOLIA.contracts.universalResolver, UNIVERSAL_ABI, provider);
-  const blockTag = await provider.getBlockNumber();
-  const tokenId = (await registry.findTokenId(label)) as bigint;
-  const owner = (await registry.ownerOf(tokenId)) as string;
-  async function text(key: string) {
-    try {
+  try {
+    const label = subname.split('.')[0];
+    const registry = new Contract(ENSV2_SEPOLIA.proxies.verdictRegistry, REGISTRY_ABI, provider);
+    const universal = new Contract(ENSV2_SEPOLIA.contracts.universalResolver, UNIVERSAL_ABI, provider);
+    const blockTag = await provider.getBlockNumber();
+    const id = BigInt(keccak256(toUtf8Bytes(label)));
+    if (Number(await registry.getStatus(id, { blockTag })) !== 2) throw new Error('Custom agent name is not active.');
+    const tokenId = (await registry.findTokenId(label, { blockTag })) as bigint;
+    const owner = (await registry.ownerOf(tokenId, { blockTag })) as string;
+    async function text(key: string) {
       const query = textInterface.encodeFunctionData('text', [namehash(subname), key]);
-      const [raw] = await universal.resolve(dnsEncode(subname), query, { blockTag });
+      const [raw, resolver] = await universal.resolve(dnsEncode(subname), query, { blockTag });
+      if (String(resolver).toLowerCase() !== ENSV2_SEPOLIA.proxies.namespaceResolver.toLowerCase()) throw new Error('Custom agent resolver differs from factory configuration.');
+      if (raw === '0x') return '';
       const [value] = textInterface.decodeFunctionResult('text', raw);
       return String(value);
-    } catch {
-      return '';
     }
-  }
-  const [policy, context] = await Promise.all([text('agent.policy'), text('agent-context')]);
-  return { owner, policy, context };
+    const [policy, context] = await Promise.all([text('agent.policy'), text('agent-context')]);
+    return { owner, policy, context, sourceBlock: blockTag };
+  } finally { provider.destroy(); }
 }
 
 export type MintResult = {

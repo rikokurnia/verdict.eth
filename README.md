@@ -103,6 +103,18 @@ standard ethers or viem Sepolia configuration.
 
 ### Vercel environment
 
+Custom Lens automatically lists names deployed in the current browser/domain,
+including the last name saved by the older UI. New deployments select Custom
+Lens immediately; multiple agents are retained in a dropdown. Saved names are
+discovery hints only. `/api/agents/custom?name=<label>.verdict.eth` reads active
+registration, owner and policy from the hackathon ENS deployment without signing
+custody. Inspect is disabled until the selected name verifies, and the server
+re-reads its policy/owner before every run. The policy affects Consensus after
+the three inspectors report, not all four prompts. Other browsers/domains do
+not share localStorage; older names overwritten by the previous single-name
+store cannot be recovered automatically. No extra Vercel environment variables
+are needed for this picker beyond `SEPOLIA_RPC_URL` and an AI provider for runs.
+
 Copy the relevant keys from `.env.example` into Vercel Project Settings →
 Environment Variables. Apply them to Production and Preview, then redeploy:
 
