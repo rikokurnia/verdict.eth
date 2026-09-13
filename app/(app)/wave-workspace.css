@@ -744,6 +744,16 @@
   width: 100%;
 }
 
+/* Full inspection page cards: thicker, more opaque, solid glassmorphic depth */
+.v-wave-workspace .v-inspect-page .v-card {
+  background: rgba(5, 16, 30, 0.95);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(163, 209, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 54px -10px rgba(0, 4, 12, 0.85);
+  border-radius: 14px;
+}
+
 .v-card-header {
   display: flex;
   align-items: flex-start;

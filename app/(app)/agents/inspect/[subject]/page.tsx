@@ -133,7 +133,7 @@ export default function InspectPage({ params }: { params: Promise<{ subject: str
   }, [marketId, asset]);
 
   return (
-    <div className="v-page">
+    <div className="v-page v-inspect-page">
       <PageHead
         title={asset ? `${asset.title} · Full inspection` : 'Inspection conclusion'}
         sub="Verifiable consensus synthesis written by four specialized AI agents to ENS Sepolia."
