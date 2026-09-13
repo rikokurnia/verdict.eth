@@ -20,6 +20,7 @@ import {
 
 export type SelfDeployPhase =
   | 'checking-wallet'
+  | 'switching-network'
   | 'registering'
   | 'publishing-policy'
   | 'confirming';
@@ -31,10 +32,47 @@ export type SelfDeployResult = {
   records: { hash: string; blockNumber: number };
 };
 
+const SEPOLIA_CHAIN_ID_HEX = '0xaa36a7';
+
+/**
+ * Bring the wallet onto Sepolia without making the user dig through network
+ * settings: request a programmatic switch, adding the chain first when the
+ * wallet reports it unknown (EIP-3326 error 4902).
+ */
+async function ensureSepolia(
+  provider: BrowserProvider,
+  onPhase: (phase: SelfDeployPhase) => void,
+) {
+  if (Number((await provider.getNetwork()).chainId) === ENSV2_SEPOLIA.chainId) return;
+  onPhase('switching-network');
+  try {
+    await provider.send('wallet_switchEthereumChain', [{ chainId: SEPOLIA_CHAIN_ID_HEX }]);
+  } catch (error) {
+    const code = (error as { code?: number })?.code;
+    if (code === 4902) {
+      await provider.send('wallet_addEthereumChain', [{
+        chainId: SEPOLIA_CHAIN_ID_HEX,
+        chainName: 'Sepolia',
+        nativeCurrency: { name: 'Sepolia ETH', symbol: 'ETH', decimals: 18 },
+        rpcUrls: ['https://rpc.sepolia.org'],
+        blockExplorerUrls: ['https://sepolia.etherscan.io'],
+      }]);
+    } else {
+      throw error;
+    }
+  }
+  if (Number((await provider.getNetwork()).chainId) !== ENSV2_SEPOLIA.chainId) {
+    throw new Error('Switch your wallet to the Sepolia network, then deploy again.');
+  }
+}
+
 function friendly(error: unknown): Error {
   const message = error instanceof Error ? error.message : 'Transaction failed.';
   if (/user rejected|user denied|rejected the request|ACTION_REJECTED/i.test(message)) {
     return new Error('You rejected the wallet confirmation. Nothing was published.');
+  }
+  if (/switch.*not supported|method not found|unsupported method|not support switching/i.test(message)) {
+    return new Error('Your wallet could not switch networks automatically. Switch to Sepolia manually, then deploy again.');
   }
   if (/insufficient funds|insufficient balance|gas required exceeds/i.test(message)) {
     return new Error('Your wallet needs Sepolia ETH for gas. Fund it from a Sepolia faucet, then try again.');
@@ -60,10 +98,7 @@ export async function selfDeployAuditorBranch(
   try {
     onPhase('checking-wallet');
     const provider = new BrowserProvider(ethereumProvider);
-    const network = await provider.getNetwork();
-    if (Number(network.chainId) !== ENSV2_SEPOLIA.chainId) {
-      throw new Error('Switch your wallet to the Sepolia network, then deploy again.');
-    }
+    await ensureSepolia(provider, onPhase);
     const signer = await provider.getSigner(owner);
     const signerAddress = await signer.getAddress();
     if (signerAddress.toLowerCase() !== owner.toLowerCase()) {

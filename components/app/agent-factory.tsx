@@ -166,6 +166,7 @@ export default function AgentFactory({
     setDeployMode('self-pay');
     const phases: Record<SelfDeployPhase, string> = {
       'checking-wallet': 'Checking wallet & Sepolia ETH…',
+      'switching-network': 'Requesting Sepolia network in wallet…',
       registering: 'Confirm registration in wallet…',
       'publishing-policy': 'Confirm policy publish in wallet…',
       confirming: 'Reading back onchain proof…',
